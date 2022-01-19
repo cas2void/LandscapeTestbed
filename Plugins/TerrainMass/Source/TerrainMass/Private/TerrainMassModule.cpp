@@ -1,13 +1,13 @@
-#include "TerrainMassShader.h"
+#include "TerrainMassModule.h"
 
-#define LOCTEXT_NAMESPACE "FTerrainMassShaderModule"
+#define LOCTEXT_NAMESPACE "FTerrainMassModule"
 
-void FTerrainMassShaderModule::StartupModule()
+void FTerrainMassModule::StartupModule()
 {
 	// This code will execute after your module is loaded into memory; the exact timing is specified in the .uplugin file per-module
 }
 
-void FTerrainMassShaderModule::ShutdownModule()
+void FTerrainMassModule::ShutdownModule()
 {
 	// This function may be called during shutdown to clean up your module.  For modules that support dynamic reloading,
 	// we call this function before unloading the module.
@@ -15,4 +15,4 @@ void FTerrainMassShaderModule::ShutdownModule()
 
 #undef LOCTEXT_NAMESPACE
 	
-IMPLEMENT_MODULE(FTerrainMassShaderModule, TerrainMassShader)
+IMPLEMENT_MODULE(FTerrainMassModule, TerrainMass)

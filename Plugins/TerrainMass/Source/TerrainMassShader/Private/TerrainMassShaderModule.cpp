@@ -1,10 +1,15 @@
 #include "TerrainMassShaderModule.h"
 
+#include "Misc/Paths.h"
+#include "ShaderCore.h"
+
 #define LOCTEXT_NAMESPACE "FTerrainMassShaderModule"
 
 void FTerrainMassShaderModule::StartupModule()
 {
 	// This code will execute after your module is loaded into memory; the exact timing is specified in the .uplugin file per-module
+	FString ShaderDirectory = FPaths::Combine(FPaths::ProjectPluginsDir(), TEXT("TerrainMass"), TEXT("Shaders"), TEXT("Private"));
+	AddShaderSourceDirectoryMapping(FString("/TerrainMassShaders"), ShaderDirectory);
 }
 
 void FTerrainMassShaderModule::ShutdownModule()

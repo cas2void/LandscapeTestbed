@@ -23,7 +23,7 @@
         {
             "Name": "TerrainMassShader",
             "Type": "Runtime",
-            "LoadingPhase": "Default"
+            "LoadingPhase": "PostConfigInit"
         },
         {
             "Name": "TerrainMassEditor",

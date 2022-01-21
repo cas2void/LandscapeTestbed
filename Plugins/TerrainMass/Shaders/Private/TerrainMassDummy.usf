@@ -1,5 +1,7 @@
 #include "/Engine/Private/Common.ush"
 
+Texture2D<float4> SourceTexture;
+SamplerState SourceTextureSampler;
 Texture2D<float> SideFalloffTexture;
 SamplerState SideFalloffTextureSampler;
 float2 InvTextureSize;
@@ -32,14 +34,18 @@ void MainVS(in float4 InPosition : ATTRIBUTE0,
 void MainPS(in float2 InTexCoords : TEXCOORD0, out float4 OutColor : SV_Target0)
 {
 	float2 CenterTextureSpace = Center * InvTextureSize;
-	float2 OutputTexCoords = InTexCoords - float2(0.5, 0.5) * InvTextureSize;
-	float CurrentDist = distance(CenterTextureSpace, OutputTexCoords);
-	float NormalizedDist = saturate(CurrentDist / Radius);
-    //float2 FalloffTexCoords = float2(1 - NormalizedDist, 0);
-    //float MappedDist = SideFalloffTexture.Sample(SideFalloffTextureSampler, FalloffTexCoords);
-    //float Height = MappedDist * Center.z;
-    //float2 OutputHeight = PackHeight(Height);
-    //OutColor = float4(OutputHeight.x, OutputHeight.y, 0, 1);
+	float2 TerrainTexcoords = InTexCoords - float2(0.5, 0.5) * InvTextureSize;
     
-	OutColor = float4(NormalizedDist, 0.0, 0.0, 1.0);
+	float4 SourcePixel = SourceTexture.Sample(SourceTextureSampler, TerrainTexcoords);
+	float SourceHeight = UnpackHeight(float2(SourcePixel.r, SourcePixel.g));
+	
+    float CurrentDist = distance(CenterTextureSpace, TerrainTexcoords);
+	float NormalizedDist = saturate(CurrentDist / Radius);
+	float2 FalloffTexCoords = float2(1 - NormalizedDist, 0);
+	float MappedDist = SideFalloffTexture.Sample(SideFalloffTextureSampler, FalloffTexCoords);
+    
+	float CompositeHeight = lerp(SourceHeight, Center.z, MappedDist);
+	float2 OutputHeight = PackHeight(CompositeHeight);
+    
+	OutColor = float4(OutputHeight.x, OutputHeight.y, SourcePixel.b, SourcePixel.a);
 }

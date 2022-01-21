@@ -39,8 +39,9 @@ public class TerrainMassEditor : ModuleRules
                 // ... add private dependencies that you statically link with here ...    
                 "LandscapeEditorUtilities",
                 "Landscape",
+                "RenderCore",
+                "RHI",
                 "TerrainMassShader",
-                "RenderCore"
             }
             );
         

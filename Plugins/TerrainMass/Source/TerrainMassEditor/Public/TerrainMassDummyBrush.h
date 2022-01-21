@@ -24,15 +24,34 @@ public:
 	virtual void Initialize_Native(const FTransform& InLandscapeTransform, const FIntPoint& InLandscapeSize, const FIntPoint& InLandscapeRenderTargetSize) override;
 
 	//
-	//
+	// UObject Interfaces
 	//
 protected:
-	UPROPERTY(VisibleAnywhere)
-	UTextureRenderTarget2D* InputRT;
+#if WITH_EDITOR	
+	virtual void PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent) override;
+	//virtual void PostLoad() override;
+#endif
 
+	//
+	// Brush Rendering
+	//
+protected:
 	UPROPERTY(VisibleAnywhere, Transient)
 	UTextureRenderTarget2D* CanvasRT;
 
+	//
+	// Shape Falloff
+	//
+protected:
+	void InitSideFalloffTexture();
+	void UpdateSideFalloffTexture();
+
 	UPROPERTY(EditAnywhere, Category="Landscape", meta=(UIMin=0))
 	float Radius = 1000.0f;
+	
+	UPROPERTY(EditAnywhere, Category="Landscape", AdvancedDisplay)
+	struct FRuntimeFloatCurve SideFalloffCurve;
+
+	UPROPERTY(VisibleAnywhere, Category = "Landscape")
+	class UTexture2D* SideFalloffTexture;
 };

@@ -1,0 +1,43 @@
+#include "/Engine/Private/Common.ush"
+
+Texture2D<float4> SourceTexture;
+SamplerState SourceTextureSampler;
+Texture2D<float> SideFalloffTexture;
+SamplerState SideFalloffTextureSampler;
+float2 InvTextureSize;
+
+// return: [-32768, 32767]
+float UnpackHeight(float2 InPackedHeight)
+{
+    return float(((int)round(InPackedHeight.r * 255.0) << 8 | (int)round(InPackedHeight.g * 255.0)) - 32768);
+}
+
+// InUnpackedHeight: [-32768, 32767]
+// return: ([0, 1], [0, 1])
+float2 PackHeight(float InUnpackedHeight)
+{
+    int IntHeight = (int)clamp(InUnpackedHeight + 32768.0f, 0.0f, 65535.0f);
+    return float2((float)(IntHeight >> 8 & 255) / 255.0f, (float)((IntHeight & 255) / 255.0f));
+}
+
+void MainVS(in float4 InPosition : ATTRIBUTE0,
+    in float2 InTextureCoordinate : ATTRIBUTE1,
+    out float2 OutTextureCoordinate : TEXCOORD0,
+    out float4 OutPosition : SV_POSITION)
+{
+    OutPosition = float4(InPosition.xy, 0, 1);
+    OutTextureCoordinate = InTextureCoordinate;
+}
+
+void MainPS(in float2 InTexCoords : TEXCOORD0, out float4 OutColor : SV_Target0)
+{
+    float2 TerrainTexcoords = InTexCoords - float2(0.5, 0.5) * InvTextureSize;
+    
+    float4 SourcePixel = SourceTexture.Sample(SourceTextureSampler, TerrainTexcoords);
+    float SourceHeight = UnpackHeight(float2(SourcePixel.r, SourcePixel.g));
+    
+    float CompositeHeight = SourceHeight;
+    float2 OutputHeight = PackHeight(SourceHeight);
+    
+    OutColor = float4(OutputHeight.x, OutputHeight.y, SourcePixel.b, SourcePixel.a);
+}

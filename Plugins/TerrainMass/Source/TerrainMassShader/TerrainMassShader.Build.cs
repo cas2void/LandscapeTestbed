@@ -47,5 +47,7 @@ public class TerrainMassShader : ModuleRules
                 // ... add any modules that your module loads dynamically here ...
             }
             );
+
+        PublicDefinitions.Add("TERRAIN_MASS_DUMMY_CUSTOM_VERTEX_SHADER=1");
     }
 }

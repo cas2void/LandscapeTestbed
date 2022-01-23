@@ -7,6 +7,40 @@
 #include "PipelineStateCache.h"
 #include "ScreenRendering.h"
 
+#if TERRAIN_MASS_DUMMY_CUSTOM_VERTEX_SHADER
+class FTerrainMassDummyShaderVS : public FGlobalShader
+{
+    DECLARE_GLOBAL_SHADER(FTerrainMassDummyShaderVS);
+
+public:
+    FTerrainMassDummyShaderVS()
+        : FGlobalShader()
+    {}
+
+    FTerrainMassDummyShaderVS(const ShaderMetaType::CompiledShaderInitializerType& Initializer)
+        : FGlobalShader(Initializer)
+    {
+        PosScaleBiasParam.Bind(Initializer.ParameterMap, TEXT("PosScaleBias"));
+        UVScaleBiasParam.Bind(Initializer.ParameterMap, TEXT("UVScaleBias"));
+        InvTargetSizeAndTextureSizeParam.Bind(Initializer.ParameterMap, TEXT("InvTargetSizeAndTextureSize"));
+    }
+
+    void SetParameters(FRHICommandList& RHICmdList, const FTerrainMassDummyShaderParameter& Params)
+    {
+        SetShaderValue(RHICmdList, RHICmdList.GetBoundVertexShader(), PosScaleBiasParam, Params.PosScaleBias);
+        SetShaderValue(RHICmdList, RHICmdList.GetBoundVertexShader(), UVScaleBiasParam, Params.UVScaleBias);
+        SetShaderValue(RHICmdList, RHICmdList.GetBoundVertexShader(), InvTargetSizeAndTextureSizeParam, Params.InvTargetSizeAndTextureSize);
+    }
+
+private:
+    LAYOUT_FIELD(FShaderParameter, PosScaleBiasParam);
+    LAYOUT_FIELD(FShaderParameter, UVScaleBiasParam);
+    LAYOUT_FIELD(FShaderParameter, InvTargetSizeAndTextureSizeParam);
+};
+
+IMPLEMENT_GLOBAL_SHADER(FTerrainMassDummyShaderVS, "/TerrainMassShaders/TerrainMassDummy.usf", "MainVS", SF_Vertex);
+#endif
+
 class FTerrainMassDummyShaderPS : public FGlobalShader
 {
 	DECLARE_GLOBAL_SHADER(FTerrainMassDummyShaderPS);
@@ -78,7 +112,12 @@ void FTerrainMassDummyShader::Render(FRHICommandListImmediate& RHICmdList, FRHIT
         GraphicsPSOInit.DepthStencilState = TStaticDepthStencilState<false, CF_Always>::GetRHI();
 
         FGlobalShaderMap* ShaderMap = GetGlobalShaderMap(GMaxRHIFeatureLevel);
+#if TERRAIN_MASS_DUMMY_CUSTOM_VERTEX_SHADER
+        TShaderMapRef<FTerrainMassDummyShaderVS> VertexShader(ShaderMap);
+        VertexShader->SetParameters(RHICmdList, ShaderParams);
+#else
         TShaderMapRef<FScreenVS> VertexShader(ShaderMap);
+#endif
         TShaderMapRef<FTerrainMassDummyShaderPS> PixelShader(ShaderMap);
         PixelShader->SetParameters(RHICmdList, ShaderParams);
 
@@ -89,6 +128,17 @@ void FTerrainMassDummyShader::Render(FRHICommandListImmediate& RHICmdList, FRHIT
 
         SetGraphicsPipelineState(RHICmdList, GraphicsPSOInit);
 
+#if TERRAIN_MASS_DUMMY_CUSTOM_VERTEX_SHADER
+        RendererModule->DrawRectangle(
+            RHICmdList,
+            ShaderParams.PosScaleBias.Z, ShaderParams.PosScaleBias.W,             // Dest X, Y
+            ShaderParams.PosScaleBias.X, ShaderParams.PosScaleBias.Y,             // Dest Width, Height
+            ShaderParams.UVScaleBias.Z, ShaderParams.UVScaleBias.W,               // Source U, V
+            ShaderParams.UVScaleBias.X, ShaderParams.UVScaleBias.Y,               // Source USize, VSize
+            FIntPoint(ShaderParams.PosScaleBias.X, ShaderParams.PosScaleBias.Y),  // Target buffer size
+            FIntPoint(ShaderParams.UVScaleBias.X, ShaderParams.UVScaleBias.Y),    // Source texture size
+            VertexShader);
+#else
         RendererModule->DrawRectangle(
             RHICmdList,
             0, 0,             // Dest X, Y
@@ -98,6 +148,7 @@ void FTerrainMassDummyShader::Render(FRHICommandListImmediate& RHICmdList, FRHIT
             Size,             // Target buffer size
             FIntPoint(1, 1),  // Source texture size
             VertexShader);
+#endif
     }
     RHICmdList.EndRenderPass();
 }

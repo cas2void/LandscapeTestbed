@@ -48,6 +48,11 @@ UTextureRenderTarget2D* ATerrainMassDummyBrush::Render_Native(bool InIsHeightmap
     ShaderParams.InvTextureSize = FVector2D(1.0f) / FVector2D(RenderTargetSize);
     ShaderParams.Center = Center;
     ShaderParams.Radius = Radius * RadiusScale / RenderTargetSize.X;
+#if TERRAIN_MASS_DUMMY_CUSTOM_VERTEX_SHADER
+    ShaderParams.PosScaleBias = FVector4(RenderTargetSize.X, RenderTargetSize.Y, 0.0f, 0.0f);
+    ShaderParams.UVScaleBias = FVector4(1.0f, 1.0f, 0.0f, 0.0f);
+    ShaderParams.InvTargetSizeAndTextureSize = FVector4(1.0f / RenderTargetSize.X, 1.0f / RenderTargetSize.Y, 1.0f, 1.0f);
+#endif
 
     ENQUEUE_RENDER_COMMAND(TerranMassDummyBrush)(
         [this, InCombinedResult, RenderTargetSize, ShaderParams](FRHICommandListImmediate& RHICmdList)

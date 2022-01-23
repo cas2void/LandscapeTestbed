@@ -1,13 +1,5 @@
 #include "/Engine/Private/Common.ush"
 
-Texture2D<float4> SourceTexture;
-SamplerState SourceTextureSampler;
-Texture2D<float> SideFalloffTexture;
-SamplerState SideFalloffTextureSampler;
-float2 InvTextureSize;
-float3 Center;
-float Radius;
-
 // return: [-32768, 32767]
 float UnpackHeight(float2 InPackedHeight)
 {
@@ -22,10 +14,39 @@ float2 PackHeight(float InUnpackedHeight)
     return float2((float)(IntHeight >> 8 & 255) / 255.0f, (float)((IntHeight & 255) / 255.0f));
 }
 
-void MainPS(in float2 InTexCoords : TEXCOORD0, out float4 OutColor : SV_Target0)
+//
+// Vertex Shader
+//
+float4 PosScaleBias;
+float4 UVScaleBias;
+float4 InvTargetSizeAndTextureSize;
+
+void MainVS(in float2 InPosition : ATTRIBUTE0,
+    in float2 InTexCoord : ATTRIBUTE1,
+    out float4 OutPosition : SV_POSITION,
+    out float2 OutTexCoord : TEXCOORD0)
+{
+	OutPosition.zw = float2(0, 1);
+	OutPosition.xy = -1.0f + 2.0f * (PosScaleBias.zw + (InPosition.xy * PosScaleBias.xy)) * InvTargetSizeAndTextureSize.xy;
+	OutPosition.xy *= float2(1, -1);
+	OutTexCoord.xy = (UVScaleBias.zw + (InTexCoord.xy * UVScaleBias.xy)) * InvTargetSizeAndTextureSize.zw;
+}
+
+//
+// Pixel Shader
+//
+Texture2D<float4> SourceTexture;
+SamplerState SourceTextureSampler;
+Texture2D<float> SideFalloffTexture;
+SamplerState SideFalloffTextureSampler;
+float2 InvTextureSize;
+float3 Center;
+float Radius;
+
+void MainPS(in float4 SvPosition : SV_POSITION, in float2 SvTexCoord : TEXCOORD0, out float4 OutColor : SV_Target0)
 {
 	float2 CenterTextureSpace = Center * InvTextureSize;
-	float2 TerrainTexcoords = InTexCoords - float2(0.5, 0.5) * InvTextureSize;
+	float2 TerrainTexcoords = SvTexCoord - float2(0.5, 0.5) * InvTextureSize;
     
 	float4 SourcePixel = SourceTexture.Sample(SourceTextureSampler, TerrainTexcoords);
 	float SourceHeight = UnpackHeight(float2(SourcePixel.r, SourcePixel.g));

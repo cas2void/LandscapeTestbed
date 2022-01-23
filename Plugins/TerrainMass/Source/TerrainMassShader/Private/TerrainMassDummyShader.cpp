@@ -7,22 +7,6 @@
 #include "PipelineStateCache.h"
 #include "ScreenRendering.h"
 
-class FTerrainMassDummyShaderVS : public FGlobalShader
-{
-	DECLARE_GLOBAL_SHADER(FTerrainMassDummyShaderVS);
-
-public:
-	FTerrainMassDummyShaderVS()
-		: FGlobalShader()
-	{}
-
-	FTerrainMassDummyShaderVS(const ShaderMetaType::CompiledShaderInitializerType& Initializer)
-		: FGlobalShader(Initializer)
-	{}
-};
-
-IMPLEMENT_GLOBAL_SHADER(FTerrainMassDummyShaderVS, "/TerrainMassShaders/TerrainMassDummy.usf", "MainVS", SF_Vertex)
-
 class FTerrainMassDummyShaderPS : public FGlobalShader
 {
 	DECLARE_GLOBAL_SHADER(FTerrainMassDummyShaderPS);

@@ -22,15 +22,6 @@ float2 PackHeight(float InUnpackedHeight)
     return float2((float)(IntHeight >> 8 & 255) / 255.0f, (float)((IntHeight & 255) / 255.0f));
 }
 
-void MainVS(in float4 InPosition : ATTRIBUTE0,
-    in float2 InTextureCoordinate : ATTRIBUTE1,
-    out float2 OutTextureCoordinate : TEXCOORD0,
-    out float4 OutPosition : SV_POSITION)
-{
-    OutPosition = float4(InPosition.xy, 0, 1);
-    OutTextureCoordinate = InTextureCoordinate;
-}
-
 void MainPS(in float2 InTexCoords : TEXCOORD0, out float4 OutColor : SV_Target0)
 {
 	float2 CenterTextureSpace = Center * InvTextureSize;

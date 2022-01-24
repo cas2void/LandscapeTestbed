@@ -5,6 +5,7 @@
 
 #include "TerrainMassLibrary.h"
 #include "TerrainMassPolygonShader.h"
+#include "TerrainMassPolygonCompositeShader.h"
 
 ATerrainMassPolygonBrush::ATerrainMassPolygonBrush()
 {
@@ -16,9 +17,11 @@ ATerrainMassPolygonBrush::ATerrainMassPolygonBrush()
 UTextureRenderTarget2D* ATerrainMassPolygonBrush::Render_Native(bool InIsHeightmap, UTextureRenderTarget2D* InCombinedResult, const FName& InWeightmapLayerName)
 {
     check(InCombinedResult);
+    check(GetOwningLandscape());
 
     FIntPoint RenderTargetSize(InCombinedResult->SizeX, InCombinedResult->SizeY);
-    if (!UTerrainMassLibrary::CreateOrUpdateRenderTarget2D(GetTransientPackage(), CanvasRT, RenderTargetSize, RTF_RGBA8, true))
+    if (!UTerrainMassLibrary::CreateOrUpdateRenderTarget2D(GetTransientPackage(), CanvasRT, RenderTargetSize, RTF_RG16f, true) ||
+        !UTerrainMassLibrary::CreateOrUpdateRenderTarget2D(GetTransientPackage(), OutputRT, RenderTargetSize, RTF_RGBA8, true))
     {
         // LandscapeEditLayers.cpp - ALandscape::RegenerateLayersHeightmaps
         //
@@ -30,34 +33,133 @@ UTextureRenderTarget2D* ATerrainMassPolygonBrush::Render_Native(bool InIsHeightm
         return nullptr;
     }
 
+    FVector TransformedStartPosition = GetOwningLandscape()->GetActorTransform().InverseTransformPosition(StartPosition);
+    FVector TransformedEndPosition = GetOwningLandscape()->GetActorTransform().InverseTransformPosition(EndPosition);
+    TransformedStartPosition.Z *= LANDSCAPE_INV_ZSCALE;
+    TransformedEndPosition.Z *= LANDSCAPE_INV_ZSCALE;
+    float Scale = 1.0f / GetOwningLandscape()->GetActorScale3D().X;
+    float TransformedWidth = Width * Scale;
+    float TransformdSideFalloff = SideFalloff * Scale;
+    float TransformedEndFalloff = EndFalloff * Scale;
+
     FTerrainMassPolygonShaderParameter ShaderParams;
-    ShaderParams.SourceTexture = InCombinedResult;
     ShaderParams.InvTextureSize = FVector2D(1.0f) / FVector2D(RenderTargetSize);
 
+    ShaderParams.Width = TransformedWidth;
+    ShaderParams.SideFalloff = TransformdSideFalloff;
+    ShaderParams.EndFalloff = TransformedEndFalloff;
+    ShaderParams.StartPosition = TransformedStartPosition;
+    ShaderParams.EndPosition = TransformedEndPosition;
+    ShaderParams.NumSegments = NumSegments;
+    ShaderParams.StartSidefFalloffTexture = StartSideFalloffTexture;
+    ShaderParams.EndSideFalloffTexture = EndSideFalloffTexture;
+
     ENQUEUE_RENDER_COMMAND(TerranMassPolygonBrush)(
-        [this, InCombinedResult, RenderTargetSize, ShaderParams](FRHICommandListImmediate& RHICmdList)
+        [this, RenderTargetSize, ShaderParams](FRHICommandListImmediate& RHICmdList)
         {
-            if (InCombinedResult->GetRenderTargetResource() && InCombinedResult->GetRenderTargetResource()->GetRenderTargetTexture() &&
-                CanvasRT->GetRenderTargetResource() && CanvasRT->GetRenderTargetResource()->GetRenderTargetTexture())
+            if (CanvasRT->GetRenderTargetResource() && CanvasRT->GetRenderTargetResource()->GetRenderTargetTexture())
             {
                 FTerrainMassPolygonShader::Render(RHICmdList,
-                    InCombinedResult->GetRenderTargetResource()->GetRenderTargetTexture(),
                     CanvasRT->GetRenderTargetResource()->GetRenderTargetTexture(),
                     RenderTargetSize, ShaderParams);
             }
         }
     );
 
-    return CanvasRT;
+    FTerrainMassPolygonCompositeShaderParameter CompositeShaderParams;
+    CompositeShaderParams.SourceTexture = InCombinedResult;
+    CompositeShaderParams.CanvasTexture = CanvasRT;
+    CompositeShaderParams.InvTextureSize = FVector2D(1.0f) / FVector2D(RenderTargetSize);
+
+    ENQUEUE_RENDER_COMMAND(TerranMassPolygonBrushComposite)(
+        [this, RenderTargetSize, CompositeShaderParams](FRHICommandListImmediate& RHICmdList)
+        {
+            if (OutputRT->GetRenderTargetResource() && OutputRT->GetRenderTargetResource()->GetRenderTargetTexture())
+            {
+                FTerrainMassPolygonCompositeShader::Render(RHICmdList,
+                    OutputRT->GetRenderTargetResource()->GetRenderTargetTexture(),
+                    RenderTargetSize, CompositeShaderParams);
+            }
+        }
+    );
+
+    return OutputRT;
 }
 
 void ATerrainMassPolygonBrush::Initialize_Native(const FTransform& InLandscapeTransform, const FIntPoint& InLandscapeSize, const FIntPoint& InLandscapeRenderTargetSize)
 {
+    InitSideFalloffCurve(StartSideFalloffCurve);
+    InitSideFalloffCurve(EndSideFalloffCurve);
 }
 
 #if WITH_EDITOR
 void ATerrainMassPolygonBrush::PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent)
 {
     Super::PostEditChangeProperty(PropertyChangedEvent);
+
+    if (PropertyChangedEvent.GetPropertyName() == GET_MEMBER_NAME_CHECKED(ATerrainMassPolygonBrush, StartSideFalloffCurve))
+    {
+        UpdateSideFalloffTexture(StartSideFalloffCurve, StartSideFalloffTexture);
+    }
+    else if (PropertyChangedEvent.GetPropertyName() == GET_MEMBER_NAME_CHECKED(ATerrainMassPolygonBrush, EndSideFalloffCurve))
+    {
+        UpdateSideFalloffTexture(EndSideFalloffCurve, EndSideFalloffTexture);
+    }
 }
 #endif
+
+void ATerrainMassPolygonBrush::InitSideFalloffCurve(FRuntimeFloatCurve& SideFalloffCurve)
+{
+    FRichCurve* Curve = SideFalloffCurve.GetRichCurve();
+    if (Curve && Curve->GetNumKeys() < 1)
+    {
+        FKeyHandle FirstKeyHandle = Curve->AddKey(0, 0);
+        FKeyHandle LastKeyHandle = Curve->AddKey(1, 1);
+        Curve->SetKeyInterpMode(FirstKeyHandle, RCIM_Cubic, true);
+        Curve->SetKeyInterpMode(LastKeyHandle, RCIM_Cubic, true);
+        Curve->SetKeyTangentMode(FirstKeyHandle, RCTM_Auto);
+        Curve->SetKeyTangentMode(LastKeyHandle, RCTM_Auto);
+    }
+}
+
+void ATerrainMassPolygonBrush::UpdateSideFalloffTexture(FRuntimeFloatCurve& SideFalloffCurve, UTexture2D* SideFalloffTexture)
+{
+    if (!UTerrainMassLibrary::CreateOrUpdateTexture2D(this, SideFalloffTexture, FIntPoint(256, 1), PF_G8, TA_Clamp, TA_Clamp))
+    {
+        return;
+    }
+
+    FRichCurve* Curve = SideFalloffCurve.GetRichCurve();
+    if (Curve)
+    {
+        FKeyHandle FirstKeyHandle = Curve->GetFirstKeyHandle();
+        float ClampedValue = FMath::Min(Curve->GetKeyValue(FirstKeyHandle), 0.0f);
+        Curve->SetKeyValue(FirstKeyHandle, ClampedValue);
+
+        float ClampedTime = FMath::Max(Curve->GetKeyTime(FirstKeyHandle), 0.0f);
+        Curve->SetKeyTime(FirstKeyHandle, ClampedTime);
+    }
+
+    const int32 TextureWidth = SideFalloffTexture->GetSizeX();
+    const int32 TotalSize = TextureWidth * sizeof(uint8);
+    uint8* Pixels = new uint8[TotalSize];
+
+    for (int32 Index = 0; Index < TextureWidth; Index++)
+    {
+        float Time = (float)Index / (float)(TextureWidth - 1);
+        float CurveValue = Time;
+        if (Curve && Curve->GetNumKeys() > 0)
+        {
+            CurveValue = FMath::Clamp(Curve->Eval(Time), 0.0f, 1.0f);
+        }
+        Pixels[Index] = (uint8)(CurveValue * 255);
+    }
+
+    uint8* MipData = (uint8*)SideFalloffTexture->PlatformData->Mips[0].BulkData.Lock(LOCK_READ_WRITE);
+    FMemory::Memcpy(MipData, Pixels, TotalSize);
+    SideFalloffTexture->PlatformData->Mips[0].BulkData.Unlock();
+
+    SideFalloffTexture->UpdateResource();
+
+    delete[] Pixels;
+}

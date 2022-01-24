@@ -1,49 +1,25 @@
 #include "/Engine/Private/Common.ush"
 
-Texture2D<float4> SourceTexture;
-SamplerState SourceTextureSampler;
-Texture2D<float> SideFalloffTexture;
-SamplerState SideFalloffTextureSampler;
 float2 InvTextureSize;
+Texture2D<float> StartSideFalloffTexture;
+SamplerState StartSideFalloffTextureSampler;
+Texture2D<float> EndSideFalloffTexture;
+SamplerState EndSideFalloffTextureSampler;
 
-// return: [-32768, 32767]
-float UnpackHeight(float2 InPackedHeight)
-{
-    return float(((int)round(InPackedHeight.r * 255.0) << 8 | (int)round(InPackedHeight.g * 255.0)) - 32768);
-}
-
-// InUnpackedHeight: [-32768, 32767]
-// return: ([0, 1], [0, 1])
-float2 PackHeight(float InUnpackedHeight)
-{
-    int IntHeight = (int)clamp(InUnpackedHeight + 32768.0f, 0.0f, 65535.0f);
-    return float2((float)(IntHeight >> 8 & 255) / 255.0f, (float)((IntHeight & 255) / 255.0f));
-}
-
-void MainVS(in float2 InPosition : ATTRIBUTE0,
+void MainVS(in float4 InPosition : ATTRIBUTE0,
     in float2 InTexCoord : ATTRIBUTE1,
     out float4 OutPosition : SV_POSITION,
-    out float2 OutTexCoord : TEXCOORD0)
+    out float2 OutTexCoord : TEXCOORD0,
+    out float4 OutColor : TEXCOORD1)
 {
 	OutPosition.zw = float2(0, 1);
 	OutPosition.xy = -1.0 + 2.0 * InPosition.xy;
 	OutPosition.xy *= float2(1, -1);
-	OutTexCoord = InTexCoord;
+	OutTexCoord = InPosition.xy;
+    OutColor.r = InPosition.z;
 }
 
-void MainPS(in float4 SvPosition : SV_POSITION, in float2 SvTexCoord : TEXCOORD0, out float4 OutColor : SV_Target0)
+void MainPS(in float4 SvPosition : SV_POSITION, in float2 SvTexCoord : TEXCOORD0, in float4 SvColor : TEXCOORD1, out float4 OutColor : SV_Target0)
 {
-	float2 TerrainTexcoords = SvTexCoord - float2(0.5, 0.5) * InvTextureSize;
-    
-	float4 SourcePixel = SourceTexture.Sample(SourceTextureSampler, SvTexCoord);
-    float SourceHeight = UnpackHeight(float2(SourcePixel.r, SourcePixel.g));
-    
-    float CompositeHeight = SourceHeight;
-    if (SvTexCoord.x < 0.5)
-	{
-		CompositeHeight *= 5;
-	}
-	float2 OutputHeight = PackHeight(CompositeHeight);
-    
-    OutColor = float4(OutputHeight.x, OutputHeight.y, SourcePixel.b, SourcePixel.a);
+	OutColor = float4(SvColor.r, 1, 0, 1);
 }

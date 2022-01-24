@@ -8,12 +8,20 @@
 
 struct FTerrainMassPolygonShaderParameter
 {
-    UTextureRenderTarget2D* SourceTexture = nullptr;
     FVector2D InvTextureSize;
+
+    float Width;
+    float SideFalloff;
+    float EndFalloff;
+    FVector StartPosition;
+    FVector EndPosition;
+    int32 NumSegments;
+    UTexture2D* StartSidefFalloffTexture;
+    UTexture2D* EndSideFalloffTexture;
 };
 
 class TERRAINMASSSHADER_API FTerrainMassPolygonShader
 {
 public:
-    static void Render(FRHICommandListImmediate& RHICmdList, FRHITexture* SourceTexture, FRHITexture* DestTexture, const FIntPoint& Size, const FTerrainMassPolygonShaderParameter& ShaderParams);
+    static void Render(FRHICommandListImmediate& RHICmdList, FRHITexture* DestTexture, const FIntPoint& Size, const FTerrainMassPolygonShaderParameter& ShaderParams);
 };

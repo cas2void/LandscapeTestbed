@@ -43,7 +43,7 @@ protected:
 	// Shape Falloff
 	//
 protected:
-	void InitSideFalloffTexture();
+	void InitSideFalloffCurve();
 	void UpdateSideFalloffTexture();
 
 	UPROPERTY(EditAnywhere, Category="Landscape", meta=(UIMin=0))

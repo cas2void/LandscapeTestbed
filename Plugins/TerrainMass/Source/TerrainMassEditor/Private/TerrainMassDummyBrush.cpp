@@ -73,7 +73,7 @@ UTextureRenderTarget2D* ATerrainMassDummyBrush::Render_Native(bool InIsHeightmap
 
 void ATerrainMassDummyBrush::Initialize_Native(const FTransform& InLandscapeTransform, const FIntPoint& InLandscapeSize, const FIntPoint& InLandscapeRenderTargetSize)
 {
-    InitSideFalloffTexture();
+    InitSideFalloffCurve();
     UpdateSideFalloffTexture();
 }
 
@@ -89,7 +89,7 @@ void ATerrainMassDummyBrush::PostEditChangeProperty(FPropertyChangedEvent& Prope
 }
 #endif
 
-void ATerrainMassDummyBrush::InitSideFalloffTexture()
+void ATerrainMassDummyBrush::InitSideFalloffCurve()
 {
     FRichCurve* Curve = SideFalloffCurve.GetRichCurve();
     if (Curve && Curve->GetNumKeys() < 1)

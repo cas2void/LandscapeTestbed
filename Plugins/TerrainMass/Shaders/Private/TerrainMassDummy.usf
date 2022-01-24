@@ -23,8 +23,8 @@ float4 InvTargetSizeAndTextureSize;
 
 void MainVS(in float2 InPosition : ATTRIBUTE0,
     in float2 InTexCoord : ATTRIBUTE1,
-    out float4 OutPosition : SV_POSITION,
-    out float2 OutTexCoord : TEXCOORD0)
+    out float2 OutTexCoord : TEXCOORD0,
+    out float4 OutPosition : SV_POSITION)
 {
 	OutPosition.zw = float2(0, 1);
 	OutPosition.xy = -1.0f + 2.0f * (PosScaleBias.zw + (InPosition.xy * PosScaleBias.xy)) * InvTargetSizeAndTextureSize.xy;
@@ -43,7 +43,7 @@ float2 InvTextureSize;
 float3 Center;
 float Radius;
 
-void MainPS(in float4 SvPosition : SV_POSITION, in float2 SvTexCoord : TEXCOORD0, out float4 OutColor : SV_Target0)
+void MainPS(in float2 SvTexCoord : TEXCOORD0, in float4 SvPosition : SV_POSITION, out float4 OutColor : SV_Target0)
 {
 	float4 SourcePixel = SourceTexture.Sample(SourceTextureSampler, SvTexCoord);
 	float SourceHeight = UnpackHeight(float2(SourcePixel.r, SourcePixel.g));

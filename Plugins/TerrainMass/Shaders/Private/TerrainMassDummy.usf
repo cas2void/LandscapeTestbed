@@ -45,11 +45,11 @@ float Radius;
 
 void MainPS(in float4 SvPosition : SV_POSITION, in float2 SvTexCoord : TEXCOORD0, out float4 OutColor : SV_Target0)
 {
+	float4 SourcePixel = SourceTexture.Sample(SourceTextureSampler, SvTexCoord);
+	float SourceHeight = UnpackHeight(float2(SourcePixel.r, SourcePixel.g));
+	
 	float2 CenterTextureSpace = Center * InvTextureSize;
 	float2 TerrainTexcoords = SvTexCoord - float2(0.5, 0.5) * InvTextureSize;
-    
-	float4 SourcePixel = SourceTexture.Sample(SourceTextureSampler, TerrainTexcoords);
-	float SourceHeight = UnpackHeight(float2(SourcePixel.r, SourcePixel.g));
 	
     float CurrentDist = distance(CenterTextureSpace, TerrainTexcoords);
 	float NormalizedDist = saturate(CurrentDist / Radius);

@@ -20,24 +20,30 @@ float2 PackHeight(float InUnpackedHeight)
     return float2((float)(IntHeight >> 8 & 255) / 255.0f, (float)((IntHeight & 255) / 255.0f));
 }
 
-void MainVS(in float4 InPosition : ATTRIBUTE0,
-    in float2 InTextureCoordinate : ATTRIBUTE1,
-    out float2 OutTextureCoordinate : TEXCOORD0,
-    out float4 OutPosition : SV_POSITION)
+void MainVS(in float2 InPosition : ATTRIBUTE0,
+    in float2 InTexCoord : ATTRIBUTE1,
+    out float4 OutPosition : SV_POSITION,
+    out float2 OutTexCoord : TEXCOORD0)
 {
-    OutPosition = float4(InPosition.xy, 0, 1);
-    OutTextureCoordinate = InTextureCoordinate;
+	OutPosition.zw = float2(0, 1);
+	OutPosition.xy = -1.0 + 2.0 * InPosition.xy;
+	OutPosition.xy *= float2(1, -1);
+	OutTexCoord = InTexCoord;
 }
 
-void MainPS(in float2 InTexCoords : TEXCOORD0, out float4 OutColor : SV_Target0)
+void MainPS(in float4 SvPosition : SV_POSITION, in float2 SvTexCoord : TEXCOORD0, out float4 OutColor : SV_Target0)
 {
-    float2 TerrainTexcoords = InTexCoords - float2(0.5, 0.5) * InvTextureSize;
+	float2 TerrainTexcoords = SvTexCoord - float2(0.5, 0.5) * InvTextureSize;
     
-    float4 SourcePixel = SourceTexture.Sample(SourceTextureSampler, TerrainTexcoords);
+	float4 SourcePixel = SourceTexture.Sample(SourceTextureSampler, SvTexCoord);
     float SourceHeight = UnpackHeight(float2(SourcePixel.r, SourcePixel.g));
     
     float CompositeHeight = SourceHeight;
-    float2 OutputHeight = PackHeight(SourceHeight);
+    if (SvTexCoord.x < 0.5)
+	{
+		CompositeHeight *= 5;
+	}
+	float2 OutputHeight = PackHeight(CompositeHeight);
     
     OutColor = float4(OutputHeight.x, OutputHeight.y, SourcePixel.b, SourcePixel.a);
 }

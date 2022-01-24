@@ -1,11 +1,7 @@
 #include "TerrainMassPolygonShader.h"
 
 #include "GlobalShader.h"
-#include "Modules/ModuleManager.h"
-#include "RendererInterface.h"
-#include "CommonRenderResources.h"
 #include "PipelineStateCache.h"
-#include "ScreenRendering.h"
 
 class FTerrainMassPolygonShaderVS : public FGlobalShader
 {
@@ -129,7 +125,6 @@ void FTerrainMassPolygonShader::Render(FRHICommandListImmediate& RHICmdList, FRH
     // Render
     //
 
-    IRendererModule* RendererModule = &FModuleManager::GetModuleChecked<IRendererModule>("Renderer");
     FRHIRenderPassInfo RPInfo(DestTexture, ERenderTargetActions::Load_Store);
     RHICmdList.BeginRenderPass(RPInfo, TEXT("TerrainMass"));
     {
@@ -146,7 +141,7 @@ void FTerrainMassPolygonShader::Render(FRHICommandListImmediate& RHICmdList, FRH
         TShaderMapRef<FTerrainMassPolygonShaderPS> PixelShader(ShaderMap);
         PixelShader->SetParameters(RHICmdList, ShaderParams);
 
-        GraphicsPSOInit.BoundShaderState.VertexDeclarationRHI = GFilterVertexDeclaration.VertexDeclarationRHI;
+        GraphicsPSOInit.BoundShaderState.VertexDeclarationRHI = GTerrainMassPolygonVertexDeclaration.VertexDeclarationRHI;
         GraphicsPSOInit.BoundShaderState.VertexShaderRHI = VertexShader.GetVertexShader();
         GraphicsPSOInit.BoundShaderState.PixelShaderRHI = PixelShader.GetPixelShader();
         GraphicsPSOInit.PrimitiveType = PT_TriangleList;

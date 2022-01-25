@@ -17,7 +17,17 @@ public:
 
     FTerrainMassPolygonShaderVS(const ShaderMetaType::CompiledShaderInitializerType& Initializer)
         : FGlobalShader(Initializer)
-    {}
+    {
+        InvTextureSizeParam.Bind(Initializer.ParameterMap, TEXT("InvTextureSize"));
+    }
+
+    void SetParameters(FRHICommandList& RHICmdList, const FTerrainMassPolygonShaderParameter& Params)
+    {
+        SetShaderValue(RHICmdList, RHICmdList.GetBoundVertexShader(), InvTextureSizeParam, Params.InvTextureSize);
+    }
+
+private:
+    LAYOUT_FIELD(FShaderParameter, InvTextureSizeParam);
 };
 
 IMPLEMENT_GLOBAL_SHADER(FTerrainMassPolygonShaderVS, "/TerrainMassShaders/TerrainMassPolygon.usf", "MainVS", SF_Vertex)
@@ -37,7 +47,6 @@ public:
     FTerrainMassPolygonShaderPS(const ShaderMetaType::CompiledShaderInitializerType& Initializer)
         : FGlobalShader(Initializer)
     {
-        InvTextureSizeParam.Bind(Initializer.ParameterMap, TEXT("InvTextureSize"));
         StartSideFalloffTextureParam.Bind(Initializer.ParameterMap, TEXT("StartSideFalloffTexture"));
         StartSideFalloffTextureSamplerParam.Bind(Initializer.ParameterMap, TEXT("StartSideFalloffTextureSampler"));
         EndSideFalloffTextureParam.Bind(Initializer.ParameterMap, TEXT("EndStartSideFalloffTexture"));
@@ -46,8 +55,6 @@ public:
 
     void SetParameters(FRHICommandList& RHICmdList, const FTerrainMassPolygonShaderParameter& Params)
     {
-        SetShaderValue(RHICmdList, RHICmdList.GetBoundPixelShader(), InvTextureSizeParam, Params.InvTextureSize);
-
         if (Params.StartSidefFalloffTexture &&
             Params.StartSidefFalloffTexture->Resource &&
             Params.StartSidefFalloffTexture->Resource->TextureRHI)
@@ -66,7 +73,6 @@ public:
     }
 
 private:
-    LAYOUT_FIELD(FShaderParameter, InvTextureSizeParam);
     LAYOUT_FIELD(FShaderResourceParameter, StartSideFalloffTextureParam);
     LAYOUT_FIELD(FShaderResourceParameter, StartSideFalloffTextureSamplerParam);
     LAYOUT_FIELD(FShaderResourceParameter, EndSideFalloffTextureParam);
@@ -82,7 +88,9 @@ struct FTerrainMassPolygonVertex
 {
 public:
     FVector4 Position;
-    FVector2D UV;
+    FVector4 UV0;
+    FVector4 UV1;
+    FVector4 UV2;
 };
 
 class FTerrainMassPolygonVertexDeclaration : public FRenderResource
@@ -97,7 +105,10 @@ public:
 		FVertexDeclarationElementList Elements;
 		uint32 Stride = sizeof(FTerrainMassPolygonVertex);
 		Elements.Add(FVertexElement(0, STRUCT_OFFSET(FTerrainMassPolygonVertex, Position), VET_Float4, 0, Stride));
-		Elements.Add(FVertexElement(0, STRUCT_OFFSET(FTerrainMassPolygonVertex, UV), VET_Float2, 1, Stride));
+		//Elements.Add(FVertexElement(0, STRUCT_OFFSET(FTerrainMassPolygonVertex, UV), VET_Float2, 1, Stride));
+        Elements.Add(FVertexElement(0, STRUCT_OFFSET(FTerrainMassPolygonVertex, UV0), VET_Float4, 1, Stride));
+        Elements.Add(FVertexElement(0, STRUCT_OFFSET(FTerrainMassPolygonVertex, UV1), VET_Float4, 2, Stride));
+        Elements.Add(FVertexElement(0, STRUCT_OFFSET(FTerrainMassPolygonVertex, UV2), VET_Float4, 3, Stride));
 		VertexDeclarationRHI = PipelineStateCache::GetOrCreateVertexDeclaration(Elements);
 	}
 
@@ -116,38 +127,58 @@ static void CookVertexData(TResourceArray<FTerrainMassPolygonVertex, VERTEXBUFFE
 {
     check(ShaderParams.NumSegments > 0);
 
-    FVector2D Start2D(ShaderParams.StartPosition);
-    FVector2D End2D(ShaderParams.EndPosition);
-    FVector2D Direction2D = (End2D - Start2D).GetSafeNormal();
-    FVector Normal = FVector(Direction2D.Y, -Direction2D.X, 0.0f);
+    FVector Direction = ShaderParams.EndPosition - ShaderParams.StartPosition;
+    FVector Normal = FVector::CrossProduct(Direction, FVector::UpVector).GetSafeNormal();
 
-    TArray<FVector> Centers;
     TArray<FVector> Lefts;
     TArray<FVector> Rights;
+    TArray<FVector> LeftFalloffs;
+    TArray<FVector> RightFalloffs;
 
     for (int32 Index = 0; Index <= ShaderParams.NumSegments; Index++)
     {
         float Ratio = float(Index) / ShaderParams.NumSegments;
         FVector Center = FMath::Lerp(ShaderParams.StartPosition, ShaderParams.EndPosition, Ratio);
-        FVector Left = Center + Normal * ShaderParams.Width;
-        FVector Right = Center - Normal * ShaderParams.Width;
+        FVector Left = Center + Normal * ShaderParams.Width * 0.5f;
+        FVector Right = Center - Normal * ShaderParams.Width * 0.5f;
+        FVector LeftFalloff = Left + Normal * ShaderParams.SideFalloff * 0.5f;
+        FVector RightFalloff = Right - Normal * ShaderParams.SideFalloff * 0.5f;
 
-        Centers.Add(Center / FVector(Size.X, Size.Y, 1.0f));
-        Lefts.Add(Left / FVector(Size.X, Size.Y, 1.0f));
-        Rights.Add(Right / FVector(Size.X, Size.Y, 1.0f));
+        FVector ScaleVector(Size.X - 1.0f, Size.Y - 1.0f, 1.0f);
+        Lefts.Add(Left / ScaleVector);
+        Rights.Add(Right / ScaleVector);
+        LeftFalloffs.Add(LeftFalloff / ScaleVector);
+        RightFalloffs.Add(RightFalloff / ScaleVector);
     }
 
-    int32 NumPoints = ShaderParams.NumSegments * 6;
+    int32 NumPoints = ShaderParams.NumSegments * 18;
     Vertices.SetNumUninitialized(NumPoints);
 
     for (int32 Index = 0; Index < ShaderParams.NumSegments; Index++)
     {
-        Vertices[Index * 6 + 0].Position = Centers[Index];
-        Vertices[Index * 6 + 1].Position = Rights[Index];
-        Vertices[Index * 6 + 2].Position = Centers[Index + 1];
-        Vertices[Index * 6 + 3].Position = Centers[Index + 1];
-        Vertices[Index * 6 + 4].Position = Rights[Index];
-        Vertices[Index * 6 + 5].Position = Rights[Index + 1];
+        // Center
+        Vertices[Index * 18 + 0].Position = Lefts[Index];
+        Vertices[Index * 18 + 1].Position = Rights[Index];
+        Vertices[Index * 18 + 2].Position = Lefts[Index + 1];
+        Vertices[Index * 18 + 3].Position = Lefts[Index + 1];
+        Vertices[Index * 18 + 4].Position = Rights[Index];
+        Vertices[Index * 18 + 5].Position = Rights[Index + 1];
+
+        // Left Falloff
+        Vertices[Index * 18 +  6].Position = LeftFalloffs[Index];
+        Vertices[Index * 18 +  7].Position = Lefts[Index];
+        Vertices[Index * 18 +  8].Position = LeftFalloffs[Index + 1];
+        Vertices[Index * 18 +  9].Position = LeftFalloffs[Index + 1];
+        Vertices[Index * 18 + 10].Position = Lefts[Index];
+        Vertices[Index * 18 + 11].Position = Lefts[Index + 1];
+
+        // Right Falloff
+        Vertices[Index * 18 + 12].Position = Rights[Index];
+        Vertices[Index * 18 + 13].Position = RightFalloffs[Index];
+        Vertices[Index * 18 + 14].Position = Rights[Index + 1];
+        Vertices[Index * 18 + 15].Position = Rights[Index + 1];
+        Vertices[Index * 18 + 16].Position = RightFalloffs[Index];
+        Vertices[Index * 18 + 17].Position = RightFalloffs[Index + 1];
     }
 
     //Vertices[0].Position = FVector4(1, 1, 0, 1);
@@ -201,6 +232,7 @@ void FTerrainMassPolygonShader::Render(FRHICommandListImmediate& RHICmdList, FRH
 
         FGlobalShaderMap* ShaderMap = GetGlobalShaderMap(GMaxRHIFeatureLevel);
         TShaderMapRef<FTerrainMassPolygonShaderVS> VertexShader(ShaderMap);
+        VertexShader->SetParameters(RHICmdList, ShaderParams);
         TShaderMapRef<FTerrainMassPolygonShaderPS> PixelShader(ShaderMap);
         PixelShader->SetParameters(RHICmdList, ShaderParams);
 
@@ -212,7 +244,7 @@ void FTerrainMassPolygonShader::Render(FRHICommandListImmediate& RHICmdList, FRH
         SetGraphicsPipelineState(RHICmdList, GraphicsPSOInit);
 
         RHICmdList.SetStreamSource(0, VertexBufferRHI, 0);
-        RHICmdList.DrawPrimitive(0, 2, 1);
+        RHICmdList.DrawPrimitive(0, ShaderParams.NumSegments * 6, 1);
     }
     RHICmdList.EndRenderPass();
 

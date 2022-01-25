@@ -115,10 +115,10 @@ void ATerrainMassPolygonBrush::InitSideFalloffCurve(FRuntimeFloatCurve& SideFall
     {
         FKeyHandle FirstKeyHandle = Curve->AddKey(0, 0);
         FKeyHandle LastKeyHandle = Curve->AddKey(1, 1);
-        Curve->SetKeyInterpMode(FirstKeyHandle, RCIM_Cubic, true);
-        Curve->SetKeyInterpMode(LastKeyHandle, RCIM_Cubic, true);
-        Curve->SetKeyTangentMode(FirstKeyHandle, RCTM_Auto);
-        Curve->SetKeyTangentMode(LastKeyHandle, RCTM_Auto);
+        Curve->SetKeyInterpMode(FirstKeyHandle, RCIM_Cubic, false);
+        Curve->SetKeyInterpMode(LastKeyHandle, RCIM_Cubic, false);
+        Curve->SetKeyTangentMode(FirstKeyHandle, RCTM_Auto, false);
+        Curve->SetKeyTangentMode(LastKeyHandle, RCTM_Auto, false);
     }
 }
 

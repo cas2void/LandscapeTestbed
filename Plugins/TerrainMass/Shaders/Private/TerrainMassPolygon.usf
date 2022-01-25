@@ -7,19 +7,17 @@ Texture2D<float> EndSideFalloffTexture;
 SamplerState EndSideFalloffTextureSampler;
 
 void MainVS(in float4 InPosition : ATTRIBUTE0,
-    in float2 InTexCoord : ATTRIBUTE1,
+    in float4 InTexCoord0 : ATTRIBUTE1,
     out float4 OutPosition : SV_POSITION,
-    out float2 OutTexCoord : TEXCOORD0,
-    out float4 OutColor : TEXCOORD1)
+    out float4 OutTexCoord0 : TEXCOORD0)
 {
 	OutPosition.zw = float2(0, 1);
 	OutPosition.xy = -1.0 + 2.0 * InPosition.xy;
 	OutPosition.xy *= float2(1, -1);
-	OutTexCoord = InPosition.xy;
-    OutColor.r = InPosition.z;
+	OutTexCoord0.x = InPosition.z;
 }
 
-void MainPS(in float4 SvPosition : SV_POSITION, in float2 SvTexCoord : TEXCOORD0, in float4 SvColor : TEXCOORD1, out float4 OutColor : SV_Target0)
+void MainPS(in float4 SvPosition : SV_POSITION, in float4 SvTexCoord : TEXCOORD0, out float4 OutColor : SV_Target0)
 {
-	OutColor = float4(SvColor.r, 1, 0, 1);
+	OutColor = float4(SvTexCoord.r, 1, 0, 1);
 }

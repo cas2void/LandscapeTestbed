@@ -45,14 +45,15 @@ UTextureRenderTarget2D* ATerrainMassPolygonBrush::Render_Native(bool InIsHeightm
     FTerrainMassPolygonShaderParameter ShaderParams;
     ShaderParams.InvTextureSize = FVector2D(1.0f) / FVector2D(RenderTargetSize);
 
-    ShaderParams.Width = TransformedWidth;
-    ShaderParams.SideFalloff = TransformdSideFalloff;
-    ShaderParams.EndFalloff = TransformedEndFalloff;
-    ShaderParams.StartPosition = TransformedStartPosition;
-    ShaderParams.EndPosition = TransformedEndPosition;
+    ShaderParams.Width = Width;
+    ShaderParams.SideFalloff = SideFalloff;
+    ShaderParams.EndFalloff = EndFalloff;
+    ShaderParams.StartPosition = StartPosition;
+    ShaderParams.EndPosition = EndPosition;
     ShaderParams.NumSegments = NumSegments;
     ShaderParams.StartSidefFalloffTexture = StartSideFalloffTexture;
     ShaderParams.EndSideFalloffTexture = EndSideFalloffTexture;
+    ShaderParams.WorldToCanvasTransform = GetOwningLandscape()->GetActorTransform().Inverse();
 
     ENQUEUE_RENDER_COMMAND(TerranMassPolygonBrush)(
         [this, RenderTargetSize, ShaderParams](FRHICommandListImmediate& RHICmdList)

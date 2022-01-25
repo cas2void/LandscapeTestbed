@@ -2,6 +2,7 @@
 
 #include "GlobalShader.h"
 #include "PipelineStateCache.h"
+#include "LandscapeDataAccess.h"
 
 //
 // Vertex Shader
@@ -129,11 +130,14 @@ static void CookVertexData(TResourceArray<FTerrainMassPolygonVertex, VERTEXBUFFE
 
     FVector Direction = ShaderParams.EndPosition - ShaderParams.StartPosition;
     FVector Normal = FVector::CrossProduct(Direction, FVector::UpVector).GetSafeNormal();
+    float Distance = FVector::Distance(ShaderParams.StartPosition, ShaderParams.EndPosition);
 
     TArray<FVector> Lefts;
     TArray<FVector> Rights;
     TArray<FVector> LeftFalloffs;
     TArray<FVector> RightFalloffs;
+
+    TArray<float> EndFalloffs;
 
     for (int32 Index = 0; Index <= ShaderParams.NumSegments; Index++)
     {
@@ -144,11 +148,21 @@ static void CookVertexData(TResourceArray<FTerrainMassPolygonVertex, VERTEXBUFFE
         FVector LeftFalloff = Left + Normal * ShaderParams.SideFalloff * 0.5f;
         FVector RightFalloff = Right - Normal * ShaderParams.SideFalloff * 0.5f;
 
-        FVector ScaleVector(Size.X - 1.0f, Size.Y - 1.0f, 1.0f);
-        Lefts.Add(Left / ScaleVector);
-        Rights.Add(Right / ScaleVector);
-        LeftFalloffs.Add(LeftFalloff / ScaleVector);
-        RightFalloffs.Add(RightFalloff / ScaleVector);
+        FVector ScaleVector = FVector(1.0f, 1.0f, LANDSCAPE_INV_ZSCALE);
+
+        Lefts.Add(Left);
+        Rights.Add(Right);
+        LeftFalloffs.Add(LeftFalloff);
+        RightFalloffs.Add(RightFalloff);
+
+        float DistanceToStart = FVector::Distance(ShaderParams.StartPosition, Center);
+        float HeadEndFalloff = FMath::Min(FMath::Min(DistanceToStart, ShaderParams.EndFalloff), Distance) / ShaderParams.EndFalloff;
+
+        float DistanceToEnd = FVector::Distance(ShaderParams.EndPosition, Center);
+        float TailEndFalloff = FMath::Min(FMath::Min(DistanceToEnd, ShaderParams.EndFalloff), Distance) / ShaderParams.EndFalloff;
+
+        float EndFalloff = HeadEndFalloff * TailEndFalloff;
+        EndFalloffs.Add(EndFalloff);
     }
 
     int32 NumPoints = ShaderParams.NumSegments * 18;
@@ -179,6 +193,11 @@ static void CookVertexData(TResourceArray<FTerrainMassPolygonVertex, VERTEXBUFFE
         Vertices[Index * 18 + 15].Position = Rights[Index + 1];
         Vertices[Index * 18 + 16].Position = RightFalloffs[Index];
         Vertices[Index * 18 + 17].Position = RightFalloffs[Index + 1];
+
+        for (int32 InterIndex = 0; InterIndex < 18; InterIndex++)
+        {
+            Vertices[Index * 18 + InterIndex].UV0.X = EndFalloffs[Index];
+        }
     }
 
     //Vertices[0].Position = FVector4(1, 1, 0, 1);

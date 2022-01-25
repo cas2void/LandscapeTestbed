@@ -18,6 +18,7 @@ struct FTerrainMassPolygonShaderParameter
     int32 NumSegments;
     UTexture2D* StartSidefFalloffTexture;
     UTexture2D* EndSideFalloffTexture;
+    FTransform WorldToCanvasTransform;
 };
 
 class TERRAINMASSSHADER_API FTerrainMassPolygonShader

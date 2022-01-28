@@ -155,14 +155,14 @@ static void CookVertexData(TResourceArray<FTerrainMassPolygonVertex, VERTEXBUFFE
         LeftFalloffs.Add(ShaderParams.WorldToCanvasTransform.TransformPosition(LeftFalloff) * ScaleVector);
         RightFalloffs.Add(ShaderParams.WorldToCanvasTransform.TransformPosition(RightFalloff) * ScaleVector);
 
-        //float DistanceToStart = FVector::Distance(ShaderParams.StartPosition, Center);
-        //float HeadEndFalloff = FMath::Min(FMath::Min(DistanceToStart, ShaderParams.EndFalloff), Distance) / ShaderParams.EndFalloff;
+        float DistanceToStart = FVector::Distance(ShaderParams.StartPosition, Center);
+        float HeadEndFalloff = FMath::Min(FMath::Min(DistanceToStart, ShaderParams.EndFalloff), Distance) / ShaderParams.EndFalloff;
 
-        //float DistanceToEnd = FVector::Distance(ShaderParams.EndPosition, Center);
-        //float TailEndFalloff = FMath::Min(FMath::Min(DistanceToEnd, ShaderParams.EndFalloff), Distance) / ShaderParams.EndFalloff;
+        float DistanceToEnd = FVector::Distance(ShaderParams.EndPosition, Center);
+        float TailEndFalloff = FMath::Min(FMath::Min(DistanceToEnd, ShaderParams.EndFalloff), Distance) / ShaderParams.EndFalloff;
 
-        //float EndFalloff = HeadEndFalloff * TailEndFalloff;
-        //EndFalloffs.Add(EndFalloff);
+        float EndFalloff = HeadEndFalloff * TailEndFalloff;
+        EndFalloffs.Add(EndFalloff);
     }
 
     int32 NumPoints = ShaderParams.NumSegments * 18;
@@ -171,52 +171,67 @@ static void CookVertexData(TResourceArray<FTerrainMassPolygonVertex, VERTEXBUFFE
     for (int32 Index = 0; Index < ShaderParams.NumSegments; Index++)
     {
         // Center
-        Vertices[Index * 18 + 0].Position = Lefts[Index];
-        Vertices[Index * 18 + 1].Position = Rights[Index];
-        Vertices[Index * 18 + 2].Position = Lefts[Index + 1];
-        Vertices[Index * 18 + 3].Position = Lefts[Index + 1];
-        Vertices[Index * 18 + 4].Position = Rights[Index];
-        Vertices[Index * 18 + 5].Position = Rights[Index + 1];
+        Vertices[Index * 18 +  0].Position = Lefts[Index];
+        Vertices[Index * 18 +  0].UV0.X = EndFalloffs[Index];
+
+        Vertices[Index * 18 +  1].Position = Rights[Index];
+        Vertices[Index * 18 +  1].UV0.X = EndFalloffs[Index];
+
+        Vertices[Index * 18 +  2].Position = Lefts[Index + 1];
+        Vertices[Index * 18 +  2].UV0.X = EndFalloffs[Index + 1];
+
+        Vertices[Index * 18 +  3].Position = Lefts[Index + 1];
+        Vertices[Index * 18 +  3].UV0.X = EndFalloffs[Index + 1];
+
+        Vertices[Index * 18 +  4].Position = Rights[Index];
+        Vertices[Index * 18 +  4].UV0.X = EndFalloffs[Index];
+
+        Vertices[Index * 18 +  5].Position = Rights[Index + 1];
+        Vertices[Index * 18 +  5].UV0.X = EndFalloffs[Index + 1];
 
         // Left Falloff
         Vertices[Index * 18 +  6].Position = LeftFalloffs[Index];
+        Vertices[Index * 18 +  6].UV0.X = EndFalloffs[Index];
+
         Vertices[Index * 18 +  7].Position = Lefts[Index];
+        Vertices[Index * 18 +  7].UV0.X = EndFalloffs[Index];
+
         Vertices[Index * 18 +  8].Position = LeftFalloffs[Index + 1];
+        Vertices[Index * 18 +  8].UV0.X = EndFalloffs[Index + 1];
+
         Vertices[Index * 18 +  9].Position = LeftFalloffs[Index + 1];
+        Vertices[Index * 18 +  9].UV0.X = EndFalloffs[Index + 1];
+
         Vertices[Index * 18 + 10].Position = Lefts[Index];
+        Vertices[Index * 18 + 10].UV0.X = EndFalloffs[Index];
+
         Vertices[Index * 18 + 11].Position = Lefts[Index + 1];
+        Vertices[Index * 18 + 11].UV0.X = EndFalloffs[Index + 1];
 
         // Right Falloff
         Vertices[Index * 18 + 12].Position = Rights[Index];
+        Vertices[Index * 18 + 12].UV0.X = EndFalloffs[Index];
+
         Vertices[Index * 18 + 13].Position = RightFalloffs[Index];
+        Vertices[Index * 18 + 13].UV0.X = EndFalloffs[Index];
+
         Vertices[Index * 18 + 14].Position = Rights[Index + 1];
+        Vertices[Index * 18 + 14].UV0.X = EndFalloffs[Index + 1];
+
         Vertices[Index * 18 + 15].Position = Rights[Index + 1];
+        Vertices[Index * 18 + 15].UV0.X = EndFalloffs[Index + 1];
+
         Vertices[Index * 18 + 16].Position = RightFalloffs[Index];
+        Vertices[Index * 18 + 16].UV0.X = EndFalloffs[Index];
+
         Vertices[Index * 18 + 17].Position = RightFalloffs[Index + 1];
+        Vertices[Index * 18 + 17].UV0.X = EndFalloffs[Index + 1];
 
         //for (int32 InterIndex = 0; InterIndex < 18; InterIndex++)
         //{
         //    Vertices[Index * 18 + InterIndex].UV0.X = EndFalloffs[Index];
         //}
     }
-
-    //Vertices[0].Position = FVector4(1, 1, 0, 1);
-    //Vertices[0].UV = FVector2D(1, 1);
-
-    //Vertices[1].Position = FVector4(0, 1, 0, 1);
-    //Vertices[1].UV = FVector2D(0, 1);
-
-    //Vertices[2].Position = FVector4(1, 0, 0, 1);
-    //Vertices[2].UV = FVector2D(1, 0);
-
-    //Vertices[3].Position = FVector4(0, 0, 0, 1);
-    //Vertices[3].UV = FVector2D(0, 0);
-
-    //Vertices[4].Position = FVector4(0, 1, 0, 1);
-    //Vertices[4].UV = FVector2D(0, 1);
-
-    //Vertices[5].Position = FVector4(1, 0, 0, 1);
-    //Vertices[5].UV = FVector2D(1, 0);
 }
 
 void FTerrainMassPolygonShader::Render(FRHICommandListImmediate& RHICmdList, FRHITexture* DestTexture, const FTerrainMassPolygonShaderParameter& ShaderParams)

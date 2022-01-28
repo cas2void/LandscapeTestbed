@@ -4,7 +4,6 @@ Texture2D<float4> SourceTexture;
 SamplerState SourceTextureSampler;
 Texture2D<float2> CanvasTexture;
 SamplerState CanvasTextureSampler;
-float2 InvTextureSize;
 
 // return: [-32768, 32767]
 float UnpackHeight(float2 InPackedHeight)

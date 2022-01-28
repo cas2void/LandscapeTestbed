@@ -26,7 +26,6 @@ public:
         SourceTextureSamplerParam.Bind(Initializer.ParameterMap, TEXT("SourceTextureSampler"));
         CanvasTextureParam.Bind(Initializer.ParameterMap, TEXT("CanvasTexture"));
         CanvasTextureSamplerParam.Bind(Initializer.ParameterMap, TEXT("CanvasTextureSampler"));
-        InvTextureSizeParam.Bind(Initializer.ParameterMap, TEXT("InvTextureSize"));
     }
 
     void SetParameters(FRHICommandList& RHICmdList, const FTerrainMassPolygonCompositeShaderParameter& Params)
@@ -46,8 +45,6 @@ public:
             SetTextureParameter(RHICmdList, RHICmdList.GetBoundPixelShader(), CanvasTextureParam, CanvasTextureSamplerParam,
                 TStaticSamplerState<>::GetRHI(), Params.CanvasTexture->Resource->TextureRHI);
         }
-
-        SetShaderValue(RHICmdList, RHICmdList.GetBoundPixelShader(), InvTextureSizeParam, Params.InvTextureSize);
     }
 
 private:
@@ -55,18 +52,17 @@ private:
     LAYOUT_FIELD(FShaderResourceParameter, SourceTextureSamplerParam);
     LAYOUT_FIELD(FShaderResourceParameter, CanvasTextureParam);
     LAYOUT_FIELD(FShaderResourceParameter, CanvasTextureSamplerParam);
-    LAYOUT_FIELD(FShaderParameter, InvTextureSizeParam);
 };
 
 IMPLEMENT_GLOBAL_SHADER(FTerrainMassPolygonCompositeShaderPS, "/TerrainMassShaders/TerrainMassPolygonComposite.usf", "MainPS", SF_Pixel);
 
-void FTerrainMassPolygonCompositeShader::Render(FRHICommandListImmediate& RHICmdList, FRHITexture* DestTexture, const FIntPoint& Size, const FTerrainMassPolygonCompositeShaderParameter& ShaderParams)
+void FTerrainMassPolygonCompositeShader::Render(FRHICommandListImmediate& RHICmdList, FRHITexture* DestTexture, const FTerrainMassPolygonCompositeShaderParameter& ShaderParams)
 {
     IRendererModule* RendererModule = &FModuleManager::GetModuleChecked<IRendererModule>("Renderer");
     FRHIRenderPassInfo RPInfo(DestTexture, ERenderTargetActions::Load_Store);
     RHICmdList.BeginRenderPass(RPInfo, TEXT("TerrainMassComposite"));
     {
-        RHICmdList.SetViewport(0, 0, 0, Size.X, Size.Y, 1);
+        RHICmdList.SetViewport(0, 0, 0, ShaderParams.RenderTargetSize.X, ShaderParams.RenderTargetSize.Y, 1);
 
         FGraphicsPipelineStateInitializer GraphicsPSOInit;
         RHICmdList.ApplyCachedRenderTargets(GraphicsPSOInit);
@@ -87,12 +83,12 @@ void FTerrainMassPolygonCompositeShader::Render(FRHICommandListImmediate& RHICmd
         SetGraphicsPipelineState(RHICmdList, GraphicsPSOInit);
         RendererModule->DrawRectangle(
             RHICmdList,
-            0, 0,             // Dest X, Y
-            Size.X, Size.Y,   // Dest Width, Height
-            0, 0,             // Source U, V
-            1, 1,             // Source USize, VSize
-            Size,             // Target buffer size
-            FIntPoint(1, 1),  // Source texture size
+            0, 0,                                                                                       // Dest X, Y
+            ShaderParams.RenderTargetSize.X, ShaderParams.RenderTargetSize.Y,                           // Dest Width, Height
+            0, 0,                                                                                       // Source U, V
+            1, 1,                                                                                       // Source USize, VSize
+            FIntPoint((int32)ShaderParams.RenderTargetSize.X, (int32)ShaderParams.RenderTargetSize.Y),  // Target buffer size
+            FIntPoint(1, 1),                                                                            // Source texture size
             VertexShader);
     }
     RHICmdList.EndRenderPass();

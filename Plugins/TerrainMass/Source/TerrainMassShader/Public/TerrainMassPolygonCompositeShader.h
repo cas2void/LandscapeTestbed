@@ -7,13 +7,13 @@
 
 struct FTerrainMassPolygonCompositeShaderParameter
 {
+    FVector2D RenderTargetSize;
     UTextureRenderTarget2D* SourceTexture = nullptr;
     UTextureRenderTarget2D* CanvasTexture = nullptr;
-    FVector2D InvTextureSize;
 };
 
 class TERRAINMASSSHADER_API FTerrainMassPolygonCompositeShader
 {
 public:
-    static void Render(FRHICommandListImmediate& RHICmdList, FRHITexture* DestTexture, const FIntPoint& Size, const FTerrainMassPolygonCompositeShaderParameter& ShaderParams);
+    static void Render(FRHICommandListImmediate& RHICmdList, FRHITexture* DestTexture, const FTerrainMassPolygonCompositeShaderParameter& ShaderParams);
 };

@@ -15,9 +15,10 @@ void MainVS(in float4 InPosition : ATTRIBUTE0,
 	OutPosition.xy = -1.0 + 2.0 * InPosition.xy;
 	OutPosition.xy *= float2(1, -1);
 	OutTexCoord0.x = InPosition.z;
+	OutTexCoord0.y = InTexCoord0.x;
 }
 
 void MainPS(in float4 SvPosition : SV_POSITION, in float4 SvTexCoord : TEXCOORD0, out float4 OutColor : SV_Target0)
 {
-	OutColor = float4(SvTexCoord.r, 1, 0, 1);
+	OutColor = float4(SvTexCoord.r, cos((1 - SvTexCoord.g) * 3.141593 * 0.5), 0, 1);
 }

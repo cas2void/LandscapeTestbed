@@ -33,15 +33,6 @@ UTextureRenderTarget2D* ATerrainMassPolygonBrush::Render_Native(bool InIsHeightm
         return nullptr;
     }
 
-    FVector TransformedStartPosition = GetOwningLandscape()->GetActorTransform().InverseTransformPosition(StartPosition);
-    FVector TransformedEndPosition = GetOwningLandscape()->GetActorTransform().InverseTransformPosition(EndPosition);
-    TransformedStartPosition.Z *= LANDSCAPE_INV_ZSCALE;
-    TransformedEndPosition.Z *= LANDSCAPE_INV_ZSCALE;
-    float Scale = 1.0f / GetOwningLandscape()->GetActorScale3D().X;
-    float TransformedWidth = Width * Scale;
-    float TransformdSideFalloff = SideFalloff * Scale;
-    float TransformedEndFalloff = EndFalloff * Scale;
-
     FTerrainMassPolygonShaderParameter ShaderParams;
     ShaderParams.RenderTargetSize = RenderTargetSize;
     ShaderParams.Width = Width;
@@ -67,9 +58,9 @@ UTextureRenderTarget2D* ATerrainMassPolygonBrush::Render_Native(bool InIsHeightm
     );
 
     FTerrainMassPolygonCompositeShaderParameter CompositeShaderParams;
+    CompositeShaderParams.RenderTargetSize = RenderTargetSize;
     CompositeShaderParams.SourceTexture = InCombinedResult;
     CompositeShaderParams.CanvasTexture = CanvasRT;
-    CompositeShaderParams.InvTextureSize = FVector2D(1.0f) / FVector2D(RenderTargetSize);
 
     ENQUEUE_RENDER_COMMAND(TerranMassPolygonBrushComposite)(
         [this, RenderTargetSize, CompositeShaderParams](FRHICommandListImmediate& RHICmdList)
@@ -78,7 +69,7 @@ UTextureRenderTarget2D* ATerrainMassPolygonBrush::Render_Native(bool InIsHeightm
             {
                 FTerrainMassPolygonCompositeShader::Render(RHICmdList,
                     OutputRT->GetRenderTargetResource()->GetRenderTargetTexture(),
-                    RenderTargetSize, CompositeShaderParams);
+                    CompositeShaderParams);
             }
         }
     );
@@ -105,6 +96,8 @@ void ATerrainMassPolygonBrush::PostEditChangeProperty(FPropertyChangedEvent& Pro
     {
         UpdateSideFalloffTexture(EndSideFalloffCurve, EndSideFalloffTexture);
     }
+
+    RequestLandscapeUpdate();
 }
 #endif
 

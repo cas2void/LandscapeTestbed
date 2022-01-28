@@ -43,8 +43,7 @@ UTextureRenderTarget2D* ATerrainMassPolygonBrush::Render_Native(bool InIsHeightm
     float TransformedEndFalloff = EndFalloff * Scale;
 
     FTerrainMassPolygonShaderParameter ShaderParams;
-    ShaderParams.InvTextureSize = FVector2D(1.0f) / FVector2D(RenderTargetSize);
-
+    ShaderParams.RenderTargetSize = RenderTargetSize;
     ShaderParams.Width = Width;
     ShaderParams.SideFalloff = SideFalloff;
     ShaderParams.EndFalloff = EndFalloff;
@@ -62,7 +61,7 @@ UTextureRenderTarget2D* ATerrainMassPolygonBrush::Render_Native(bool InIsHeightm
             {
                 FTerrainMassPolygonShader::Render(RHICmdList,
                     CanvasRT->GetRenderTargetResource()->GetRenderTargetTexture(),
-                    RenderTargetSize, ShaderParams);
+                    ShaderParams);
             }
         }
     );

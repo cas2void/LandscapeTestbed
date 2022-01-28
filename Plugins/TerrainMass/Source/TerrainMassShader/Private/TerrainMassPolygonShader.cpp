@@ -24,7 +24,7 @@ public:
 
     void SetParameters(FRHICommandList& RHICmdList, const FTerrainMassPolygonShaderParameter& Params)
     {
-        SetShaderValue(RHICmdList, RHICmdList.GetBoundVertexShader(), InvTextureSizeParam, Params.InvTextureSize);
+        SetShaderValue(RHICmdList, RHICmdList.GetBoundVertexShader(), InvTextureSizeParam, FVector2D(1.0f) / Params.RenderTargetSize);
     }
 
 private:
@@ -124,7 +124,7 @@ TGlobalResource<FTerrainMassPolygonVertexDeclaration> GTerrainMassPolygonVertexD
 //
 // Renderer
 //
-static void CookVertexData(TResourceArray<FTerrainMassPolygonVertex, VERTEXBUFFER_ALIGNMENT>& Vertices, const FIntPoint& Size, const FTerrainMassPolygonShaderParameter& ShaderParams)
+static void CookVertexData(TResourceArray<FTerrainMassPolygonVertex, VERTEXBUFFER_ALIGNMENT>& Vertices, const FTerrainMassPolygonShaderParameter& ShaderParams)
 {
     check(ShaderParams.NumSegments > 0);
 
@@ -148,21 +148,21 @@ static void CookVertexData(TResourceArray<FTerrainMassPolygonVertex, VERTEXBUFFE
         FVector LeftFalloff = Left + Normal * ShaderParams.SideFalloff * 0.5f;
         FVector RightFalloff = Right - Normal * ShaderParams.SideFalloff * 0.5f;
 
-        FVector ScaleVector = FVector(1.0f, 1.0f, LANDSCAPE_INV_ZSCALE);
+        FVector ScaleVector = FVector(1.0f / (ShaderParams.RenderTargetSize.X - 1.0f), 1.0f / (ShaderParams.RenderTargetSize.Y - 1.0f), LANDSCAPE_INV_ZSCALE);
 
-        Lefts.Add(Left);
-        Rights.Add(Right);
-        LeftFalloffs.Add(LeftFalloff);
-        RightFalloffs.Add(RightFalloff);
+        Lefts.Add(ShaderParams.WorldToCanvasTransform.TransformPosition(Left) * ScaleVector);
+        Rights.Add(ShaderParams.WorldToCanvasTransform.TransformPosition(Right) * ScaleVector);
+        LeftFalloffs.Add(ShaderParams.WorldToCanvasTransform.TransformPosition(LeftFalloff) * ScaleVector);
+        RightFalloffs.Add(ShaderParams.WorldToCanvasTransform.TransformPosition(RightFalloff) * ScaleVector);
 
-        float DistanceToStart = FVector::Distance(ShaderParams.StartPosition, Center);
-        float HeadEndFalloff = FMath::Min(FMath::Min(DistanceToStart, ShaderParams.EndFalloff), Distance) / ShaderParams.EndFalloff;
+        //float DistanceToStart = FVector::Distance(ShaderParams.StartPosition, Center);
+        //float HeadEndFalloff = FMath::Min(FMath::Min(DistanceToStart, ShaderParams.EndFalloff), Distance) / ShaderParams.EndFalloff;
 
-        float DistanceToEnd = FVector::Distance(ShaderParams.EndPosition, Center);
-        float TailEndFalloff = FMath::Min(FMath::Min(DistanceToEnd, ShaderParams.EndFalloff), Distance) / ShaderParams.EndFalloff;
+        //float DistanceToEnd = FVector::Distance(ShaderParams.EndPosition, Center);
+        //float TailEndFalloff = FMath::Min(FMath::Min(DistanceToEnd, ShaderParams.EndFalloff), Distance) / ShaderParams.EndFalloff;
 
-        float EndFalloff = HeadEndFalloff * TailEndFalloff;
-        EndFalloffs.Add(EndFalloff);
+        //float EndFalloff = HeadEndFalloff * TailEndFalloff;
+        //EndFalloffs.Add(EndFalloff);
     }
 
     int32 NumPoints = ShaderParams.NumSegments * 18;
@@ -194,10 +194,10 @@ static void CookVertexData(TResourceArray<FTerrainMassPolygonVertex, VERTEXBUFFE
         Vertices[Index * 18 + 16].Position = RightFalloffs[Index];
         Vertices[Index * 18 + 17].Position = RightFalloffs[Index + 1];
 
-        for (int32 InterIndex = 0; InterIndex < 18; InterIndex++)
-        {
-            Vertices[Index * 18 + InterIndex].UV0.X = EndFalloffs[Index];
-        }
+        //for (int32 InterIndex = 0; InterIndex < 18; InterIndex++)
+        //{
+        //    Vertices[Index * 18 + InterIndex].UV0.X = EndFalloffs[Index];
+        //}
     }
 
     //Vertices[0].Position = FVector4(1, 1, 0, 1);
@@ -219,7 +219,7 @@ static void CookVertexData(TResourceArray<FTerrainMassPolygonVertex, VERTEXBUFFE
     //Vertices[5].UV = FVector2D(1, 0);
 }
 
-void FTerrainMassPolygonShader::Render(FRHICommandListImmediate& RHICmdList, FRHITexture* DestTexture, const FIntPoint& Size, const FTerrainMassPolygonShaderParameter& ShaderParams)
+void FTerrainMassPolygonShader::Render(FRHICommandListImmediate& RHICmdList, FRHITexture* DestTexture, const FTerrainMassPolygonShaderParameter& ShaderParams)
 {
     //
     // Vertex Buffer
@@ -227,7 +227,7 @@ void FTerrainMassPolygonShader::Render(FRHICommandListImmediate& RHICmdList, FRH
     FVertexBufferRHIRef VertexBufferRHI;
 
     TResourceArray<FTerrainMassPolygonVertex, VERTEXBUFFER_ALIGNMENT> Vertices;
-    CookVertexData(Vertices, Size, ShaderParams);
+    CookVertexData(Vertices, ShaderParams);
 
     // Create vertex buffer. Fill buffer with initial data upon creation
     FRHIResourceCreateInfo CreateInfo(&Vertices);
@@ -236,12 +236,10 @@ void FTerrainMassPolygonShader::Render(FRHICommandListImmediate& RHICmdList, FRH
     //
     // Render
     //
-
-    // Canvas
     FRHIRenderPassInfo RPInfoCanvas(DestTexture, ERenderTargetActions::Load_Store);
     RHICmdList.BeginRenderPass(RPInfoCanvas, TEXT("TerrainMassPolygon"));
     {
-        RHICmdList.SetViewport(0, 0, 0, Size.X, Size.Y, 1);
+        RHICmdList.SetViewport(0, 0, 0, ShaderParams.RenderTargetSize.X, ShaderParams.RenderTargetSize.Y, 1);
 
         FGraphicsPipelineStateInitializer GraphicsPSOInit;
         RHICmdList.ApplyCachedRenderTargets(GraphicsPSOInit);

@@ -20,7 +20,7 @@ UTextureRenderTarget2D* ATerrainMassPolygonBrush::Render_Native(bool InIsHeightm
     check(GetOwningLandscape());
 
     FIntPoint RenderTargetSize(InCombinedResult->SizeX, InCombinedResult->SizeY);
-    if (!UTerrainMassLibrary::CreateOrUpdateRenderTarget2D(GetTransientPackage(), CanvasRT, RenderTargetSize, RTF_RG16f, true) ||
+    if (!UTerrainMassLibrary::CreateOrUpdateRenderTarget2D(GetTransientPackage(), CanvasRT, RenderTargetSize, RTF_RGBA16f, true) ||
         !UTerrainMassLibrary::CreateOrUpdateRenderTarget2D(GetTransientPackage(), OutputRT, RenderTargetSize, RTF_RGBA8, true))
     {
         // LandscapeEditLayers.cpp - ALandscape::RegenerateLayersHeightmaps
@@ -81,6 +81,8 @@ void ATerrainMassPolygonBrush::Initialize_Native(const FTransform& InLandscapeTr
 {
     InitSideFalloffCurve(StartSideFalloffCurve);
     InitSideFalloffCurve(EndSideFalloffCurve);
+    UpdateSideFalloffTexture(StartSideFalloffCurve, StartSideFalloffTexture);
+    UpdateSideFalloffTexture(EndSideFalloffCurve, EndSideFalloffTexture);
 }
 
 #if WITH_EDITOR
@@ -115,7 +117,7 @@ void ATerrainMassPolygonBrush::InitSideFalloffCurve(FRuntimeFloatCurve& SideFall
     }
 }
 
-void ATerrainMassPolygonBrush::UpdateSideFalloffTexture(FRuntimeFloatCurve& SideFalloffCurve, UTexture2D* SideFalloffTexture)
+void ATerrainMassPolygonBrush::UpdateSideFalloffTexture(FRuntimeFloatCurve& SideFalloffCurve, UTexture2D*& SideFalloffTexture)
 {
     if (!UTerrainMassLibrary::CreateOrUpdateTexture2D(this, SideFalloffTexture, FIntPoint(256, 1), PF_G8, TA_Clamp, TA_Clamp))
     {

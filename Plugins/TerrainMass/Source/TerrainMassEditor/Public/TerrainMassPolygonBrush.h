@@ -36,7 +36,7 @@ protected:
 	//
 protected:
 	void InitSideFalloffCurve(FRuntimeFloatCurve& SideFalloffCurve);
-	void UpdateSideFalloffTexture(struct FRuntimeFloatCurve& SideFalloffCurve, class UTexture2D* SideFalloffTexture);
+	void UpdateSideFalloffTexture(struct FRuntimeFloatCurve& SideFalloffCurve, class UTexture2D*& SideFalloffTexture);
 
 	UPROPERTY(VisibleAnywhere, Transient)
 	UTextureRenderTarget2D* CanvasRT;
@@ -68,9 +68,9 @@ protected:
 	UPROPERTY(EditAnywhere, Category="Landscape", AdvancedDisplay)
 	struct FRuntimeFloatCurve EndSideFalloffCurve;
 
-	UPROPERTY()
+	UPROPERTY(VisibleAnywhere, Category = "Landscape", AdvancedDisplay)
 	class UTexture2D* StartSideFalloffTexture;
 
-	UPROPERTY()
+	UPROPERTY(VisibleAnywhere, Category = "Landscape", AdvancedDisplay)
 	class UTexture2D* EndSideFalloffTexture;
 };

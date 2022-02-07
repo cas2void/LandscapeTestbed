@@ -89,9 +89,17 @@ struct FTerrainMassPolygonVertex
 {
 public:
     FVector4 Position;
-    FVector4 UV0;
-    FVector4 UV1;
-    FVector4 UV2;
+    // Point 0, xy: position, z: alpha
+    FVector4 Point0;
+    // Point 1
+    FVector4 Point1;
+    // Point 2
+    FVector4 Point2;
+
+    FVector4 P0;
+    FVector4 P1;
+    FVector4 P2;
+    FVector4 P3;
 };
 
 class FTerrainMassPolygonVertexDeclaration : public FRenderResource
@@ -107,9 +115,14 @@ public:
 		uint32 Stride = sizeof(FTerrainMassPolygonVertex);
 		Elements.Add(FVertexElement(0, STRUCT_OFFSET(FTerrainMassPolygonVertex, Position), VET_Float4, 0, Stride));
 		//Elements.Add(FVertexElement(0, STRUCT_OFFSET(FTerrainMassPolygonVertex, UV), VET_Float2, 1, Stride));
-        Elements.Add(FVertexElement(0, STRUCT_OFFSET(FTerrainMassPolygonVertex, UV0), VET_Float4, 1, Stride));
-        Elements.Add(FVertexElement(0, STRUCT_OFFSET(FTerrainMassPolygonVertex, UV1), VET_Float4, 2, Stride));
-        Elements.Add(FVertexElement(0, STRUCT_OFFSET(FTerrainMassPolygonVertex, UV2), VET_Float4, 3, Stride));
+        Elements.Add(FVertexElement(0, STRUCT_OFFSET(FTerrainMassPolygonVertex, Point0), VET_Float4, 1, Stride));
+        Elements.Add(FVertexElement(0, STRUCT_OFFSET(FTerrainMassPolygonVertex, Point1), VET_Float4, 2, Stride));
+        Elements.Add(FVertexElement(0, STRUCT_OFFSET(FTerrainMassPolygonVertex, Point2), VET_Float4, 3, Stride));
+
+        Elements.Add(FVertexElement(0, STRUCT_OFFSET(FTerrainMassPolygonVertex, P0), VET_Float4, 4, Stride));
+        Elements.Add(FVertexElement(0, STRUCT_OFFSET(FTerrainMassPolygonVertex, P1), VET_Float4, 5, Stride));
+        Elements.Add(FVertexElement(0, STRUCT_OFFSET(FTerrainMassPolygonVertex, P2), VET_Float4, 6, Stride));
+        Elements.Add(FVertexElement(0, STRUCT_OFFSET(FTerrainMassPolygonVertex, P3), VET_Float4, 7, Stride));
 		VertexDeclarationRHI = PipelineStateCache::GetOrCreateVertexDeclaration(Elements);
 	}
 
@@ -139,6 +152,8 @@ static void CookVertexData(TResourceArray<FTerrainMassPolygonVertex, VERTEXBUFFE
 
     TArray<float> EndFalloffs;
 
+    FVector ScaleVector = FVector(1.0f / (ShaderParams.RenderTargetSize.X - 1.0f), 1.0f / (ShaderParams.RenderTargetSize.Y - 1.0f), LANDSCAPE_INV_ZSCALE);
+
     for (int32 Index = 0; Index <= ShaderParams.NumSegments; Index++)
     {
         float Ratio = float(Index) / ShaderParams.NumSegments;
@@ -147,8 +162,6 @@ static void CookVertexData(TResourceArray<FTerrainMassPolygonVertex, VERTEXBUFFE
         FVector Right = Center - Normal * ShaderParams.Width * 0.5f;
         FVector LeftFalloff = Left + Normal * ShaderParams.SideFalloff * 0.5f;
         FVector RightFalloff = Right - Normal * ShaderParams.SideFalloff * 0.5f;
-
-        FVector ScaleVector = FVector(1.0f / (ShaderParams.RenderTargetSize.X - 1.0f), 1.0f / (ShaderParams.RenderTargetSize.Y - 1.0f), LANDSCAPE_INV_ZSCALE);
 
         Lefts.Add(ShaderParams.WorldToCanvasTransform.TransformPosition(Left) * ScaleVector);
         Rights.Add(ShaderParams.WorldToCanvasTransform.TransformPosition(Right) * ScaleVector);
@@ -172,65 +185,126 @@ static void CookVertexData(TResourceArray<FTerrainMassPolygonVertex, VERTEXBUFFE
     {
         // Center
         Vertices[Index * 18 +  0].Position = Lefts[Index];
-        Vertices[Index * 18 +  0].UV0.X = EndFalloffs[Index];
+        Vertices[Index * 18 +  0].Position.W = EndFalloffs[Index];
 
         Vertices[Index * 18 +  1].Position = Rights[Index];
-        Vertices[Index * 18 +  1].UV0.X = EndFalloffs[Index];
+        Vertices[Index * 18 +  1].Position.W = EndFalloffs[Index];
 
         Vertices[Index * 18 +  2].Position = Lefts[Index + 1];
-        Vertices[Index * 18 +  2].UV0.X = EndFalloffs[Index + 1];
+        Vertices[Index * 18 +  2].Position.W = EndFalloffs[Index + 1];
+
+        for (int32 InnerIndex = 0; InnerIndex < 3; InnerIndex++)
+        {
+            Vertices[Index * 18 + InnerIndex].Point0 = FVector(Lefts[Index].X, Lefts[Index].Y, 1.0f);
+            Vertices[Index * 18 + InnerIndex].Point1 = FVector(Rights[Index].X, Rights[Index].Y, 1.0f);
+            Vertices[Index * 18 + InnerIndex].Point2 = FVector(Lefts[Index + 1].X, Lefts[Index + 1].Y, 1.0f);
+        }
 
         Vertices[Index * 18 +  3].Position = Lefts[Index + 1];
-        Vertices[Index * 18 +  3].UV0.X = EndFalloffs[Index + 1];
+        Vertices[Index * 18 +  3].Position.W = EndFalloffs[Index + 1];
 
         Vertices[Index * 18 +  4].Position = Rights[Index];
-        Vertices[Index * 18 +  4].UV0.X = EndFalloffs[Index];
+        Vertices[Index * 18 +  4].Position.W = EndFalloffs[Index];
 
         Vertices[Index * 18 +  5].Position = Rights[Index + 1];
-        Vertices[Index * 18 +  5].UV0.X = EndFalloffs[Index + 1];
+        Vertices[Index * 18 +  5].Position.W = EndFalloffs[Index + 1];
+
+        for (int32 InnerIndex = 0; InnerIndex < 3; InnerIndex++)
+        {
+            Vertices[Index * 18 + 3 + InnerIndex].Point0 = FVector(Lefts[Index + 1].X, Lefts[Index + 1].Y, 1.0f);
+            Vertices[Index * 18 + 3 + InnerIndex].Point1 = FVector(Rights[Index].X, Rights[Index].Y, 1.0f);
+            Vertices[Index * 18 + 3 + InnerIndex].Point2 = FVector(Rights[Index + 1].X, Rights[Index + 1].Y, 1.0f);
+        }
+
+        for (int32 InnerIndex = 0; InnerIndex < 6; InnerIndex++)
+        {
+            Vertices[Index * 18 + 0 + InnerIndex].P0 = FVector(Lefts[Index].X, Lefts[Index].Y, 1.0f);
+            Vertices[Index * 18 + 0 + InnerIndex].P1 = FVector(Lefts[Index + 1].X, Lefts[Index + 1].Y, 1.0f);
+            Vertices[Index * 18 + 0 + InnerIndex].P2 = FVector(Rights[Index].X, Rights[Index].Y, 1.0f);
+            Vertices[Index * 18 + 0 + InnerIndex].P3 = FVector(Rights[Index + 1].X, Rights[Index + 1].Y, 1.0f);
+        }
 
         // Left Falloff
         Vertices[Index * 18 +  6].Position = LeftFalloffs[Index];
-        Vertices[Index * 18 +  6].UV0.X = EndFalloffs[Index];
+        Vertices[Index * 18 +  6].Position.W = EndFalloffs[Index];
 
         Vertices[Index * 18 +  7].Position = Lefts[Index];
-        Vertices[Index * 18 +  7].UV0.X = EndFalloffs[Index];
+        Vertices[Index * 18 +  7].Position.W = EndFalloffs[Index];
 
         Vertices[Index * 18 +  8].Position = LeftFalloffs[Index + 1];
-        Vertices[Index * 18 +  8].UV0.X = EndFalloffs[Index + 1];
+        Vertices[Index * 18 +  8].Position.W = EndFalloffs[Index + 1];
+
+        for (int32 InnerIndex = 0; InnerIndex < 3; InnerIndex++)
+        {
+            Vertices[Index * 18 + 6 + InnerIndex].Point0 = FVector(LeftFalloffs[Index].X, LeftFalloffs[Index].Y, 0.0f);
+            Vertices[Index * 18 + 6 + InnerIndex].Point1 = FVector(Lefts[Index].X, Lefts[Index].Y, 1.0f);
+            Vertices[Index * 18 + 6 + InnerIndex].Point2 = FVector(LeftFalloffs[Index + 1].X, LeftFalloffs[Index + 1].Y, 0.0f);
+        }
 
         Vertices[Index * 18 +  9].Position = LeftFalloffs[Index + 1];
-        Vertices[Index * 18 +  9].UV0.X = EndFalloffs[Index + 1];
+        Vertices[Index * 18 +  9].Position.W = EndFalloffs[Index + 1];
 
         Vertices[Index * 18 + 10].Position = Lefts[Index];
-        Vertices[Index * 18 + 10].UV0.X = EndFalloffs[Index];
+        Vertices[Index * 18 + 10].Position.W = EndFalloffs[Index];
 
         Vertices[Index * 18 + 11].Position = Lefts[Index + 1];
-        Vertices[Index * 18 + 11].UV0.X = EndFalloffs[Index + 1];
+        Vertices[Index * 18 + 11].Position.W = EndFalloffs[Index + 1];
+
+        for (int32 InnerIndex = 0; InnerIndex < 3; InnerIndex++)
+        {
+            Vertices[Index * 18 + 9 + InnerIndex].Point0 = FVector(LeftFalloffs[Index + 1].X, LeftFalloffs[Index + 1].Y, 0.0f);
+            Vertices[Index * 18 + 9 + InnerIndex].Point1 = FVector(Lefts[Index].X, Lefts[Index].Y, 1.0f);
+            Vertices[Index * 18 + 9 + InnerIndex].Point2 = FVector(Lefts[Index + 1].X, Lefts[Index + 1].Y, 1.0f);
+        }
+
+        for (int32 InnerIndex = 0; InnerIndex < 6; InnerIndex++)
+        {
+            Vertices[Index * 18 + 6 + InnerIndex].P0 = FVector(Lefts[Index].X, Lefts[Index].Y, 1.0f);
+            Vertices[Index * 18 + 6 + InnerIndex].P1 = FVector(Lefts[Index + 1].X, Lefts[Index + 1].Y, 1.0f);
+            Vertices[Index * 18 + 6 + InnerIndex].P2 = FVector(LeftFalloffs[Index].X, LeftFalloffs[Index].Y, 0.0f);
+            Vertices[Index * 18 + 6 + InnerIndex].P3 = FVector(LeftFalloffs[Index + 1].X, LeftFalloffs[Index + 1].Y, 0.0f);
+        }
 
         // Right Falloff
         Vertices[Index * 18 + 12].Position = Rights[Index];
-        Vertices[Index * 18 + 12].UV0.X = EndFalloffs[Index];
+        Vertices[Index * 18 + 12].Position.W = EndFalloffs[Index];
 
         Vertices[Index * 18 + 13].Position = RightFalloffs[Index];
-        Vertices[Index * 18 + 13].UV0.X = EndFalloffs[Index];
+        Vertices[Index * 18 + 13].Position.W = EndFalloffs[Index];
 
         Vertices[Index * 18 + 14].Position = Rights[Index + 1];
-        Vertices[Index * 18 + 14].UV0.X = EndFalloffs[Index + 1];
+        Vertices[Index * 18 + 14].Position.W = EndFalloffs[Index + 1];
+
+        for (int32 InnerIndex = 0; InnerIndex < 3; InnerIndex++)
+        {
+            Vertices[Index * 18 + 12 + InnerIndex].Point0 = FVector(Rights[Index].X, Rights[Index].Y, 1.0f);
+            Vertices[Index * 18 + 12 + InnerIndex].Point1 = FVector(RightFalloffs[Index].X, RightFalloffs[Index].Y, 0.0f);
+            Vertices[Index * 18 + 12 + InnerIndex].Point2 = FVector(Rights[Index + 1].X, Rights[Index + 1].Y, 1.0f);
+        }
 
         Vertices[Index * 18 + 15].Position = Rights[Index + 1];
-        Vertices[Index * 18 + 15].UV0.X = EndFalloffs[Index + 1];
+        Vertices[Index * 18 + 15].Position.W = EndFalloffs[Index + 1];
 
         Vertices[Index * 18 + 16].Position = RightFalloffs[Index];
-        Vertices[Index * 18 + 16].UV0.X = EndFalloffs[Index];
+        Vertices[Index * 18 + 16].Position.W = EndFalloffs[Index];
 
         Vertices[Index * 18 + 17].Position = RightFalloffs[Index + 1];
-        Vertices[Index * 18 + 17].UV0.X = EndFalloffs[Index + 1];
+        Vertices[Index * 18 + 17].Position.W = EndFalloffs[Index + 1];
 
-        //for (int32 InterIndex = 0; InterIndex < 18; InterIndex++)
-        //{
-        //    Vertices[Index * 18 + InterIndex].UV0.X = EndFalloffs[Index];
-        //}
+        for (int32 InnerIndex = 0; InnerIndex < 3; InnerIndex++)
+        {
+            Vertices[Index * 18 + 15 + InnerIndex].Point0 = FVector(Rights[Index + 1].X, Rights[Index + 1].Y, 1.0f);
+            Vertices[Index * 18 + 15 + InnerIndex].Point1 = FVector(RightFalloffs[Index].X, RightFalloffs[Index].Y, 0.0f);
+            Vertices[Index * 18 + 15 + InnerIndex].Point2 = FVector(RightFalloffs[Index + 1].X, RightFalloffs[Index + 1].Y, 0.0f);
+        }
+
+        for (int32 InnerIndex = 0; InnerIndex < 6; InnerIndex++)
+        {
+            Vertices[Index * 18 + 12 + InnerIndex].P0 = FVector(Rights[Index].X, Rights[Index].Y, 1.0f);
+            Vertices[Index * 18 + 12 + InnerIndex].P1 = FVector(Rights[Index + 1].X, Rights[Index + 1].Y, 1.0f);
+            Vertices[Index * 18 + 12 + InnerIndex].P2 = FVector(RightFalloffs[Index].X, RightFalloffs[Index].Y, 0.0f);
+            Vertices[Index * 18 + 12 + InnerIndex].P3 = FVector(RightFalloffs[Index + 1].X, RightFalloffs[Index + 1].Y, 0.0f);
+        }
     }
 }
 

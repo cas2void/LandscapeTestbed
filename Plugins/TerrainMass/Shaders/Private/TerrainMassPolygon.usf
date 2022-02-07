@@ -8,17 +8,73 @@ SamplerState EndSideFalloffTextureSampler;
 
 void MainVS(in float4 InPosition : ATTRIBUTE0,
     in float4 InTexCoord0 : ATTRIBUTE1,
+    in float4 InTexCoord1 : ATTRIBUTE2,
+    in float4 InTexCoord2 : ATTRIBUTE3,
+    in float4 InTexCoord3 : ATTRIBUTE4,
+    in float4 InTexCoord4 : ATTRIBUTE5,
+    in float4 InTexCoord5 : ATTRIBUTE6,
+    in float4 InTexCoord6 : ATTRIBUTE7,
     out float4 OutPosition : SV_POSITION,
-    out float4 OutTexCoord0 : TEXCOORD0)
+    out float4 OutTexCoord0 : TEXCOORD0,
+    out float4 OutTexCoord1 : TEXCOORD1,
+    out float4 OutTexCoord2 : TEXCOORD2,
+    out float4 OutTexCoord3 : TEXCOORD3,
+    out float4 OutTexCoord4 : TEXCOORD4,
+    out float4 OutTexCoord5 : TEXCOORD5,
+    out float4 OutTexCoord6 : TEXCOORD6,
+    out float4 OutTexCoord7 : TEXCOORD7)
 {
 	OutPosition.zw = float2(0, 1);
 	OutPosition.xy = -1.0 + 2.0 * InPosition.xy;
 	OutPosition.xy *= float2(1, -1);
-	OutTexCoord0.x = InPosition.z;
-	OutTexCoord0.y = InTexCoord0.x;
+	OutTexCoord3.x = InPosition.z;
+	OutTexCoord3.y = InPosition.w;
+    
+	OutTexCoord0 = InTexCoord0;
+	OutTexCoord1 = InTexCoord1;
+	OutTexCoord2 = InTexCoord2;
+    
+	OutTexCoord4 = InTexCoord3;
+	OutTexCoord5 = InTexCoord4;
+	OutTexCoord6 = InTexCoord5;
+	OutTexCoord7 = InTexCoord6;
+    
+	OutTexCoord3.zw = InPosition.xy;
 }
 
-void MainPS(in float4 SvPosition : SV_POSITION, in float4 SvTexCoord : TEXCOORD0, out float4 OutColor : SV_Target0)
+void MainPS(in float4 SvPosition : SV_POSITION,
+    in float4 SvTexCoord0 : TEXCOORD0,
+    in float4 SvTexCoord1 : TEXCOORD1,
+    in float4 SvTexCoord2 : TEXCOORD2,
+    in float4 SvTexCoord3 : TEXCOORD3,
+    in float4 SvTexCoord4 : TEXCOORD4,
+    in float4 SvTexCoord5 : TEXCOORD5,
+    in float4 SvTexCoord6 : TEXCOORD6,
+    in float4 SvTexCoord7 : TEXCOORD7,
+    out float4 OutColor : SV_Target0)
 {
-	OutColor = float4(SvTexCoord.r, cos((1 - SvTexCoord.g) * 3.141593 * 0.5), 0, 1);
+	float EndFalloff = (cos((1 - SvTexCoord3.y) * 3.141593) + 1.0) * 0.5;
+    
+	float2 d01 = SvTexCoord5.xy - SvTexCoord4.xy;
+	float2 d01_N = normalize(d01);
+	float d01_len = length(d01);
+    
+	float d02_len = length(SvTexCoord6.xy - SvTexCoord4.xy);
+	float d13_len = length(SvTexCoord7.xy - SvTexCoord5.xy);
+    
+	float2 dx0 = SvTexCoord3.zw - SvTexCoord4.xy;
+	float dx0_len = length(dx0);
+	float projected_len = abs(dot(dx0, d01_N));
+	float other_len = sqrt(dx0_len * dx0_len - projected_len * projected_len);
+    
+	float lengthAlpha = projected_len / d01_len;
+	float lerped_len = lerp(d02_len, d13_len, lengthAlpha);
+    
+	float distanceAlpha = other_len / lerped_len;
+	float lerped_alpha = lerp(SvTexCoord4.z, SvTexCoord6.z, distanceAlpha);
+    
+	float2 FalloffTexCoords = float2(lerped_alpha, 0);
+	float MappedDist = StartSideFalloffTexture.Sample(StartSideFalloffTextureSampler, FalloffTexCoords);
+	
+	OutColor = float4(SvTexCoord3.x, EndFalloff * MappedDist, lerped_alpha, 1);
 }

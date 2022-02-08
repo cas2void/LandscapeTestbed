@@ -78,8 +78,10 @@ void MainPS(in float4 SvPosition : SV_POSITION,
 	float InterpolatedAlpha = u * SvTexCoord0.w + v * SvTexCoord1.w + w * SvTexCoord2.w;
 	float2 SideFalloffTexCoords = float2(InterpolatedAlpha, 0);
 	float StartSideFalloff = StartSideFalloffTexture.Sample(StartSideFalloffTextureSampler, SideFalloffTexCoords);
+	float EndSideFalloff = EndSideFalloffTexture.Sample(EndSideFalloffTextureSampler, SideFalloffTexCoords);
+	float LerpedSideFalloff = lerp(StartSideFalloff, EndSideFalloff, SvTexCoord3.x);
 	
-	OutColor = float4(SvTexCoord4.z, EndFalloff * StartSideFalloff, InterpolatedAlpha, 1);
+	OutColor = float4(SvTexCoord4.z, EndFalloff * LerpedSideFalloff, SvTexCoord3.x, 1);
     
 	//{
 	//	// for experiment with 4 points around

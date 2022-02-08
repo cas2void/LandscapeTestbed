@@ -50,7 +50,7 @@ public:
     {
         StartSideFalloffTextureParam.Bind(Initializer.ParameterMap, TEXT("StartSideFalloffTexture"));
         StartSideFalloffTextureSamplerParam.Bind(Initializer.ParameterMap, TEXT("StartSideFalloffTextureSampler"));
-        EndSideFalloffTextureParam.Bind(Initializer.ParameterMap, TEXT("EndStartSideFalloffTexture"));
+        EndSideFalloffTextureParam.Bind(Initializer.ParameterMap, TEXT("EndSideFalloffTexture"));
         EndSideFalloffTextureSamplerParam.Bind(Initializer.ParameterMap, TEXT("EndSideFalloffTextureSampler"));
     }
 
@@ -98,6 +98,7 @@ public:
     // Extra data, x: SegmentT
     FVector4 ExtraData;
 
+    // for experiment with 4 points around
     FVector4 P0;
     FVector4 P1;
     FVector4 P2;
@@ -152,7 +153,7 @@ static void CookVertexData(TResourceArray<FTerrainMassPolygonVertex, VERTEXBUFFE
     TArray<FVector> Rights;
     TArray<FVector> LeftFalloffs;
     TArray<FVector> RightFalloffs;
-
+    TArray<float> Ratios;
     TArray<float> EndFalloffs;
 
     FVector ScaleVector = FVector(1.0f / (ShaderParams.RenderTargetSize.X - 1.0f), 1.0f / (ShaderParams.RenderTargetSize.Y - 1.0f), LANDSCAPE_INV_ZSCALE);
@@ -160,6 +161,8 @@ static void CookVertexData(TResourceArray<FTerrainMassPolygonVertex, VERTEXBUFFE
     for (int32 Index = 0; Index <= ShaderParams.NumSegments; Index++)
     {
         float Ratio = float(Index) / ShaderParams.NumSegments;
+        Ratios.Add(Ratio);
+
         FVector Center = FMath::Lerp(ShaderParams.StartPosition, ShaderParams.EndPosition, Ratio);
         FVector Left = Center + Normal * ShaderParams.Width * 0.5f;
         FVector Right = Center - Normal * ShaderParams.Width * 0.5f;
@@ -189,12 +192,15 @@ static void CookVertexData(TResourceArray<FTerrainMassPolygonVertex, VERTEXBUFFE
         // Center
         Vertices[Index * 18 +  0].Position = Lefts[Index];
         Vertices[Index * 18 +  0].Position.W = EndFalloffs[Index];
+        Vertices[Index * 18 +  0].ExtraData.X = Ratios[Index];
 
         Vertices[Index * 18 +  1].Position = Rights[Index];
         Vertices[Index * 18 +  1].Position.W = EndFalloffs[Index];
+        Vertices[Index * 18 +  1].ExtraData.X = Ratios[Index];
 
         Vertices[Index * 18 +  2].Position = Lefts[Index + 1];
         Vertices[Index * 18 +  2].Position.W = EndFalloffs[Index + 1];
+        Vertices[Index * 18 +  2].ExtraData.X = Ratios[Index + 1];
 
         for (int32 InnerIndex = 0; InnerIndex < 3; InnerIndex++)
         {
@@ -205,12 +211,15 @@ static void CookVertexData(TResourceArray<FTerrainMassPolygonVertex, VERTEXBUFFE
 
         Vertices[Index * 18 +  3].Position = Lefts[Index + 1];
         Vertices[Index * 18 +  3].Position.W = EndFalloffs[Index + 1];
+        Vertices[Index * 18 +  3].ExtraData.X = Ratios[Index + 1];
 
         Vertices[Index * 18 +  4].Position = Rights[Index];
         Vertices[Index * 18 +  4].Position.W = EndFalloffs[Index];
+        Vertices[Index * 18 +  4].ExtraData.X = Ratios[Index];
 
         Vertices[Index * 18 +  5].Position = Rights[Index + 1];
         Vertices[Index * 18 +  5].Position.W = EndFalloffs[Index + 1];
+        Vertices[Index * 18 +  5].ExtraData.X = Ratios[Index + 1];
 
         for (int32 InnerIndex = 0; InnerIndex < 3; InnerIndex++)
         {
@@ -219,24 +228,29 @@ static void CookVertexData(TResourceArray<FTerrainMassPolygonVertex, VERTEXBUFFE
             Vertices[Index * 18 + 3 + InnerIndex].Point2 = FVector(Rights[Index + 1].X, Rights[Index + 1].Y, 1.0f);
         }
 
-        // 4 points for each vertex, for experiment
-        for (int32 InnerIndex = 0; InnerIndex < 6; InnerIndex++)
         {
-            Vertices[Index * 18 + 0 + InnerIndex].P0 = FVector(Lefts[Index].X, Lefts[Index].Y, 1.0f);
-            Vertices[Index * 18 + 0 + InnerIndex].P1 = FVector(Lefts[Index + 1].X, Lefts[Index + 1].Y, 1.0f);
-            Vertices[Index * 18 + 0 + InnerIndex].P2 = FVector(Rights[Index].X, Rights[Index].Y, 1.0f);
-            Vertices[Index * 18 + 0 + InnerIndex].P3 = FVector(Rights[Index + 1].X, Rights[Index + 1].Y, 1.0f);
+            // 4 points for each vertex, for experiment
+            for (int32 InnerIndex = 0; InnerIndex < 6; InnerIndex++)
+            {
+                Vertices[Index * 18 + 0 + InnerIndex].P0 = FVector(Lefts[Index].X, Lefts[Index].Y, 1.0f);
+                Vertices[Index * 18 + 0 + InnerIndex].P1 = FVector(Lefts[Index + 1].X, Lefts[Index + 1].Y, 1.0f);
+                Vertices[Index * 18 + 0 + InnerIndex].P2 = FVector(Rights[Index].X, Rights[Index].Y, 1.0f);
+                Vertices[Index * 18 + 0 + InnerIndex].P3 = FVector(Rights[Index + 1].X, Rights[Index + 1].Y, 1.0f);
+            }
         }
 
         // Left Falloff
         Vertices[Index * 18 +  6].Position = LeftFalloffs[Index];
         Vertices[Index * 18 +  6].Position.W = EndFalloffs[Index];
+        Vertices[Index * 18 +  6].ExtraData.X = Ratios[Index];
 
         Vertices[Index * 18 +  7].Position = Lefts[Index];
         Vertices[Index * 18 +  7].Position.W = EndFalloffs[Index];
+        Vertices[Index * 18 +  7].ExtraData.X = Ratios[Index];
 
         Vertices[Index * 18 +  8].Position = LeftFalloffs[Index + 1];
         Vertices[Index * 18 +  8].Position.W = EndFalloffs[Index + 1];
+        Vertices[Index * 18 +  8].ExtraData.X = Ratios[Index + 1];
 
         for (int32 InnerIndex = 0; InnerIndex < 3; InnerIndex++)
         {
@@ -247,12 +261,15 @@ static void CookVertexData(TResourceArray<FTerrainMassPolygonVertex, VERTEXBUFFE
 
         Vertices[Index * 18 +  9].Position = LeftFalloffs[Index + 1];
         Vertices[Index * 18 +  9].Position.W = EndFalloffs[Index + 1];
+        Vertices[Index * 18 +  9].ExtraData.X = Ratios[Index + 1];
 
         Vertices[Index * 18 + 10].Position = Lefts[Index];
         Vertices[Index * 18 + 10].Position.W = EndFalloffs[Index];
+        Vertices[Index * 18 + 10].ExtraData.X = Ratios[Index];
 
         Vertices[Index * 18 + 11].Position = Lefts[Index + 1];
         Vertices[Index * 18 + 11].Position.W = EndFalloffs[Index + 1];
+        Vertices[Index * 18 + 11].ExtraData.X = Ratios[Index + 1];
 
         for (int32 InnerIndex = 0; InnerIndex < 3; InnerIndex++)
         {
@@ -261,24 +278,29 @@ static void CookVertexData(TResourceArray<FTerrainMassPolygonVertex, VERTEXBUFFE
             Vertices[Index * 18 + 9 + InnerIndex].Point2 = FVector(Lefts[Index + 1].X, Lefts[Index + 1].Y, 1.0f);
         }
 
-        // 4 points for each vertex, for experiment
-        for (int32 InnerIndex = 0; InnerIndex < 6; InnerIndex++)
         {
-            Vertices[Index * 18 + 6 + InnerIndex].P0 = FVector(Lefts[Index].X, Lefts[Index].Y, 1.0f);
-            Vertices[Index * 18 + 6 + InnerIndex].P1 = FVector(Lefts[Index + 1].X, Lefts[Index + 1].Y, 1.0f);
-            Vertices[Index * 18 + 6 + InnerIndex].P2 = FVector(LeftFalloffs[Index].X, LeftFalloffs[Index].Y, 0.0f);
-            Vertices[Index * 18 + 6 + InnerIndex].P3 = FVector(LeftFalloffs[Index + 1].X, LeftFalloffs[Index + 1].Y, 0.0f);
+            // 4 points for each vertex, for experiment
+            for (int32 InnerIndex = 0; InnerIndex < 6; InnerIndex++)
+            {
+                Vertices[Index * 18 + 6 + InnerIndex].P0 = FVector(Lefts[Index].X, Lefts[Index].Y, 1.0f);
+                Vertices[Index * 18 + 6 + InnerIndex].P1 = FVector(Lefts[Index + 1].X, Lefts[Index + 1].Y, 1.0f);
+                Vertices[Index * 18 + 6 + InnerIndex].P2 = FVector(LeftFalloffs[Index].X, LeftFalloffs[Index].Y, 0.0f);
+                Vertices[Index * 18 + 6 + InnerIndex].P3 = FVector(LeftFalloffs[Index + 1].X, LeftFalloffs[Index + 1].Y, 0.0f);
+            }
         }
 
         // Right Falloff
         Vertices[Index * 18 + 12].Position = Rights[Index];
         Vertices[Index * 18 + 12].Position.W = EndFalloffs[Index];
+        Vertices[Index * 18 + 12].ExtraData.X = Ratios[Index];
 
         Vertices[Index * 18 + 13].Position = RightFalloffs[Index];
         Vertices[Index * 18 + 13].Position.W = EndFalloffs[Index];
+        Vertices[Index * 18 + 13].ExtraData.X = Ratios[Index];
 
         Vertices[Index * 18 + 14].Position = Rights[Index + 1];
         Vertices[Index * 18 + 14].Position.W = EndFalloffs[Index + 1];
+        Vertices[Index * 18 + 14].ExtraData.X = Ratios[Index + 1];
 
         for (int32 InnerIndex = 0; InnerIndex < 3; InnerIndex++)
         {
@@ -289,12 +311,15 @@ static void CookVertexData(TResourceArray<FTerrainMassPolygonVertex, VERTEXBUFFE
 
         Vertices[Index * 18 + 15].Position = Rights[Index + 1];
         Vertices[Index * 18 + 15].Position.W = EndFalloffs[Index + 1];
+        Vertices[Index * 18 + 15].ExtraData.X = Ratios[Index + 1];
 
         Vertices[Index * 18 + 16].Position = RightFalloffs[Index];
         Vertices[Index * 18 + 16].Position.W = EndFalloffs[Index];
+        Vertices[Index * 18 + 16].ExtraData.X = Ratios[Index];
 
         Vertices[Index * 18 + 17].Position = RightFalloffs[Index + 1];
         Vertices[Index * 18 + 17].Position.W = EndFalloffs[Index + 1];
+        Vertices[Index * 18 + 17].ExtraData.X = Ratios[Index + 1];
 
         for (int32 InnerIndex = 0; InnerIndex < 3; InnerIndex++)
         {
@@ -303,13 +328,15 @@ static void CookVertexData(TResourceArray<FTerrainMassPolygonVertex, VERTEXBUFFE
             Vertices[Index * 18 + 15 + InnerIndex].Point2 = FVector(RightFalloffs[Index + 1].X, RightFalloffs[Index + 1].Y, 0.0f);
         }
 
-        // 4 points for each vertex, for experiment
-        for (int32 InnerIndex = 0; InnerIndex < 6; InnerIndex++)
         {
-            Vertices[Index * 18 + 12 + InnerIndex].P0 = FVector(Rights[Index].X, Rights[Index].Y, 1.0f);
-            Vertices[Index * 18 + 12 + InnerIndex].P1 = FVector(Rights[Index + 1].X, Rights[Index + 1].Y, 1.0f);
-            Vertices[Index * 18 + 12 + InnerIndex].P2 = FVector(RightFalloffs[Index].X, RightFalloffs[Index].Y, 0.0f);
-            Vertices[Index * 18 + 12 + InnerIndex].P3 = FVector(RightFalloffs[Index + 1].X, RightFalloffs[Index + 1].Y, 0.0f);
+            // 4 points for each vertex, for experiment
+            for (int32 InnerIndex = 0; InnerIndex < 6; InnerIndex++)
+            {
+                Vertices[Index * 18 + 12 + InnerIndex].P0 = FVector(Rights[Index].X, Rights[Index].Y, 1.0f);
+                Vertices[Index * 18 + 12 + InnerIndex].P1 = FVector(Rights[Index + 1].X, Rights[Index + 1].Y, 1.0f);
+                Vertices[Index * 18 + 12 + InnerIndex].P2 = FVector(RightFalloffs[Index].X, RightFalloffs[Index].Y, 0.0f);
+                Vertices[Index * 18 + 12 + InnerIndex].P3 = FVector(RightFalloffs[Index + 1].X, RightFalloffs[Index + 1].Y, 0.0f);
+            }
         }
     }
 }

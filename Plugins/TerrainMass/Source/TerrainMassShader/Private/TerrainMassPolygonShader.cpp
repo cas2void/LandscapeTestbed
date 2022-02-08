@@ -95,6 +95,8 @@ public:
     FVector4 Point1;
     // Point 2
     FVector4 Point2;
+    // Extra data, x: SegmentT
+    FVector4 ExtraData;
 
     FVector4 P0;
     FVector4 P1;
@@ -118,11 +120,12 @@ public:
         Elements.Add(FVertexElement(0, STRUCT_OFFSET(FTerrainMassPolygonVertex, Point0), VET_Float4, 1, Stride));
         Elements.Add(FVertexElement(0, STRUCT_OFFSET(FTerrainMassPolygonVertex, Point1), VET_Float4, 2, Stride));
         Elements.Add(FVertexElement(0, STRUCT_OFFSET(FTerrainMassPolygonVertex, Point2), VET_Float4, 3, Stride));
+        Elements.Add(FVertexElement(0, STRUCT_OFFSET(FTerrainMassPolygonVertex, ExtraData), VET_Float4, 4, Stride));
 
-        Elements.Add(FVertexElement(0, STRUCT_OFFSET(FTerrainMassPolygonVertex, P0), VET_Float4, 4, Stride));
-        Elements.Add(FVertexElement(0, STRUCT_OFFSET(FTerrainMassPolygonVertex, P1), VET_Float4, 5, Stride));
-        Elements.Add(FVertexElement(0, STRUCT_OFFSET(FTerrainMassPolygonVertex, P2), VET_Float4, 6, Stride));
-        Elements.Add(FVertexElement(0, STRUCT_OFFSET(FTerrainMassPolygonVertex, P3), VET_Float4, 7, Stride));
+        Elements.Add(FVertexElement(0, STRUCT_OFFSET(FTerrainMassPolygonVertex, P0), VET_Float4, 5, Stride));
+        Elements.Add(FVertexElement(0, STRUCT_OFFSET(FTerrainMassPolygonVertex, P1), VET_Float4, 6, Stride));
+        Elements.Add(FVertexElement(0, STRUCT_OFFSET(FTerrainMassPolygonVertex, P2), VET_Float4, 7, Stride));
+        Elements.Add(FVertexElement(0, STRUCT_OFFSET(FTerrainMassPolygonVertex, P3), VET_Float4, 8, Stride));
 		VertexDeclarationRHI = PipelineStateCache::GetOrCreateVertexDeclaration(Elements);
 	}
 
@@ -216,6 +219,7 @@ static void CookVertexData(TResourceArray<FTerrainMassPolygonVertex, VERTEXBUFFE
             Vertices[Index * 18 + 3 + InnerIndex].Point2 = FVector(Rights[Index + 1].X, Rights[Index + 1].Y, 1.0f);
         }
 
+        // 4 points for each vertex, for experiment
         for (int32 InnerIndex = 0; InnerIndex < 6; InnerIndex++)
         {
             Vertices[Index * 18 + 0 + InnerIndex].P0 = FVector(Lefts[Index].X, Lefts[Index].Y, 1.0f);
@@ -257,6 +261,7 @@ static void CookVertexData(TResourceArray<FTerrainMassPolygonVertex, VERTEXBUFFE
             Vertices[Index * 18 + 9 + InnerIndex].Point2 = FVector(Lefts[Index + 1].X, Lefts[Index + 1].Y, 1.0f);
         }
 
+        // 4 points for each vertex, for experiment
         for (int32 InnerIndex = 0; InnerIndex < 6; InnerIndex++)
         {
             Vertices[Index * 18 + 6 + InnerIndex].P0 = FVector(Lefts[Index].X, Lefts[Index].Y, 1.0f);
@@ -298,6 +303,7 @@ static void CookVertexData(TResourceArray<FTerrainMassPolygonVertex, VERTEXBUFFE
             Vertices[Index * 18 + 15 + InnerIndex].Point2 = FVector(RightFalloffs[Index + 1].X, RightFalloffs[Index + 1].Y, 0.0f);
         }
 
+        // 4 points for each vertex, for experiment
         for (int32 InnerIndex = 0; InnerIndex < 6; InnerIndex++)
         {
             Vertices[Index * 18 + 12 + InnerIndex].P0 = FVector(Rights[Index].X, Rights[Index].Y, 1.0f);

@@ -166,8 +166,8 @@ static void CookVertexData(TResourceArray<FTerrainMassPolygonVertex, VERTEXBUFFE
         FVector Center = FMath::Lerp(ShaderParams.StartPosition, ShaderParams.EndPosition, Ratio);
         FVector Left = Center + Normal * ShaderParams.Width * 0.5f;
         FVector Right = Center - Normal * ShaderParams.Width * 0.5f;
-        FVector LeftFalloff = Left + Normal * ShaderParams.SideFalloff * 0.5f;
-        FVector RightFalloff = Right - Normal * ShaderParams.SideFalloff * 0.5f;
+        FVector LeftFalloff = Left + Normal * ShaderParams.SideFalloff;
+        FVector RightFalloff = Right - Normal * ShaderParams.SideFalloff;
 
         Lefts.Add(ShaderParams.WorldToCanvasTransform.TransformPosition(Left) * ScaleVector);
         Rights.Add(ShaderParams.WorldToCanvasTransform.TransformPosition(Right) * ScaleVector);

@@ -45,10 +45,10 @@ protected:
 	UTextureRenderTarget2D* OutputRT;
 
 	UPROPERTY(EditAnywhere, Category="Landscape")
-	float Width = 1000.0f;
+	float Width = 200.0f;
 
 	UPROPERTY(EditAnywhere, Category="Landscape")
-	float SideFalloff = 600.0f;
+	float SideFalloff = 1000.0f;
 
 	UPROPERTY(EditAnywhere, Category="Landscape")
 	float EndFalloff = 800.0f;

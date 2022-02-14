@@ -1,0 +1,109 @@
+#include "/Engine/Private/Common.ush"
+
+float2 InvTextureSize;
+Texture2D<float> StartSideFalloffTexture;
+SamplerState StartSideFalloffTextureSampler;
+Texture2D<float> EndSideFalloffTexture;
+SamplerState EndSideFalloffTextureSampler;
+
+void MainVS(in float4 InPosition : ATTRIBUTE0,
+    in float4 InTexCoord0 : ATTRIBUTE1,
+    in float4 InTexCoord1 : ATTRIBUTE2,
+    in float4 InTexCoord2 : ATTRIBUTE3,
+    in float4 InTexCoord3 : ATTRIBUTE4,
+    in float4 InTexCoord4 : ATTRIBUTE5,
+    in float4 InTexCoord5 : ATTRIBUTE6,
+    in float4 InTexCoord6 : ATTRIBUTE7,
+    in float4 InTexCoord7 : ATTRIBUTE8,
+    out float4 OutPosition : SV_POSITION,
+    out float4 OutTexCoord0 : TEXCOORD0,
+    out float4 OutTexCoord1 : TEXCOORD1,
+    out float4 OutTexCoord2 : TEXCOORD2,
+    out float4 OutTexCoord3 : TEXCOORD3,
+    out float4 OutTexCoord4 : TEXCOORD4,
+    out float4 OutTexCoord5 : TEXCOORD5,
+    out float4 OutTexCoord6 : TEXCOORD6,
+    out float4 OutTexCoord7 : TEXCOORD7,
+    out float4 OutTexCoord8 : TEXCOORD8)
+{
+	OutPosition.zw = float2(0, 1);
+	OutPosition.xy = -1.0 + 2.0 * InPosition.xy;
+	OutPosition.xy *= float2(1, -1);
+	OutTexCoord4 = InPosition;
+    
+	float x1 = InTexCoord0.x;
+	float y1 = InTexCoord0.y;
+	float x2 = InTexCoord1.x;
+	float y2 = InTexCoord1.y;
+	float x3 = InTexCoord2.x;
+	float y3 = InTexCoord2.y;
+	
+	float OneOverDet = 1.0 / (x1 * (y2 - y3) + x2 * (y3 - y1) + x3 * (y1 - y2));
+	float3 Line0 = float3(x2 * y3 - x3 * y2, y2 - y3, x3 - x2) * OneOverDet;
+	float3 Line1 = float3(x3 * y1 - x1 * y3, y3 - y1, x1 - x3) * OneOverDet;
+	float3 Line2 = float3(x1 * y2 - x2 * y1, y1 - y2, x2 - x1) * OneOverDet;
+	
+	OutTexCoord0 = float4(Line0, InTexCoord0.z);
+	OutTexCoord1 = float4(Line1, InTexCoord1.z);
+	OutTexCoord2 = float4(Line2, InTexCoord2.z);
+	OutTexCoord3 = InTexCoord3;
+    
+	//{
+	//	// for experiment with 4 points around
+	//	OutTexCoord5 = InTexCoord4;
+	//	OutTexCoord6 = InTexCoord5;
+	//	OutTexCoord7 = InTexCoord6;
+	//	OutTexCoord8 = InTexCoord7;
+	//}
+}
+
+void MainPS(in float4 SvPosition : SV_POSITION,
+    in float4 SvTexCoord0 : TEXCOORD0,
+    in float4 SvTexCoord1 : TEXCOORD1,
+    in float4 SvTexCoord2 : TEXCOORD2,
+    in float4 SvTexCoord3 : TEXCOORD3,
+    in float4 SvTexCoord4 : TEXCOORD4,
+    in float4 SvTexCoord5 : TEXCOORD5,
+    in float4 SvTexCoord6 : TEXCOORD6,
+    in float4 SvTexCoord7 : TEXCOORD7,
+    in float4 SvTexCoord8 : TEXCOORD8,
+    out float4 OutColor : SV_Target0)
+{
+	float EndFalloff = (cos((1 - SvTexCoord4.w) * 3.141593) + 1.0) * 0.5;
+	
+	float3 VariableVector = float3(1, SvTexCoord4.x, SvTexCoord4.y);
+	float u = dot(SvTexCoord0.xyz, VariableVector);
+	float v = dot(SvTexCoord1.xyz, VariableVector);
+	float w = dot(SvTexCoord2.xyz, VariableVector);
+	float InterpolatedAlpha = u * SvTexCoord0.w + v * SvTexCoord1.w + w * SvTexCoord2.w;
+	float2 SideFalloffTexCoords = float2(InterpolatedAlpha, 0);
+	float StartSideFalloff = StartSideFalloffTexture.Sample(StartSideFalloffTextureSampler, SideFalloffTexCoords);
+	float EndSideFalloff = EndSideFalloffTexture.Sample(EndSideFalloffTextureSampler, SideFalloffTexCoords);
+	float LerpedSideFalloff = lerp(StartSideFalloff, EndSideFalloff, SvTexCoord3.x);
+	
+	OutColor = float4(SvTexCoord4.z, EndFalloff * LerpedSideFalloff, SvTexCoord3.x, 1);
+    
+	//{
+	//	// for experiment with 4 points around
+	//	float2 d01 = SvTexCoord6.xy - SvTexCoord5.xy;
+	//	float2 d01_N = normalize(d01);
+	//	float d01_len = length(d01);
+    
+	//	float d02_len = length(SvTexCoord7.xy - SvTexCoord5.xy);
+	//	float d13_len = length(SvTexCoord8.xy - SvTexCoord6.xy);
+    
+	//	float2 dx0 = SvTexCoord4.xy - SvTexCoord5.xy;
+	//	float dx0_len = length(dx0);
+	//	float projected_len = abs(dot(dx0, d01_N));
+	//	float other_len = sqrt(dx0_len * dx0_len - projected_len * projected_len);
+    
+	//	float lengthAlpha = projected_len / d01_len;
+	//	float lerped_len = lerp(d02_len, d13_len, lengthAlpha);
+    
+	//	float distanceAlpha = other_len / lerped_len;
+	//	float lerped_alpha = lerp(SvTexCoord5.z, SvTexCoord7.z, distanceAlpha);
+    
+	//	float2 FalloffTexCoords = float2(lerped_alpha, 0);
+	//	float MappedDist = StartSideFalloffTexture.Sample(StartSideFalloffTextureSampler, FalloffTexCoords);
+	//}
+}

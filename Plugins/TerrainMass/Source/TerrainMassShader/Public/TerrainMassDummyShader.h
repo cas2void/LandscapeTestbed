@@ -2,14 +2,11 @@
 
 #include "CoreMinimal.h"
 #include "Engine/TextureRenderTarget2D.h"
-#include "Engine/Texture2D.h"
-#include "RHICommandList.h"
-#include "RHIResources.h"
+#include "Engine/Texture2DDynamic.h"
 
 struct FTerrainMassDummyShaderParameter
 {
-	UTextureRenderTarget2D* SourceTexture = nullptr;
-	UTexture2D* SideFalloffTexture = nullptr;
+	TWeakObjectPtr<UTexture2DDynamic> SideFalloffTexture;
 	FVector2D InvTextureSize;
 	FVector Center;
 	float Radius;
@@ -24,5 +21,5 @@ struct FTerrainMassDummyShaderParameter
 class TERRAINMASSSHADER_API FTerrainMassDummyShader
 {
 public:
-	static void Render(FRHICommandListImmediate& RHICmdList, FRHITexture* SourceTexture, FRHITexture* DestTexture, const FIntPoint& Size, const FTerrainMassDummyShaderParameter& ShaderParams);
+	static void Render(UTextureRenderTarget2D* DestRT, const FIntPoint& Size, const FTerrainMassDummyShaderParameter& ShaderParams);
 };

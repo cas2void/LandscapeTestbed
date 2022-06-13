@@ -6,6 +6,8 @@
 #include "CommonRenderResources.h"
 #include "PipelineStateCache.h"
 #include "ScreenRendering.h"
+#include "RHICommandList.h"
+#include "RHIResources.h"
 
 #if TERRAIN_MASS_DUMMY_CUSTOM_VERTEX_SHADER
 class FTerrainMassDummyShaderVS : public FGlobalShader
@@ -53,8 +55,6 @@ public:
 	FTerrainMassDummyShaderPS(const ShaderMetaType::CompiledShaderInitializerType& Initializer)
         : FGlobalShader(Initializer)
     {
-        SourceTextureParam.Bind(Initializer.ParameterMap, TEXT("SourceTexture"));
-        SourceTextureSamplerParam.Bind(Initializer.ParameterMap, TEXT("SourceTextureSampler"));
         SideFalloffTextureParam.Bind(Initializer.ParameterMap, TEXT("SideFalloffTexture"));
         SideFalloffTextureSamplerParam.Bind(Initializer.ParameterMap, TEXT("SideFalloffTextureSampler"));
         InvTextureSizeParam.Bind(Initializer.ParameterMap, TEXT("InvTextureSize"));
@@ -64,15 +64,7 @@ public:
 
 	void SetParameters(FRHICommandList& RHICmdList, const FTerrainMassDummyShaderParameter& Params)
     {
-        if (Params.SourceTexture &&
-            Params.SourceTexture->Resource &&
-            Params.SourceTexture->Resource->TextureRHI)
-        {
-            SetTextureParameter(RHICmdList, RHICmdList.GetBoundPixelShader(), SourceTextureParam, SourceTextureSamplerParam,
-                TStaticSamplerState<>::GetRHI(), Params.SourceTexture->Resource->TextureRHI);
-        }
-
-        if (Params.SideFalloffTexture &&
+        if (Params.SideFalloffTexture.IsValid() &&
             Params.SideFalloffTexture->Resource &&
             Params.SideFalloffTexture->Resource->TextureRHI)
         {
@@ -86,8 +78,6 @@ public:
     }
 
 private:
-    LAYOUT_FIELD(FShaderResourceParameter, SourceTextureParam);
-    LAYOUT_FIELD(FShaderResourceParameter, SourceTextureSamplerParam);
 	LAYOUT_FIELD(FShaderResourceParameter, SideFalloffTextureParam);
 	LAYOUT_FIELD(FShaderResourceParameter, SideFalloffTextureSamplerParam);
 	LAYOUT_FIELD(FShaderParameter, InvTextureSizeParam);
@@ -97,7 +87,7 @@ private:
 
 IMPLEMENT_GLOBAL_SHADER(FTerrainMassDummyShaderPS, "/TerrainMassShaders/TerrainMassDummy.usf", "MainPS", SF_Pixel);
 
-void FTerrainMassDummyShader::Render(FRHICommandListImmediate& RHICmdList, FRHITexture* SourceTexture, FRHITexture* DestTexture, const FIntPoint& Size, const FTerrainMassDummyShaderParameter& ShaderParams)
+static void Render_RenderingThread(FRHICommandListImmediate& RHICmdList, FRHITexture* DestTexture, const FIntPoint& Size, const FTerrainMassDummyShaderParameter& ShaderParams)
 {
     IRendererModule* RendererModule = &FModuleManager::GetModuleChecked<IRendererModule>("Renderer");
     FRHIRenderPassInfo RPInfo(DestTexture, ERenderTargetActions::Load_Store);
@@ -151,4 +141,17 @@ void FTerrainMassDummyShader::Render(FRHICommandListImmediate& RHICmdList, FRHIT
 #endif
     }
     RHICmdList.EndRenderPass();
+}
+
+void FTerrainMassDummyShader::Render(UTextureRenderTarget2D* DestRT, const FIntPoint& Size, const FTerrainMassDummyShaderParameter& ShaderParams)
+{
+    ENQUEUE_RENDER_COMMAND(TerranMassDummyBrush)(
+        [DestRT, Size, ShaderParams](FRHICommandListImmediate& RHICmdList)
+        {
+            if (DestRT->GetRenderTargetResource() && DestRT->GetRenderTargetResource()->GetRenderTargetTexture())
+            {
+                Render_RenderingThread(RHICmdList, DestRT->GetRenderTargetResource()->GetRenderTargetTexture(), Size, ShaderParams);
+            }
+        }
+    );
 }

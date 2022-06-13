@@ -3,6 +3,7 @@
 #include "CoreMinimal.h"
 #include "LandscapeBlueprintBrush.h"
 #include "Engine/TextureRenderTarget2D.h"
+#include "ScalarRamp.h"
 #include "TerrainMassDummyBrush.generated.h"
 
 /**
@@ -29,8 +30,13 @@ public:
 protected:
 #if WITH_EDITOR	
 	virtual void PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent) override;
-	//virtual void PostLoad() override;
 #endif
+
+	//
+	// AActor Interfaces
+	//
+public:
+	virtual void PostRegisterAllComponents() override;
 
 	//
 	// Brush Rendering
@@ -39,19 +45,22 @@ protected:
 	UPROPERTY(VisibleAnywhere, Transient)
 	UTextureRenderTarget2D* CanvasRT;
 
+	UPROPERTY(VisibleAnywhere, Transient)
+	UTextureRenderTarget2D* BlendRT;
+
+	UPROPERTY(VisibleAnywhere, Transient)
+	UTextureRenderTarget2D* OutputRT;
+
 	//
 	// Shape Falloff
 	//
 protected:
-	void InitSideFalloffCurve();
-	void UpdateSideFalloffTexture();
-
 	UPROPERTY(EditAnywhere, Category="Landscape", meta=(UIMin=0))
 	float Radius = 1000.0f;
 	
 	UPROPERTY(EditAnywhere, Category="Landscape", AdvancedDisplay)
-	struct FRuntimeFloatCurve SideFalloffCurve;
+	FScalarRamp SideFalloffRamp;
 
-	UPROPERTY(VisibleAnywhere, Category = "Landscape")
-	class UTexture2D* SideFalloffTexture;
+	UPROPERTY(Transient, VisibleInstanceOnly, Category = "Landscape", AdvancedDisplay)
+	UTexture2DDynamic* SideFalloffTexture;
 };

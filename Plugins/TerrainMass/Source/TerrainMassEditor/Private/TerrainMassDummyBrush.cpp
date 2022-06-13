@@ -3,10 +3,11 @@
 #include "Landscape.h"
 #include "LandscapeDataAccess.h"
 #include "Curves/CurveFloat.h"
-#include "Engine/Texture2D.h"
+#include "Kismet/KismetRenderingLibrary.h"
 
-#include "TerrainMassLibrary.h"
+#include "ScalarRamp.h"
 #include "TerrainMassDummyShader.h"
+#include "TerrainMassCompositeShader.h"
 
 ATerrainMassDummyBrush::ATerrainMassDummyBrush()
 {
@@ -20,7 +21,23 @@ UTextureRenderTarget2D* ATerrainMassDummyBrush::Render_Native(bool InIsHeightmap
     check(InCombinedResult);
 
     FIntPoint RenderTargetSize(InCombinedResult->SizeX, InCombinedResult->SizeY);
-    if (!UTerrainMassLibrary::CreateOrUpdateRenderTarget2D(GetTransientPackage(), CanvasRT, RenderTargetSize, RTF_RGBA8, true))
+
+    if (!CanvasRT || CanvasRT->SizeX != RenderTargetSize.X || CanvasRT->SizeY != RenderTargetSize.Y)
+    {
+        CanvasRT = UKismetRenderingLibrary::CreateRenderTarget2D(this, RenderTargetSize.X, RenderTargetSize.Y, RTF_RG8);
+    }
+
+    if (!BlendRT || BlendRT->SizeX != RenderTargetSize.X || BlendRT->SizeY != RenderTargetSize.Y)
+    {
+        BlendRT = UKismetRenderingLibrary::CreateRenderTarget2D(this, RenderTargetSize.X, RenderTargetSize.Y, RTF_R8);
+    }
+
+    if (!OutputRT || OutputRT->SizeX != RenderTargetSize.X || OutputRT->SizeY != RenderTargetSize.Y)
+    {
+        OutputRT = UKismetRenderingLibrary::CreateRenderTarget2D(this, RenderTargetSize.X, RenderTargetSize.Y, RTF_RGBA8);
+    }
+
+    if (!CanvasRT || !BlendRT || !OutputRT)
     {
         // LandscapeEditLayers.cpp - ALandscape::RegenerateLayersHeightmaps
         //
@@ -43,7 +60,6 @@ UTextureRenderTarget2D* ATerrainMassDummyBrush::Render_Native(bool InIsHeightmap
     Center.Z *= LANDSCAPE_INV_ZSCALE;
 
     FTerrainMassDummyShaderParameter ShaderParams;
-    ShaderParams.SourceTexture = InCombinedResult;
     ShaderParams.SideFalloffTexture = SideFalloffTexture;
     ShaderParams.InvTextureSize = FVector2D(1.0f) / FVector2D(RenderTargetSize);
     ShaderParams.Center = Center;
@@ -54,27 +70,24 @@ UTextureRenderTarget2D* ATerrainMassDummyBrush::Render_Native(bool InIsHeightmap
     ShaderParams.InvTargetSizeAndTextureSize = FVector4(1.0f / RenderTargetSize.X, 1.0f / RenderTargetSize.Y, 1.0f, 1.0f);
 #endif
 
-    ENQUEUE_RENDER_COMMAND(TerranMassDummyBrush)(
-        [this, InCombinedResult, RenderTargetSize, ShaderParams](FRHICommandListImmediate& RHICmdList)
-        {
-            if (InCombinedResult->GetRenderTargetResource() && InCombinedResult->GetRenderTargetResource()->GetRenderTargetTexture() &&
-                CanvasRT->GetRenderTargetResource() && CanvasRT->GetRenderTargetResource()->GetRenderTargetTexture())
-            {
-                FTerrainMassDummyShader::Render(RHICmdList,
-                    InCombinedResult->GetRenderTargetResource()->GetRenderTargetTexture(),
-                    CanvasRT->GetRenderTargetResource()->GetRenderTargetTexture(),
-                    RenderTargetSize, ShaderParams);
-            }
-        }
-    );
+    FTerrainMassDummyShader::Render(CanvasRT, RenderTargetSize, ShaderParams);
 
-    return CanvasRT;
+    FTerrainMassCompositeShaderParameter CompositeShaderParams;
+    CompositeShaderParams.InvTextureSize = FVector2D(1.0f) / FVector2D(RenderTargetSize);
+#if TERRAIN_MASS_DUMMY_CUSTOM_VERTEX_SHADER
+    CompositeShaderParams.PosScaleBias = FVector4(RenderTargetSize.X, RenderTargetSize.Y, 0.0f, 0.0f);
+    CompositeShaderParams.UVScaleBias = FVector4(1.0f, 1.0f, 0.0f, 0.0f);
+    CompositeShaderParams.InvTargetSizeAndTextureSize = FVector4(1.0f / RenderTargetSize.X, 1.0f / RenderTargetSize.Y, 1.0f, 1.0f);
+#endif
+
+    FTerrainMassCompositeShader::Render(InCombinedResult, CanvasRT, BlendRT, OutputRT, RenderTargetSize, CompositeShaderParams);
+
+    return OutputRT;
 }
 
 void ATerrainMassDummyBrush::Initialize_Native(const FTransform& InLandscapeTransform, const FIntPoint& InLandscapeSize, const FIntPoint& InLandscapeRenderTargetSize)
 {
-    InitSideFalloffCurve();
-    UpdateSideFalloffTexture();
+    UE_LOG(LogTemp, Warning, TEXT("ATerrainMassDummyBrush::Initialize_Native"));
 }
 
 #if WITH_EDITOR
@@ -82,65 +95,21 @@ void ATerrainMassDummyBrush::PostEditChangeProperty(FPropertyChangedEvent& Prope
 {
     Super::PostEditChangeProperty(PropertyChangedEvent);
 
-    if (PropertyChangedEvent.GetPropertyName() == GET_MEMBER_NAME_CHECKED(ATerrainMassDummyBrush, SideFalloffCurve))
+    if (PropertyChangedEvent.GetPropertyName() == GET_MEMBER_NAME_CHECKED(ATerrainMassDummyBrush, SideFalloffRamp) ||
+        PropertyChangedEvent.MemberProperty->GetFName() == GET_MEMBER_NAME_CHECKED(ATerrainMassDummyBrush, SideFalloffRamp))
     {
-        UpdateSideFalloffTexture();
+        SideFalloffRamp.WriteTexture(SideFalloffTexture);
     }
 }
 #endif
 
-void ATerrainMassDummyBrush::InitSideFalloffCurve()
+void ATerrainMassDummyBrush::PostRegisterAllComponents()
 {
-    FRichCurve* Curve = SideFalloffCurve.GetRichCurve();
-    if (Curve && Curve->GetNumKeys() < 1)
+    Super::PostRegisterAllComponents();
+
+    if (!SideFalloffTexture)
     {
-        FKeyHandle FirstKeyHandle = Curve->AddKey(0, 0);
-        FKeyHandle LastKeyHandle = Curve->AddKey(1, 1);
-        Curve->SetKeyInterpMode(FirstKeyHandle, RCIM_Cubic, true);
-        Curve->SetKeyInterpMode(LastKeyHandle, RCIM_Cubic, true);
-        Curve->SetKeyTangentMode(FirstKeyHandle, RCTM_Auto);
-        Curve->SetKeyTangentMode(LastKeyHandle, RCTM_Auto);
+        SideFalloffTexture = FScalarRamp::CreateTexture(256);
+        SideFalloffRamp.WriteTexture(SideFalloffTexture);
     }
-}
-
-void ATerrainMassDummyBrush::UpdateSideFalloffTexture()
-{
-    if (!UTerrainMassLibrary::CreateOrUpdateTexture2D(this, SideFalloffTexture, FIntPoint(256, 1), PF_G8, TA_Clamp, TA_Clamp))
-    {
-        return;
-    }
-
-    FRichCurve* Curve = SideFalloffCurve.GetRichCurve();
-    if (Curve)
-    {
-        FKeyHandle FirstKeyHandle = Curve->GetFirstKeyHandle();
-        float ClampedValue = FMath::Min(Curve->GetKeyValue(FirstKeyHandle), 0.0f);
-        Curve->SetKeyValue(FirstKeyHandle, ClampedValue);
-
-        float ClampedTime = FMath::Max(Curve->GetKeyTime(FirstKeyHandle), 0.0f);
-        Curve->SetKeyTime(FirstKeyHandle, ClampedTime);
-    }
-
-    const int32 TextureWidth = SideFalloffTexture->GetSizeX();
-    const int32 TotalSize = TextureWidth * sizeof(uint8);
-    uint8* Pixels = new uint8[TotalSize];
-
-    for (int32 Index = 0; Index < TextureWidth; Index++)
-    {
-        float Time = (float)Index / (float)(TextureWidth - 1);
-        float CurveValue = Time;
-        if (Curve && Curve->GetNumKeys() > 0)
-        {
-            CurveValue = FMath::Clamp(Curve->Eval(Time), 0.0f, 1.0f);
-        }
-        Pixels[Index] = (uint8)(CurveValue * 255);
-    }
-
-    uint8* MipData = (uint8*)SideFalloffTexture->PlatformData->Mips[0].BulkData.Lock(LOCK_READ_WRITE);
-    FMemory::Memcpy(MipData, Pixels, TotalSize);
-    SideFalloffTexture->PlatformData->Mips[0].BulkData.Unlock();
-
-    SideFalloffTexture->UpdateResource();
-
-    delete[] Pixels;
 }

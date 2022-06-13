@@ -35,23 +35,26 @@ void MainVS(in float2 InPosition : ATTRIBUTE0,
 //
 // Pixel Shader
 //
-Texture2D<float> SideFalloffTexture;
-SamplerState SideFalloffTextureSampler;
+Texture2D<float2> InputTexture;
+SamplerState InputTextureSampler;
+Texture2D<float2> CanvasTexture;
+SamplerState CanvasTextureSampler;
+Texture2D<float> BlendTexture;
+SamplerState BlendTextureSampler;
+
 float2 InvTextureSize;
-float3 Center;
-float Radius;
 
 void MainPS(in float2 SvTexCoord : TEXCOORD0, in float4 SvPosition : SV_POSITION, out float4 OutColor : SV_Target0)
 {
-	float2 CenterTextureSpace = Center * InvTextureSize;
-	float2 TerrainTexcoords = SvTexCoord - float2(0.5, 0.5) * InvTextureSize;
+    float2 InputPixel = InputTexture.Sample(InputTextureSampler, SvTexCoord);
+    float InputHeight = UnpackHeight(InputPixel);
 	
-    float CurrentDist = distance(CenterTextureSpace, TerrainTexcoords);
-	float NormalizedDist = saturate(CurrentDist / Radius);
-	float2 FalloffTexCoords = float2(1 - NormalizedDist, 0);
-	float MappedDist = SideFalloffTexture.Sample(SideFalloffTextureSampler, FalloffTexCoords);
+    float2 CanvasPixel = CanvasTexture.Sample(CanvasTextureSampler, SvTexCoord);
+    float CanvasHeight = UnpackHeight(CanvasPixel);
+	
+    float BlendValue = BlendTexture.Sample(BlendTextureSampler, SvTexCoord);
     
-	float CompositeHeight = lerp(0, Center.z, MappedDist);
+    float CompositeHeight = lerp(InputHeight, CanvasHeight, BlendValue);
 	float2 OutputHeight = PackHeight(CompositeHeight);
     
 	OutColor = float4(OutputHeight.x, OutputHeight.y, 0, 1);

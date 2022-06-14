@@ -43,12 +43,6 @@ public:
 	//
 protected:
 	UPROPERTY(VisibleAnywhere, Transient)
-	UTextureRenderTarget2D* CanvasRT;
-
-	UPROPERTY(VisibleAnywhere, Transient)
-	UTextureRenderTarget2D* BlendRT;
-
-	UPROPERTY(VisibleAnywhere, Transient)
 	UTextureRenderTarget2D* OutputRT;
 
 	//
@@ -58,7 +52,7 @@ protected:
 	UPROPERTY(EditAnywhere, Category="Landscape", meta=(UIMin=0))
 	float Radius = 1000.0f;
 	
-	UPROPERTY(EditAnywhere, Category="Landscape", AdvancedDisplay)
+	UPROPERTY(EditAnywhere, Category="Landscape")
 	FScalarRamp SideFalloffRamp;
 
 	UPROPERTY(Transient, VisibleInstanceOnly, Category = "Landscape", AdvancedDisplay)

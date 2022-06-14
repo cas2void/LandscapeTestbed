@@ -35,6 +35,8 @@ void MainVS(in float2 InPosition : ATTRIBUTE0,
 //
 // Pixel Shader
 //
+Texture2D<float4> InputTexture;
+SamplerState InputTextureSampler;
 Texture2D<float> SideFalloffTexture;
 SamplerState SideFalloffTextureSampler;
 float2 InvTextureSize;
@@ -43,6 +45,9 @@ float Radius;
 
 void MainPS(in float2 SvTexCoord : TEXCOORD0, in float4 SvPosition : SV_POSITION, out float4 OutColor : SV_Target0)
 {
+    float4 InputPixel = InputTexture.Sample(InputTextureSampler, SvTexCoord);
+    float InputHeight = UnpackHeight(float2(InputPixel.r, InputPixel.g));
+	
 	float2 CenterTextureSpace = Center * InvTextureSize;
 	float2 TerrainTexcoords = SvTexCoord - float2(0.5, 0.5) * InvTextureSize;
 	
@@ -51,8 +56,8 @@ void MainPS(in float2 SvTexCoord : TEXCOORD0, in float4 SvPosition : SV_POSITION
 	float2 FalloffTexCoords = float2(1 - NormalizedDist, 0);
 	float MappedDist = SideFalloffTexture.Sample(SideFalloffTextureSampler, FalloffTexCoords);
     
-	float CompositeHeight = lerp(0, Center.z, MappedDist);
+	float CompositeHeight = lerp(InputHeight, Center.z, MappedDist);
 	float2 OutputHeight = PackHeight(CompositeHeight);
     
-	OutColor = float4(OutputHeight.x, OutputHeight.y, 0, 1);
+    OutColor = float4(OutputHeight.x, OutputHeight.y, 0, 1);
 }

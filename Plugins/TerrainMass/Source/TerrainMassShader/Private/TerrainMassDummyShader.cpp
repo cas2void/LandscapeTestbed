@@ -55,6 +55,8 @@ public:
 	FTerrainMassDummyShaderPS(const ShaderMetaType::CompiledShaderInitializerType& Initializer)
         : FGlobalShader(Initializer)
     {
+        InputTextureParam.Bind(Initializer.ParameterMap, TEXT("InputTexture"));
+        InputTextureSamplerParam.Bind(Initializer.ParameterMap, TEXT("InputTextureSampler"));
         SideFalloffTextureParam.Bind(Initializer.ParameterMap, TEXT("SideFalloffTexture"));
         SideFalloffTextureSamplerParam.Bind(Initializer.ParameterMap, TEXT("SideFalloffTextureSampler"));
         InvTextureSizeParam.Bind(Initializer.ParameterMap, TEXT("InvTextureSize"));
@@ -77,7 +79,15 @@ public:
         SetShaderValue(RHICmdList, RHICmdList.GetBoundPixelShader(), RadiusParam, Params.Radius);
     }
 
+    void SetInput(FRHICommandList& RHICmdList, FRHITexture* InputTexture)
+    {
+        SetTextureParameter(RHICmdList, RHICmdList.GetBoundPixelShader(), InputTextureParam, InputTextureSamplerParam,
+            TStaticSamplerState<>::GetRHI(), InputTexture);
+    }
+
 private:
+    LAYOUT_FIELD(FShaderResourceParameter, InputTextureParam);
+    LAYOUT_FIELD(FShaderResourceParameter, InputTextureSamplerParam);
 	LAYOUT_FIELD(FShaderResourceParameter, SideFalloffTextureParam);
 	LAYOUT_FIELD(FShaderResourceParameter, SideFalloffTextureSamplerParam);
 	LAYOUT_FIELD(FShaderParameter, InvTextureSizeParam);
@@ -87,10 +97,10 @@ private:
 
 IMPLEMENT_GLOBAL_SHADER(FTerrainMassDummyShaderPS, "/TerrainMassShaders/TerrainMassDummy.usf", "MainPS", SF_Pixel);
 
-static void Render_RenderingThread(FRHICommandListImmediate& RHICmdList, FRHITexture* DestTexture, const FIntPoint& Size, const FTerrainMassDummyShaderParameter& ShaderParams)
+static void Render_RenderingThread(FRHICommandListImmediate& RHICmdList, FRHITexture* InputTexture, FRHITexture* OutputTexture, const FIntPoint& Size, const FTerrainMassDummyShaderParameter& ShaderParams)
 {
     IRendererModule* RendererModule = &FModuleManager::GetModuleChecked<IRendererModule>("Renderer");
-    FRHIRenderPassInfo RPInfo(DestTexture, ERenderTargetActions::Load_Store);
+    FRHIRenderPassInfo RPInfo(OutputTexture, ERenderTargetActions::Load_Store);
     RHICmdList.BeginRenderPass(RPInfo, TEXT("TerrainMass"));
     {
         RHICmdList.SetViewport(0, 0, 0, Size.X, Size.Y, 1);
@@ -110,6 +120,7 @@ static void Render_RenderingThread(FRHICommandListImmediate& RHICmdList, FRHITex
 #endif
         TShaderMapRef<FTerrainMassDummyShaderPS> PixelShader(ShaderMap);
         PixelShader->SetParameters(RHICmdList, ShaderParams);
+        PixelShader->SetInput(RHICmdList, InputTexture);
 
         GraphicsPSOInit.BoundShaderState.VertexDeclarationRHI = GFilterVertexDeclaration.VertexDeclarationRHI;
         GraphicsPSOInit.BoundShaderState.VertexShaderRHI = VertexShader.GetVertexShader();
@@ -143,14 +154,16 @@ static void Render_RenderingThread(FRHICommandListImmediate& RHICmdList, FRHITex
     RHICmdList.EndRenderPass();
 }
 
-void FTerrainMassDummyShader::Render(UTextureRenderTarget2D* DestRT, const FIntPoint& Size, const FTerrainMassDummyShaderParameter& ShaderParams)
+void FTerrainMassDummyShader::Render(UTextureRenderTarget2D* InputRT, UTextureRenderTarget2D* OutputRT, const FTerrainMassDummyShaderParameter& ShaderParams)
 {
     ENQUEUE_RENDER_COMMAND(TerranMassDummyBrush)(
-        [DestRT, Size, ShaderParams](FRHICommandListImmediate& RHICmdList)
+        [InputRT, OutputRT, ShaderParams](FRHICommandListImmediate& RHICmdList)
         {
-            if (DestRT->GetRenderTargetResource() && DestRT->GetRenderTargetResource()->GetRenderTargetTexture())
+            if (InputRT->GetRenderTargetResource() && InputRT->GetRenderTargetResource()->GetRenderTargetTexture() ||
+                OutputRT->GetRenderTargetResource() && OutputRT->GetRenderTargetResource()->GetRenderTargetTexture())
             {
-                Render_RenderingThread(RHICmdList, DestRT->GetRenderTargetResource()->GetRenderTargetTexture(), Size, ShaderParams);
+                Render_RenderingThread(RHICmdList, InputRT->GetRenderTargetResource()->GetRenderTargetTexture(), OutputRT->GetRenderTargetResource()->GetRenderTargetTexture(), 
+                    FIntPoint(InputRT->SizeX, InputRT->SizeY), ShaderParams);
             }
         }
     );

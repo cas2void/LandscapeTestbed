@@ -20,6 +20,6 @@ public:
 
 	void WriteTexture(UTexture2DDynamic* OutTexture);
 
-	UPROPERTY(EditAnywhere)
+	UPROPERTY(EditAnywhere, AdvancedDisplay)
 	FRuntimeFloatCurve Curve;
 };

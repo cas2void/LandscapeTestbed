@@ -21,5 +21,5 @@ struct FTerrainMassDummyShaderParameter
 class TERRAINMASSSHADER_API FTerrainMassDummyShader
 {
 public:
-	static void Render(UTextureRenderTarget2D* DestRT, const FIntPoint& Size, const FTerrainMassDummyShaderParameter& ShaderParams);
+	static void Render(UTextureRenderTarget2D* InputRT, UTextureRenderTarget2D* OutputRT, const FTerrainMassDummyShaderParameter& ShaderParams);
 };

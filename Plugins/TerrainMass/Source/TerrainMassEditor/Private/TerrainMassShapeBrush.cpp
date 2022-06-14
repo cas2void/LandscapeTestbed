@@ -2,6 +2,7 @@
 
 #include "Landscape.h"
 #include "LandscapeDataAccess.h"
+#include "LandscapeInfo.h"
 #include "Curves/CurveFloat.h"
 #include "Kismet/KismetRenderingLibrary.h"
 #include "Components/SplineComponent.h"
@@ -60,15 +61,14 @@ UTextureRenderTarget2D* ATerrainMassShapeBrush::Render_Native(bool InIsHeightmap
     //Center.Z *= LANDSCAPE_INV_ZSCALE;
 
     ALandscape* Landscape = GetOwningLandscape();
-    if (!Landscape || Landscape->LandscapeComponents.Num() < 1 || !Landscape->LandscapeComponents[0])
+    if (!Landscape || !Landscape->GetLandscapeInfo())
     {
         return nullptr;
     }
 
-    FIntPoint ComponentCounts = Landscape->ComputeComponentCounts();
-    int32 SectionSize = Landscape->LandscapeComponents[0]->NumSubsections * Landscape->LandscapeComponents[0]->SubsectionSizeQuads;
-    FIntPoint LandscapeResolution = ComponentCounts * SectionSize;
-    FVector LandscapeUVScale = FVector(LandscapeResolution.X, LandscapeResolution.Y, LANDSCAPE_ZSCALE);
+    int32 MinX, MinY, MaxX, MaxY;
+    Landscape->GetLandscapeInfo()->GetLandscapeExtent(MinX, MinY, MaxX, MaxY);
+    FVector LandscapeUVScale = FVector(MaxX - MinX, MaxY - MinY, LANDSCAPE_ZSCALE);
 
     if (SplineComponent->GetNumberOfSplinePoints() > 2)
     {

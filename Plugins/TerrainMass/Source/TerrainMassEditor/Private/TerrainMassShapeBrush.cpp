@@ -59,6 +59,17 @@ UTextureRenderTarget2D* ATerrainMassShapeBrush::Render_Native(bool InIsHeightmap
     //}
     //Center.Z *= LANDSCAPE_INV_ZSCALE;
 
+    ALandscape* Landscape = GetOwningLandscape();
+    if (!Landscape || Landscape->LandscapeComponents.Num() < 1 || !Landscape->LandscapeComponents[0])
+    {
+        return nullptr;
+    }
+
+    FIntPoint ComponentCounts = Landscape->ComputeComponentCounts();
+    int32 SectionSize = Landscape->LandscapeComponents[0]->NumSubsections * Landscape->LandscapeComponents[0]->SubsectionSizeQuads;
+    FIntPoint LandscapeResolution = ComponentCounts * SectionSize;
+    FVector LandscapeUVScale = FVector(LandscapeResolution.X, LandscapeResolution.Y, LANDSCAPE_ZSCALE);
+
     if (SplineComponent->GetNumberOfSplinePoints() > 2)
     {
         FTerrainMassShapeShaderParameter ShaderParams;
@@ -69,11 +80,8 @@ UTextureRenderTarget2D* ATerrainMassShapeBrush::Render_Native(bool InIsHeightmap
         for (float Time = 0.0f; Time < SplineComponent->Duration; Time += 0.01f)
         {
             FVector WorldLocation = SplineComponent->GetLocationAtTime(Time, ESplineCoordinateSpace::World);
-            if (GetOwningLandscape())
-            {
-                FVector TextureLocation = GetOwningLandscape()->GetActorTransform().InverseTransformPosition(WorldLocation);
-                ShapePoints.Add(TextureLocation / FVector(504.0f, 504.0f, 1.0f));
-            }
+            FVector TextureLocation = Landscape->GetActorTransform().InverseTransformPosition(WorldLocation);
+            ShapePoints.Add(TextureLocation / LandscapeUVScale);
         }
 
         FTerrainMassShapeShader::Render(ShapeRT, ShapePoints, ShaderParams);

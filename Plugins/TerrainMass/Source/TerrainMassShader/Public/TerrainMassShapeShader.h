@@ -4,14 +4,27 @@
 #include "Engine/TextureRenderTarget2D.h"
 #include "Engine/Texture2DDynamic.h"
 
+//
+// Vertex Layout
+//
+struct FTerrainMassShapeVertex
+{
+	FVector Position;
+	//FVector4 ExtraData;
+
+	FTerrainMassShapeVertex(FVector InPosition)
+		: Position(InPosition)
+	{}
+};
+
 struct FTerrainMassShapeShaderParameter
 {
-	TWeakObjectPtr<UTexture2DDynamic> SideFalloffTexture;
 	FVector2D InvTextureSize;
+	FMatrix World2UV;
 };
 
 class TERRAINMASSSHADER_API FTerrainMassShapeShader
 {
 public:
-	static void Render(UTextureRenderTarget2D* OutputRT, const TArray<FVector>& ShapePoints, const FTerrainMassShapeShaderParameter& ShaderParams);
+	static void Render(UTextureRenderTarget2D* OutputRT, const TArray<FTerrainMassShapeVertex>& ShapePoints, const FTerrainMassShapeShaderParameter& ShaderParams);
 };

@@ -50,16 +50,6 @@ UTextureRenderTarget2D* ATerrainMassShapeBrush::Render_Native(bool InIsHeightmap
         return nullptr;
     }
 
-    //FVector Center = GetActorLocation();
-    //float RadiusScale = 1.0f;
-    //if (GetOwningLandscape())
-    //{
-    //    FTransform BrushRelativeTransform = GetActorTransform().GetRelativeTransform(GetOwningLandscape()->GetActorTransform());
-    //    Center = BrushRelativeTransform.GetLocation();
-    //    RadiusScale = BrushRelativeTransform.GetScale3D().X;
-    //}
-    //Center.Z *= LANDSCAPE_INV_ZSCALE;
-
     ALandscape* Landscape = GetOwningLandscape();
     if (!Landscape || !Landscape->GetLandscapeInfo())
     {
@@ -73,15 +63,18 @@ UTextureRenderTarget2D* ATerrainMassShapeBrush::Render_Native(bool InIsHeightmap
     if (SplineComponent->GetNumberOfSplinePoints() > 2)
     {
         FTerrainMassShapeShaderParameter ShaderParams;
-        ShaderParams.SideFalloffTexture = SideFalloffTexture;
         ShaderParams.InvTextureSize = FVector2D(1.0f) / FVector2D(RenderTargetSize);
 
-        TArray<FVector> ShapePoints;
+        FTransform ScaleTransform(FTransform::Identity);
+        ScaleTransform.SetScale3D(FVector(1.0f) / LandscapeUVScale);
+        ShaderParams.World2UV = Landscape->GetActorTransform().ToMatrixWithScale().Inverse() * ScaleTransform.ToMatrixWithScale();
+
+        TArray<FTerrainMassShapeVertex> ShapePoints;
         for (float Time = 0.0f; Time < SplineComponent->Duration; Time += 0.01f)
         {
             FVector WorldLocation = SplineComponent->GetLocationAtTime(Time, ESplineCoordinateSpace::World);
-            FVector TextureLocation = Landscape->GetActorTransform().InverseTransformPosition(WorldLocation);
-            ShapePoints.Add(TextureLocation / LandscapeUVScale);
+            FVector TextureLocation = ShaderParams.World2UV.TransformPosition(WorldLocation);
+            ShapePoints.Emplace(WorldLocation);
         }
 
         FTerrainMassShapeShader::Render(ShapeRT, ShapePoints, ShaderParams);

@@ -9,17 +9,6 @@
 #include "RHICommandList.h"
 #include "RHIResources.h"
 
-//
-// Vertex Layout
-//
-struct FTerrainMassShapeVertex
-{
-public:
-    FVector4 Position;
-    // Extra data
-    FVector4 ExtraData;
-};
-
 class FTerrainMassShapeVertexDeclaration : public FRenderResource
 {
 public:
@@ -31,9 +20,8 @@ public:
     {
         FVertexDeclarationElementList Elements;
         uint32 Stride = sizeof(FTerrainMassShapeVertex);
-        Elements.Add(FVertexElement(0, STRUCT_OFFSET(FTerrainMassShapeVertex, Position), VET_Float4, 0, Stride));
-        //Elements.Add(FVertexElement(0, STRUCT_OFFSET(FTerrainMassPolygonVertex, UV), VET_Float2, 1, Stride));
-        Elements.Add(FVertexElement(0, STRUCT_OFFSET(FTerrainMassShapeVertex, ExtraData), VET_Float4, 1, Stride));
+        Elements.Add(FVertexElement(0, STRUCT_OFFSET(FTerrainMassShapeVertex, Position), VET_Float3, 0, Stride));
+        //Elements.Add(FVertexElement(0, STRUCT_OFFSET(FTerrainMassShapeVertex, ExtraData), VET_Float4, 1, Stride));
         VertexDeclarationRHI = PipelineStateCache::GetOrCreateVertexDeclaration(Elements);
     }
 
@@ -59,15 +47,18 @@ public:
         : FGlobalShader(Initializer)
     {
         InvTextureSizeParam.Bind(Initializer.ParameterMap, TEXT("InvTextureSize"));
+        World2UVParam.Bind(Initializer.ParameterMap, TEXT("World2UV"));
     }
 
     void SetParameters(FRHICommandList& RHICmdList, const FTerrainMassShapeShaderParameter& Params)
     {
         SetShaderValue(RHICmdList, RHICmdList.GetBoundVertexShader(), InvTextureSizeParam, Params.InvTextureSize);
+        SetShaderValue(RHICmdList, RHICmdList.GetBoundVertexShader(), World2UVParam, Params.World2UV);
     }
 
 private:
     LAYOUT_FIELD(FShaderParameter, InvTextureSizeParam);
+    LAYOUT_FIELD(FShaderParameter, World2UVParam);
 };
 
 IMPLEMENT_GLOBAL_SHADER(FTerrainMassShapeShaderVS, "/TerrainMassShaders/TerrainMassShape.usf", "MainVS", SF_Vertex);
@@ -85,47 +76,30 @@ public:
 	FTerrainMassShapeShaderPS(const ShaderMetaType::CompiledShaderInitializerType& Initializer)
         : FGlobalShader(Initializer)
     {
-        InputTextureParam.Bind(Initializer.ParameterMap, TEXT("InputTexture"));
-        InputTextureSamplerParam.Bind(Initializer.ParameterMap, TEXT("InputTextureSampler"));
-        SideFalloffTextureParam.Bind(Initializer.ParameterMap, TEXT("SideFalloffTexture"));
-        SideFalloffTextureSamplerParam.Bind(Initializer.ParameterMap, TEXT("SideFalloffTextureSampler"));
-        InvTextureSizeParam.Bind(Initializer.ParameterMap, TEXT("InvTextureSize"));
     }
 
 	void SetParameters(FRHICommandList& RHICmdList, const FTerrainMassShapeShaderParameter& Params)
     {
-        if (Params.SideFalloffTexture.IsValid() &&
-            Params.SideFalloffTexture->Resource &&
-            Params.SideFalloffTexture->Resource->TextureRHI)
-        {
-            SetTextureParameter(RHICmdList, RHICmdList.GetBoundPixelShader(), SideFalloffTextureParam, SideFalloffTextureSamplerParam,
-                TStaticSamplerState<>::GetRHI(), Params.SideFalloffTexture->Resource->TextureRHI);
-        }
-
-        SetShaderValue(RHICmdList, RHICmdList.GetBoundPixelShader(), InvTextureSizeParam, Params.InvTextureSize);
     }
 
 private:
-    LAYOUT_FIELD(FShaderResourceParameter, InputTextureParam);
-    LAYOUT_FIELD(FShaderResourceParameter, InputTextureSamplerParam);
-	LAYOUT_FIELD(FShaderResourceParameter, SideFalloffTextureParam);
-	LAYOUT_FIELD(FShaderResourceParameter, SideFalloffTextureSamplerParam);
-	LAYOUT_FIELD(FShaderParameter, InvTextureSizeParam);
 };
 
 IMPLEMENT_GLOBAL_SHADER(FTerrainMassShapeShaderPS, "/TerrainMassShaders/TerrainMassShape.usf", "MainPS", SF_Pixel);
 
-static void Render_RenderingThread(FRHICommandListImmediate& RHICmdList, FRHITexture* OutputTexture, const FIntPoint& Size, const TArray<FVector>& ShapePoints, const FTerrainMassShapeShaderParameter& ShaderParams)
+static void Render_RenderingThread(FRHICommandListImmediate& RHICmdList, FRHITexture* OutputTexture, const FIntPoint& Size, const TArray<FTerrainMassShapeVertex>& ShapePoints, const FTerrainMassShapeShaderParameter& ShaderParams)
 {
+    if (ShapePoints.Num() < 3)
+    {
+        return;
+    }
+
     //
     // Vertex Buffer
     //
     TResourceArray<FTerrainMassShapeVertex, VERTEXBUFFER_ALIGNMENT> Vertices;
-    Vertices.SetNumUninitialized(ShapePoints.Num());
-    for (int32 Index = 0; Index < ShapePoints.Num(); Index++)
-    {
-        Vertices[Index].Position = FVector4(ShapePoints[Index], 1.0f);
-    }
+    Vertices.AddUninitialized(ShapePoints.Num());
+    FMemory::Memcpy(Vertices.GetData(), ShapePoints.GetData(), ShapePoints.Num() * sizeof(FTerrainMassShapeVertex));
 
     // Create vertex buffer. Fill buffer with initial data upon creation
     FRHIResourceCreateInfo CreateInfoVB(&Vertices);
@@ -133,10 +107,11 @@ static void Render_RenderingThread(FRHICommandListImmediate& RHICmdList, FRHITex
 
     // Setup index buffer
     TResourceArray<uint16, INDEXBUFFER_ALIGNMENT> IndexBuffer;
-    const uint32 NumIndices = (ShapePoints.Num() - 2) * 3;
-    IndexBuffer.SetNumUninitialized(NumIndices);
+    const int32 NumPrimitives = ShapePoints.Num() - 2;
+    const int32 NumIndices = NumPrimitives * 3;
+    IndexBuffer.AddUninitialized(NumIndices);
 
-    for (int32 Index = 0; Index < ShapePoints.Num() - 2; Index++)
+    for (int32 Index = 0; Index < NumPrimitives; Index++)
     {
         IndexBuffer[Index * 3 + 0] = 0;
         IndexBuffer[Index * 3 + 1] = Index + 1;
@@ -176,12 +151,12 @@ static void Render_RenderingThread(FRHICommandListImmediate& RHICmdList, FRHITex
         RHICmdList.SetStreamSource(0, VertexBufferRHI, 0);
         RHICmdList.DrawIndexedPrimitive(
             IndexBufferRHI,
-            0,                      //BaseVertexIndex
-            0,                      //MinIndex
-            ShapePoints.Num(),      //NumVertices
-            0,                      //StartIndex
-            ShapePoints.Num() - 2,  //NumPrimitives
-            1                       //NumInstances
+            0,                  //BaseVertexIndex
+            0,                  //FirstInstance
+            ShapePoints.Num(),  //NumVertices
+            0,                  //StartIndex
+            NumPrimitives,      //NumPrimitives
+            1                   //NumInstances
         );
     }
     RHICmdList.EndRenderPass();
@@ -190,7 +165,7 @@ static void Render_RenderingThread(FRHICommandListImmediate& RHICmdList, FRHITex
     VertexBufferRHI.SafeRelease();
 }
 
-void FTerrainMassShapeShader::Render(UTextureRenderTarget2D* OutputRT, const TArray<FVector>& ShapePoints, const FTerrainMassShapeShaderParameter& ShaderParams)
+void FTerrainMassShapeShader::Render(UTextureRenderTarget2D* OutputRT, const TArray<FTerrainMassShapeVertex>& ShapePoints, const FTerrainMassShapeShaderParameter& ShaderParams)
 {
     ENQUEUE_RENDER_COMMAND(TerranMassDummyBrush)(
         [OutputRT, ShapePoints, ShaderParams](FRHICommandListImmediate& RHICmdList)

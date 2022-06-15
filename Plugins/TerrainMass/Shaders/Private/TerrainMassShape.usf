@@ -1,38 +1,26 @@
 #include "/Engine/Private/Common.ush"
 
-// return: [-32768, 32767]
-float UnpackHeight(float2 InPackedHeight)
-{
-    return float(((int)round(InPackedHeight.r * 255) << 8 | (int)round(InPackedHeight.g * 255)) - 32768);
-}
-
-// InUnpackedHeight: [-32768, 32767]
-// return: ([0, 1], [0, 1])
-float2 PackHeight(float InUnpackedHeight)
-{
-    int IntHeight = (int)clamp(InUnpackedHeight + 32768, 0, 65535);
-    return float2((float)(IntHeight >> 8 & 255) / 255.0, (float)(IntHeight & 255) / 255.0);
-}
-
 //
 // Vertex Shader
 //
 
-void MainVS(in float4 InPosition : ATTRIBUTE0,
-    in float4 InTexCoord : ATTRIBUTE1,
+float4x4 World2UV;
+float2 InvTextureSize;
+
+void MainVS(in float3 InPosition : ATTRIBUTE0,
+    //in float4 InTexCoord : ATTRIBUTE1,
     out float4 OutPosition : SV_POSITION)
 {
+    float4 UVSpacePosition = mul(float4(InPosition, 1), World2UV);
+    
     OutPosition.zw = float2(0, 1);
-    OutPosition.xy = -1.0 + 2.0 * InPosition.xy;
-    OutPosition.xy *= float2(1, -1);
+    OutPosition.xy = -1.0 + 2.0 * UVSpacePosition.xy;
+    OutPosition.y *= -1;
 }
 
 //
 // Pixel Shader
 //
-Texture2D<float> SideFalloffTexture;
-SamplerState SideFalloffTextureSampler;
-float2 InvTextureSize;
 
 void MainPS(in float4 SvPosition : SV_POSITION, in bool bIsFrontFace : SV_IsFrontFace, out float4 OutColor : SV_Target0)
 {

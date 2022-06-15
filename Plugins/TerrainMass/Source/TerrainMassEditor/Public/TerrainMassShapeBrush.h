@@ -59,14 +59,10 @@ protected:
 	//
 protected:
 	UPROPERTY(EditAnywhere, Category = "Landscape", meta = (UIMin = 0, UIMax = 100))
-	int32 KernelSize = 5;
+	int32 KernelSize = 16;
 
-	//
-	// Composition
-	//
-protected:
-	UPROPERTY(EditAnywhere, Category = "Landscape")
-	float Elevation = 500.0f;
+	UPROPERTY(EditAnywhere, Category = "Landscape", meta = (UIMin = 0, UIMax = 100))
+	float Sigma = 5.0f;
 
 	//
 	// Shape Falloff
@@ -85,4 +81,7 @@ protected:
 protected:
 	UPROPERTY(VisibleAnywhere, Category = "Landscape")
 	class USplineComponent* SplineComponent;
+
+	UPROPERTY(VisibleAnywhere, Category = "Landscape")
+	class UArrowComponent* ArrowComponent;
 };

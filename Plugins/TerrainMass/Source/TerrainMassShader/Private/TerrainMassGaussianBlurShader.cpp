@@ -25,14 +25,16 @@ public:
         InputTextureSamplerParam.Bind(Initializer.ParameterMap, TEXT("InputTextureSampler"));
         InvTextureSizeParam.Bind(Initializer.ParameterMap, TEXT("InvTextureSize"));
         KernelSizeParam.Bind(Initializer.ParameterMap, TEXT("KernelSize"));
+        SigmaParam.Bind(Initializer.ParameterMap, TEXT("Sigma"));
         DirectionParam.Bind(Initializer.ParameterMap, TEXT("Direction"));
     }
 
 	void SetParameters(FRHICommandList& RHICmdList, const FTerrainMassGaussianBlurShaderParameter& Params)
     {
-        int32 ValidatedKernelSize = FMath::Clamp<int32>(Params.KernelSize, 0, 100);
         SetShaderValue(RHICmdList, RHICmdList.GetBoundPixelShader(), InvTextureSizeParam, Params.InvTextureSize);
+        int32 ValidatedKernelSize = FMath::Clamp<int32>(Params.KernelSize, 0, 100);
         SetShaderValue(RHICmdList, RHICmdList.GetBoundPixelShader(), KernelSizeParam, ValidatedKernelSize);
+        SetShaderValue(RHICmdList, RHICmdList.GetBoundPixelShader(), SigmaParam, Params.Sigma);
     }
 
     void SetInput(FRHICommandList& RHICmdList, FRHITexture* InputTexture)
@@ -51,6 +53,7 @@ private:
     LAYOUT_FIELD(FShaderResourceParameter, InputTextureSamplerParam);
     LAYOUT_FIELD(FShaderParameter, InvTextureSizeParam);
 	LAYOUT_FIELD(FShaderParameter, KernelSizeParam);
+    LAYOUT_FIELD(FShaderParameter, SigmaParam);
     LAYOUT_FIELD(FShaderParameter, DirectionParam);
 };
 

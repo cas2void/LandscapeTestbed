@@ -8,6 +8,7 @@ struct FTerrainMassGaussianBlurShaderParameter
 {
 	FVector2D InvTextureSize;
 	int KernelSize;
+	float Sigma;
 };
 
 class TERRAINMASSSHADER_API FTerrainMassGaussianBlurShader

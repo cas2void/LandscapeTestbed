@@ -1,8 +1,5 @@
 #include "/Engine/Private/Common.ush"
 
-#define TWO_PI 6.28319
-#define E 2.71828
-
 //
 // Pixel Shader
 //
@@ -11,31 +8,20 @@ SamplerState InputTextureSampler;
 float2 InvTextureSize;
 int KernelSize;
 float2 Direction;
-float Sigma;
-
-float Gaussian(int X)
-{
-    float SigmaSquared = Sigma * Sigma;
-    return (1 / sqrt(TWO_PI * SigmaSquared)) * pow(E, -(X * X) / (2 * SigmaSquared));
-}
 
 void MainPS(in float2 SvTexCoord : TEXCOORD0, in float4 SvPosition : SV_POSITION, out float4 OutColor : SV_Target0)
 {
     int Upper = (KernelSize - 1) / 2;
     int Lower = -Upper;
     
-    float KernelSum = 0;
     float SumIntensity = 0;
     for (int Step = Lower; Step <= Upper; Step++)
     {
-        float GaussValue = Gaussian(Step);
-        KernelSum += GaussValue;
-        
         float2 UV = SvTexCoord + InvTextureSize * float2(Step, Step) * Direction;
         float SampleIntensity = InputTexture.Sample(InputTextureSampler, UV).r;
-        SumIntensity += GaussValue * SampleIntensity;
+        SumIntensity += SampleIntensity;
     }
-    float AverageIntensity = SumIntensity / KernelSum;
+    float AverageIntensity = SumIntensity / KernelSize;
     
     OutColor = float4(AverageIntensity, 0, 0, 1);
 }

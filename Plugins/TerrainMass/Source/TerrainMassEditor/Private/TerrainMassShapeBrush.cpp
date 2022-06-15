@@ -6,6 +6,7 @@
 #include "Curves/CurveFloat.h"
 #include "Kismet/KismetRenderingLibrary.h"
 #include "Components/SplineComponent.h"
+#include "Components/ArrowComponent.h"
 
 #include "ScalarRamp.h"
 #include "TerrainMassShapeShader.h"
@@ -18,8 +19,18 @@ ATerrainMassShapeBrush::ATerrainMassShapeBrush()
     SetAffectsHeightmap(true);
     SetAffectsWeightmap(true);
 
-    SplineComponent = CreateDefaultSubobject<USplineComponent>(FName("Spline"));
-    SetRootComponent(SplineComponent);
+    ArrowComponent = CreateDefaultSubobject<UArrowComponent>(FName(TEXT("Arrow")));
+    ArrowComponent->SetRelativeRotation(FRotator(90.0f, 0.0f, 0.0f));
+    ArrowComponent->SetupAttachment(RootComponent);
+    ArrowComponent->SetArrowColor(FLinearColor::Yellow);
+    ArrowComponent->ArrowSize = 40.0f;
+    ArrowComponent->ArrowLength = 25.0f;
+    ArrowComponent->bIsScreenSizeScaled = true;
+    SetRootComponent(ArrowComponent);
+
+    SplineComponent = CreateDefaultSubobject<USplineComponent>(FName(TEXT("Spline")));
+    SplineComponent->SetRelativeRotation(FRotator(-90.0f, 0.0f, 0.0f));
+    SplineComponent->SetupAttachment(ArrowComponent);
 }
 
 UTextureRenderTarget2D* ATerrainMassShapeBrush::Render_Native(bool InIsHeightmap, UTextureRenderTarget2D* InCombinedResult, const FName& InWeightmapLayerName)
@@ -103,6 +114,7 @@ UTextureRenderTarget2D* ATerrainMassShapeBrush::Render_Native(bool InIsHeightmap
     FTerrainMassGaussianBlurShaderParameter BlurShaderParams;
     BlurShaderParams.InvTextureSize = InvTextureSize;
     BlurShaderParams.KernelSize = KernelSize;
+    BlurShaderParams.Sigma = Sigma;
 
     FTerrainMassGaussianBlurShader::Render(ShapeRT, BlurRT, BlurIntermediateRT, BlurShaderParams);
 
@@ -113,8 +125,8 @@ UTextureRenderTarget2D* ATerrainMassShapeBrush::Render_Native(bool InIsHeightmap
     CompositionShaderParams.SideFalloffTexture = SideFalloffTexture;
     CompositionShaderParams.InvTextureSize = InvTextureSize;
 
-    FVector ProxyLocation(0.0f, 0.0f, Elevation);
-    float ElevationInHeightMap = Landscape->GetActorTransform().InverseTransformPosition(ProxyLocation).Z * LANDSCAPE_INV_ZSCALE;
+    FVector ArrowLocation = ArrowComponent->GetComponentLocation();
+    float ElevationInHeightMap = Landscape->GetActorTransform().InverseTransformPosition(ArrowLocation).Z * LANDSCAPE_INV_ZSCALE;
     CompositionShaderParams.Elevation = ElevationInHeightMap;
 
     FTerrainMassShapeCompositionShader::Render(InCombinedResult, BlurRT, OutputRT, CompositionShaderParams);
@@ -149,4 +161,11 @@ void ATerrainMassShapeBrush::PostRegisterAllComponents()
         SideFalloffTexture = FScalarRamp::CreateTexture(256);
         SideFalloffRamp.WriteTexture(SideFalloffTexture);
     }
+
+    ArrowComponent->TransformUpdated.RemoveAll(this);
+    ArrowComponent->TransformUpdated.AddLambda(
+        [this](USceneComponent* UpdatedComponent, EUpdateTransformFlags UpdateTransformFlags, ETeleportType Teleport)
+        {
+            RequestLandscapeUpdate();
+        });
 }

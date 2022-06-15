@@ -9,6 +9,7 @@
 
 #include "ScalarRamp.h"
 #include "TerrainMassShapeShader.h"
+#include "TerrainMassGaussianBlurShader.h"
 
 ATerrainMassShapeBrush::ATerrainMassShapeBrush()
 {
@@ -36,6 +37,16 @@ UTextureRenderTarget2D* ATerrainMassShapeBrush::Render_Native(bool InIsHeightmap
         ShapeRT = UKismetRenderingLibrary::CreateRenderTarget2D(this, RenderTargetSize.X, RenderTargetSize.Y, RTF_R32f);
     }
 
+    if (!BlurIntermediateRT || BlurIntermediateRT->SizeX != RenderTargetSize.X || BlurIntermediateRT->SizeY != RenderTargetSize.Y)
+    {
+        BlurIntermediateRT = UKismetRenderingLibrary::CreateRenderTarget2D(this, RenderTargetSize.X, RenderTargetSize.Y, RTF_R32f);
+    }
+
+    if (!BlurRT || BlurRT->SizeX != RenderTargetSize.X || BlurRT->SizeY != RenderTargetSize.Y)
+    {
+        BlurRT = UKismetRenderingLibrary::CreateRenderTarget2D(this, RenderTargetSize.X, RenderTargetSize.Y, RTF_R32f);
+    }
+
     UKismetRenderingLibrary::ClearRenderTarget2D(this, ShapeRT);
 
     if (!OutputRT)
@@ -56,29 +67,41 @@ UTextureRenderTarget2D* ATerrainMassShapeBrush::Render_Native(bool InIsHeightmap
         return nullptr;
     }
 
+    //
+    // Shape
+    //
+    TArray<FTerrainMassShapeVertex> ShapePoints;
+    for (float Time = 0.0f; Time < SplineComponent->Duration; Time += 0.01f)
+    {
+        FVector WorldLocation = SplineComponent->GetLocationAtTime(Time, ESplineCoordinateSpace::World);
+        ShapePoints.Emplace(WorldLocation);
+    }
+
+    if (ShapePoints.Num() < 3)
+    {
+        return nullptr;
+    }
+
+    FTerrainMassShapeShaderParameter ShapeShaderParams;
+    ShapeShaderParams.InvTextureSize = FVector2D(1.0f) / FVector2D(RenderTargetSize);
+
     int32 MinX, MinY, MaxX, MaxY;
     Landscape->GetLandscapeInfo()->GetLandscapeExtent(MinX, MinY, MaxX, MaxY);
     FVector LandscapeUVScale = FVector(MaxX - MinX, MaxY - MinY, LANDSCAPE_ZSCALE);
+    FTransform ScaleTransform(FTransform::Identity);
+    ScaleTransform.SetScale3D(FVector(1.0f) / LandscapeUVScale);
+    ShapeShaderParams.World2UV = Landscape->GetActorTransform().ToMatrixWithScale().Inverse() * ScaleTransform.ToMatrixWithScale();
 
-    if (SplineComponent->GetNumberOfSplinePoints() > 2)
-    {
-        FTerrainMassShapeShaderParameter ShaderParams;
-        ShaderParams.InvTextureSize = FVector2D(1.0f) / FVector2D(RenderTargetSize);
+    FTerrainMassShapeShader::Render(ShapeRT, ShapePoints, ShapeShaderParams);
 
-        FTransform ScaleTransform(FTransform::Identity);
-        ScaleTransform.SetScale3D(FVector(1.0f) / LandscapeUVScale);
-        ShaderParams.World2UV = Landscape->GetActorTransform().ToMatrixWithScale().Inverse() * ScaleTransform.ToMatrixWithScale();
+    //
+    // Blur
+    //
+    FTerrainMassGaussianBlurShaderParameter BlurShaderParams;
+    BlurShaderParams.InvTextureSize = FVector2D(1.0f) / FVector2D(RenderTargetSize);
+    BlurShaderParams.KernelSize = KernelSize;
 
-        TArray<FTerrainMassShapeVertex> ShapePoints;
-        for (float Time = 0.0f; Time < SplineComponent->Duration; Time += 0.01f)
-        {
-            FVector WorldLocation = SplineComponent->GetLocationAtTime(Time, ESplineCoordinateSpace::World);
-            FVector TextureLocation = ShaderParams.World2UV.TransformPosition(WorldLocation);
-            ShapePoints.Emplace(WorldLocation);
-        }
-
-        FTerrainMassShapeShader::Render(ShapeRT, ShapePoints, ShaderParams);
-    }
+    FTerrainMassGaussianBlurShader::Render(ShapeRT, BlurRT, BlurIntermediateRT, BlurShaderParams);
 
     return nullptr;
 }

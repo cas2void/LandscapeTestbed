@@ -1,0 +1,27 @@
+#include "/Engine/Private/Common.ush"
+
+//
+// Pixel Shader
+//
+Texture2D<float4> InputTexture;
+SamplerState InputTextureSampler;
+float2 InvTextureSize;
+int KernelSize;
+float2 Direction;
+
+void MainPS(in float2 SvTexCoord : TEXCOORD0, in float4 SvPosition : SV_POSITION, out float4 OutColor : SV_Target0)
+{
+    int Upper = (KernelSize - 1) / 2;
+    int Lower = -Upper;
+    
+    float SumIntensity = 0;
+    for (int Step = Lower; Step <= Upper; Step++)
+    {
+        float2 UV = SvTexCoord + InvTextureSize * float2(Step, Step) * Direction;
+        float SampleIntensity = InputTexture.Sample(InputTextureSampler, UV).r;
+        SumIntensity += SampleIntensity;
+    }
+    float AverageIntensity = SumIntensity / KernelSize;
+    
+    OutColor = float4(AverageIntensity, 0, 0, 1);
+}

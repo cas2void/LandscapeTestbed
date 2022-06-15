@@ -48,12 +48,25 @@ protected:
 	UPROPERTY(VisibleAnywhere, Transient)
 	UTextureRenderTarget2D* ShapeRT;
 
+	UPROPERTY(VisibleAnywhere, Transient)
+	UTextureRenderTarget2D* BlurIntermediateRT;
+
+	UPROPERTY(VisibleAnywhere, Transient)
+	UTextureRenderTarget2D* BlurRT;
+
+	//
+	// Blur
+	//
+protected:
+	UPROPERTY(EditAnywhere, Category = "Landscape", meta = (UIMin = 0, UIMax = 100))
+	int32 KernelSize = 5;
+
 	//
 	// Shape Falloff
 	//
 protected:
 	
-	UPROPERTY(EditAnywhere, Category="Landscape")
+	UPROPERTY(EditAnywhere, Category = "Landscape")
 	FScalarRamp SideFalloffRamp;
 
 	UPROPERTY(Transient, VisibleInstanceOnly, Category = "Landscape", AdvancedDisplay)

@@ -33,7 +33,6 @@ public:
 
 TGlobalResource<FTerrainMassShapeVertexDeclaration> GTerrainMassShapeVertexDeclaration;
 
-#if TERRAIN_MASS_DUMMY_CUSTOM_VERTEX_SHADER
 class FTerrainMassShapeShaderVS : public FGlobalShader
 {
     DECLARE_GLOBAL_SHADER(FTerrainMassShapeShaderVS);
@@ -62,7 +61,6 @@ private:
 };
 
 IMPLEMENT_GLOBAL_SHADER(FTerrainMassShapeShaderVS, "/TerrainMassShaders/TerrainMassShape.usf", "MainVS", SF_Vertex);
-#endif
 
 class FTerrainMassShapeShaderPS : public FGlobalShader
 {

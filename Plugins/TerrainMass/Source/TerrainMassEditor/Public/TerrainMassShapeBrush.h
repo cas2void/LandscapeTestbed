@@ -62,6 +62,13 @@ protected:
 	int32 KernelSize = 5;
 
 	//
+	// Composition
+	//
+protected:
+	UPROPERTY(EditAnywhere, Category = "Landscape")
+	float Elevation = 500.0f;
+
+	//
 	// Shape Falloff
 	//
 protected:

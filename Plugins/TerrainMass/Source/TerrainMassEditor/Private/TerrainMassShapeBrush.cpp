@@ -10,6 +10,7 @@
 #include "ScalarRamp.h"
 #include "TerrainMassShapeShader.h"
 #include "TerrainMassGaussianBlurShader.h"
+#include "TerrainMassShapeCompositionShader.h"
 
 ATerrainMassShapeBrush::ATerrainMassShapeBrush()
 {
@@ -82,8 +83,10 @@ UTextureRenderTarget2D* ATerrainMassShapeBrush::Render_Native(bool InIsHeightmap
         return nullptr;
     }
 
+    FVector2D InvTextureSize = FVector2D(1.0f) / FVector2D(RenderTargetSize);
+
     FTerrainMassShapeShaderParameter ShapeShaderParams;
-    ShapeShaderParams.InvTextureSize = FVector2D(1.0f) / FVector2D(RenderTargetSize);
+    ShapeShaderParams.InvTextureSize = InvTextureSize;
 
     int32 MinX, MinY, MaxX, MaxY;
     Landscape->GetLandscapeInfo()->GetLandscapeExtent(MinX, MinY, MaxX, MaxY);
@@ -98,12 +101,25 @@ UTextureRenderTarget2D* ATerrainMassShapeBrush::Render_Native(bool InIsHeightmap
     // Blur
     //
     FTerrainMassGaussianBlurShaderParameter BlurShaderParams;
-    BlurShaderParams.InvTextureSize = FVector2D(1.0f) / FVector2D(RenderTargetSize);
+    BlurShaderParams.InvTextureSize = InvTextureSize;
     BlurShaderParams.KernelSize = KernelSize;
 
     FTerrainMassGaussianBlurShader::Render(ShapeRT, BlurRT, BlurIntermediateRT, BlurShaderParams);
 
-    return nullptr;
+    //
+    // Composition
+    //
+    FTerrainMassShapeCompositionShaderParameter CompositionShaderParams;
+    CompositionShaderParams.SideFalloffTexture = SideFalloffTexture;
+    CompositionShaderParams.InvTextureSize = InvTextureSize;
+
+    FVector ProxyLocation(0.0f, 0.0f, Elevation);
+    float ElevationInHeightMap = Landscape->GetActorTransform().InverseTransformPosition(ProxyLocation).Z * LANDSCAPE_INV_ZSCALE;
+    CompositionShaderParams.Elevation = ElevationInHeightMap;
+
+    FTerrainMassShapeCompositionShader::Render(InCombinedResult, BlurRT, OutputRT, CompositionShaderParams);
+
+    return OutputRT;
 }
 
 void ATerrainMassShapeBrush::Initialize_Native(const FTransform& InLandscapeTransform, const FIntPoint& InLandscapeSize, const FIntPoint& InLandscapeRenderTargetSize)

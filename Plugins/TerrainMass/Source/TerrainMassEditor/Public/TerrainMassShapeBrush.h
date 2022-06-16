@@ -58,11 +58,11 @@ protected:
 	// Blur
 	//
 protected:
-	UPROPERTY(EditAnywhere, Category = "Landscape", meta = (UIMin = 0, UIMax = 100))
-	int32 KernelSize = 16;
+	UPROPERTY(EditAnywhere, Category = "Landscape", meta = (UIMin = 0, UIMax = 100, Tooltip = "Half of the kernel span"))
+	int32 KernelSize = 8;
 
-	UPROPERTY(EditAnywhere, Category = "Landscape", meta = (UIMin = 0, UIMax = 100))
-	float Sigma = 5.0f;
+	UPROPERTY(EditAnywhere, Category = "Landscape", meta = (UIMin = 0.1, UIMax = 10))
+	float Sigma = 3.0f;
 
 	//
 	// Shape Falloff

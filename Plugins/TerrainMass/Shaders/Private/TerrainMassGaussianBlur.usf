@@ -1,12 +1,13 @@
 #include "/Engine/Private/Common.ush"
 
-#define TWO_PI 6.28319
-#define E 2.71828
+// sqrt(TWO_PI)
+#define TWO_PI_ROOT 2.506628
+#define E 2.718282
 
 //
 // Pixel Shader
 //
-Texture2D<float4> InputTexture;
+Texture2D<float> InputTexture;
 SamplerState InputTextureSampler;
 float2 InvTextureSize;
 int KernelSize;
@@ -15,23 +16,19 @@ float Sigma;
 
 float Gaussian(int X)
 {
-    float SigmaSquared = Sigma * Sigma;
-    return (1 / sqrt(TWO_PI * SigmaSquared)) * pow(E, -(X * X) / (2 * SigmaSquared));
+    return (1 / (TWO_PI_ROOT * Sigma)) * pow(E, -(X * X) / (2 * Sigma * Sigma));
 }
 
 void MainPS(in float2 SvTexCoord : TEXCOORD0, in float4 SvPosition : SV_POSITION, out float4 OutColor : SV_Target0)
-{
-    int Upper = (KernelSize - 1) / 2;
-    int Lower = -Upper;
-    
+{   
     float KernelSum = 0;
     float SumIntensity = 0;
-    for (int Step = Lower; Step <= Upper; Step++)
+    for (int Offset = -KernelSize; Offset <= KernelSize; Offset++)
     {
-        float GaussValue = Gaussian(Step);
+        float GaussValue = Gaussian(Offset);
         KernelSum += GaussValue;
         
-        float2 UV = SvTexCoord + InvTextureSize * float2(Step, Step) * Direction;
+        float2 UV = SvTexCoord + InvTextureSize * float2(Offset, Offset) * Direction;
         float SampleIntensity = InputTexture.Sample(InputTextureSampler, UV).r;
         SumIntensity += GaussValue * SampleIntensity;
     }

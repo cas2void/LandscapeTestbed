@@ -156,7 +156,7 @@ static void Render_RenderingThread(FRHICommandListImmediate& RHICmdList, FRHITex
 
 void FTerrainMassDummyShader::Render(UTextureRenderTarget2D* InputRT, UTextureRenderTarget2D* OutputRT, const FTerrainMassDummyShaderParameter& ShaderParams)
 {
-    ENQUEUE_RENDER_COMMAND(TerranMassDummyBrush)(
+    ENQUEUE_RENDER_COMMAND(TerranMassDummy)(
         [InputRT, OutputRT, ShaderParams](FRHICommandListImmediate& RHICmdList)
         {
             if (InputRT->GetRenderTargetResource() && InputRT->GetRenderTargetResource()->GetRenderTargetTexture() ||

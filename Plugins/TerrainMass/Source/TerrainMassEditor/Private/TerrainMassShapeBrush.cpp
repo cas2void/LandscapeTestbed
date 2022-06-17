@@ -11,6 +11,7 @@
 #include "ScalarRamp.h"
 #include "TerrainMassShapeShader.h"
 #include "TerrainMassGaussianBlurShader.h"
+#include "TerrainMassJumpFloodingShader.h"
 #include "TerrainMassShapeCompositionShader.h"
 
 ATerrainMassShapeBrush::ATerrainMassShapeBrush()
@@ -57,6 +58,19 @@ UTextureRenderTarget2D* ATerrainMassShapeBrush::Render_Native(bool InIsHeightmap
     if (!BlurRT || BlurRT->SizeX != RenderTargetSize.X || BlurRT->SizeY != RenderTargetSize.Y)
     {
         BlurRT = UKismetRenderingLibrary::CreateRenderTarget2D(this, RenderTargetSize.X, RenderTargetSize.Y, RTF_R16f);
+    }
+
+    for (int32 Index = 0; Index < 2; Index++)
+    {
+        if (!JumpFloodingRTs[Index] || JumpFloodingRTs[Index]->SizeX != RenderTargetSize.X || JumpFloodingRTs[Index]->SizeY != RenderTargetSize.Y)
+        {
+            JumpFloodingRTs[Index] = UKismetRenderingLibrary::CreateRenderTarget2D(this, RenderTargetSize.X, RenderTargetSize.Y, RTF_RG16f);
+        }
+    }
+
+    if (!DistanceFieldRT || DistanceFieldRT->SizeX != RenderTargetSize.X || DistanceFieldRT->SizeY != RenderTargetSize.Y)
+    {
+        DistanceFieldRT = UKismetRenderingLibrary::CreateRenderTarget2D(this, RenderTargetSize.X, RenderTargetSize.Y, RTF_R16f);
     }
 
     UKismetRenderingLibrary::ClearRenderTarget2D(this, ShapeRT);
@@ -117,6 +131,26 @@ UTextureRenderTarget2D* ATerrainMassShapeBrush::Render_Native(bool InIsHeightmap
     BlurShaderParams.Sigma = Sigma;
 
     FTerrainMassGaussianBlurShader::Render(ShapeRT, BlurRT, BlurIntermediateRT, BlurShaderParams);
+
+    //
+    // Jump Flooding
+    //
+
+    FTerrainMassJumpFloodingShaderParameter JumpFloodingShaderParams;
+    JumpFloodingShaderParams.InvTextureSize = InvTextureSize;
+
+    int32 InputIndex = 0;
+    FTerrainMassJumpFloodingShader::Encode(JumpFloodingRTs[InputIndex], BlurRT);
+
+    OutputIndex = 0;
+    if (bSetIteration)
+    {
+        FTerrainMassJumpFloodingShader::Flood(JumpFloodingRTs, OutputIndex, InputIndex, NumIteration, JumpFloodingShaderParams);
+    }
+    else
+    {
+        FTerrainMassJumpFloodingShader::Flood(JumpFloodingRTs, OutputIndex, InputIndex, JumpFloodingShaderParams);
+    }
 
     //
     // Composition

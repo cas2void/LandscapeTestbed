@@ -54,6 +54,12 @@ protected:
 	UPROPERTY(VisibleAnywhere, Transient)
 	UTextureRenderTarget2D* BlurRT;
 
+	UPROPERTY(VisibleAnywhere, Transient)
+	UTextureRenderTarget2D* JumpFloodingRTs[2];
+
+	UPROPERTY(VisibleAnywhere, Transient)
+	UTextureRenderTarget2D* DistanceFieldRT;
+
 	//
 	// Blur
 	//
@@ -63,6 +69,19 @@ protected:
 
 	UPROPERTY(EditAnywhere, Category = "Landscape", meta = (UIMin = 0.1, UIMax = 10))
 	float Sigma = 3.0f;
+
+	//
+	// Jump Flooding
+	//
+protected:
+	UPROPERTY(EditAnywhere, Category = "Landscape", meta = (InlineEditConditionToggle))
+	bool bSetIteration = false;
+
+	UPROPERTY(EditAnywhere, Category = "Landscape", meta = (UIMin = 0, UIMax = 15, EditCondition = "bSetIteration"))
+	int32 NumIteration = 1;
+
+	UPROPERTY(Transient, VisibleAnywhere, Category = "Landscape")
+	int32 OutputIndex = -1;
 
 	//
 	// Shape Falloff

@@ -7,7 +7,6 @@
 struct FTerrainMassShapeCompositionShaderParameter
 {
 	TWeakObjectPtr<UTexture2DDynamic> SideFalloffTexture;
-	FVector2D InvTextureSize;
 	float Elevation;
 };
 

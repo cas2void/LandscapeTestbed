@@ -50,16 +50,6 @@ UTextureRenderTarget2D* ATerrainMassShapeBrush::Render_Native(bool InIsHeightmap
         ShapeRT = UKismetRenderingLibrary::CreateRenderTarget2D(this, RenderTargetSize.X, RenderTargetSize.Y, RTF_R16f);
     }
 
-    if (!BlurIntermediateRT || BlurIntermediateRT->SizeX != RenderTargetSize.X || BlurIntermediateRT->SizeY != RenderTargetSize.Y)
-    {
-        BlurIntermediateRT = UKismetRenderingLibrary::CreateRenderTarget2D(this, RenderTargetSize.X, RenderTargetSize.Y, RTF_R16f);
-    }
-
-    if (!BlurRT || BlurRT->SizeX != RenderTargetSize.X || BlurRT->SizeY != RenderTargetSize.Y)
-    {
-        BlurRT = UKismetRenderingLibrary::CreateRenderTarget2D(this, RenderTargetSize.X, RenderTargetSize.Y, RTF_R16f);
-    }
-
     for (int32 Index = 0; Index < 2; Index++)
     {
         if (!JumpFloodingRTs[Index] || JumpFloodingRTs[Index]->SizeX != RenderTargetSize.X || JumpFloodingRTs[Index]->SizeY != RenderTargetSize.Y)
@@ -71,6 +61,16 @@ UTextureRenderTarget2D* ATerrainMassShapeBrush::Render_Native(bool InIsHeightmap
     if (!DistanceFieldRT || DistanceFieldRT->SizeX != RenderTargetSize.X || DistanceFieldRT->SizeY != RenderTargetSize.Y)
     {
         DistanceFieldRT = UKismetRenderingLibrary::CreateRenderTarget2D(this, RenderTargetSize.X, RenderTargetSize.Y, RTF_R16f);
+    }
+
+    if (!BlurIntermediateRT || BlurIntermediateRT->SizeX != RenderTargetSize.X || BlurIntermediateRT->SizeY != RenderTargetSize.Y)
+    {
+        BlurIntermediateRT = UKismetRenderingLibrary::CreateRenderTarget2D(this, RenderTargetSize.X, RenderTargetSize.Y, RTF_R16f);
+    }
+
+    if (!BlurRT || BlurRT->SizeX != RenderTargetSize.X || BlurRT->SizeY != RenderTargetSize.Y)
+    {
+        BlurRT = UKismetRenderingLibrary::CreateRenderTarget2D(this, RenderTargetSize.X, RenderTargetSize.Y, RTF_R16f);
     }
 
     UKismetRenderingLibrary::ClearRenderTarget2D(this, ShapeRT);
@@ -151,25 +151,34 @@ UTextureRenderTarget2D* ATerrainMassShapeBrush::Render_Native(bool InIsHeightmap
     //
     // Blur
     //
-    FTerrainMassGaussianBlurShaderParameter BlurShaderParams;
-    BlurShaderParams.InvTextureSize = InvTextureSize;
-    BlurShaderParams.KernelSize = KernelSize;
-    BlurShaderParams.Sigma = Sigma;
+    if (bBlur)
+    {
+        FTerrainMassGaussianBlurShaderParameter BlurShaderParams;
+        BlurShaderParams.InvTextureSize = InvTextureSize;
+        BlurShaderParams.KernelSize = KernelSize;
+        BlurShaderParams.Sigma = Sigma;
 
-    FTerrainMassGaussianBlurShader::Render(DistanceFieldRT, BlurRT, BlurIntermediateRT, BlurShaderParams);
-
+        FTerrainMassGaussianBlurShader::Render(BlurRT, DistanceFieldRT, BlurIntermediateRT, BlurShaderParams);
+    }
+    
     //
     // Composition
     //
     FTerrainMassShapeCompositionShaderParameter CompositionShaderParams;
     CompositionShaderParams.SideFalloffTexture = SideFalloffTexture;
-    CompositionShaderParams.InvTextureSize = InvTextureSize;
 
     FVector ArrowLocation = ArrowComponent->GetComponentLocation();
     float ElevationInHeightMap = Landscape->GetActorTransform().InverseTransformPosition(ArrowLocation).Z * LANDSCAPE_INV_ZSCALE;
     CompositionShaderParams.Elevation = ElevationInHeightMap;
 
-    FTerrainMassShapeCompositionShader::Render(InCombinedResult, BlurRT, OutputRT, CompositionShaderParams);
+    if (bBlur)
+    {
+        FTerrainMassShapeCompositionShader::Render(OutputRT, InCombinedResult, BlurRT, CompositionShaderParams);
+    }
+    else
+    {
+        FTerrainMassShapeCompositionShader::Render(OutputRT, InCombinedResult, DistanceFieldRT, CompositionShaderParams);
+    }
 
     return OutputRT;
 }

@@ -49,21 +49,24 @@ protected:
 	UTextureRenderTarget2D* ShapeRT;
 
 	UPROPERTY(VisibleAnywhere, Transient)
-	UTextureRenderTarget2D* BlurIntermediateRT;
-
-	UPROPERTY(VisibleAnywhere, Transient)
-	UTextureRenderTarget2D* BlurRT;
-
-	UPROPERTY(VisibleAnywhere, Transient)
 	UTextureRenderTarget2D* JumpFloodingRTs[2];
 
 	UPROPERTY(VisibleAnywhere, Transient)
 	UTextureRenderTarget2D* DistanceFieldRT;
 
+	UPROPERTY(VisibleAnywhere, Transient)
+	UTextureRenderTarget2D* BlurIntermediateRT;
+
+	UPROPERTY(VisibleAnywhere, Transient)
+	UTextureRenderTarget2D* BlurRT;
+
 	//
 	// Blur
 	//
 protected:
+	UPROPERTY(EditAnywhere, Category = "Landscape")
+	bool bBlur = true;
+
 	UPROPERTY(EditAnywhere, Category = "Landscape", meta = (UIMin = 0, UIMax = 100, Tooltip = "Half of the kernel span"))
 	int32 KernelSize = 8;
 

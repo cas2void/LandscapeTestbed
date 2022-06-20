@@ -59,7 +59,7 @@ private:
 
 IMPLEMENT_GLOBAL_SHADER(FTerrainMassGaussianBlurShaderPS, "/TerrainMassShaders/TerrainMassGaussianBlur.usf", "MainPS", SF_Pixel);
 
-static void Render_RenderingThread(FRHICommandListImmediate& RHICmdList, FRHITexture* InputTexture, FRHITexture* OutputTexture, const FIntPoint& Size, 
+static void Render_RenderingThread(FRHICommandListImmediate& RHICmdList, FRHITexture* OutputTexture, FRHITexture* InputTexture, const FIntPoint& Size,
     const FTerrainMassGaussianBlurShaderParameter& ShaderParams, bool bRowPass)
 {
     IRendererModule* RendererModule = &FModuleManager::GetModuleChecked<IRendererModule>("Renderer");
@@ -102,28 +102,28 @@ static void Render_RenderingThread(FRHICommandListImmediate& RHICmdList, FRHITex
     RHICmdList.EndRenderPass();
 }
 
-void FTerrainMassGaussianBlurShader::Render(UTextureRenderTarget2D* InputRT, UTextureRenderTarget2D* OutputRT, UTextureRenderTarget2D* IntermediateRT, 
+void FTerrainMassGaussianBlurShader::Render(UTextureRenderTarget2D* OutputRT, UTextureRenderTarget2D* InputRT, UTextureRenderTarget2D* IntermediateRT,
     const FTerrainMassGaussianBlurShaderParameter& ShaderParams)
 {
     ENQUEUE_RENDER_COMMAND(TerranMassGaussianBlurRow)(
-        [InputRT, IntermediateRT, ShaderParams](FRHICommandListImmediate& RHICmdList)
+        [IntermediateRT, InputRT, ShaderParams](FRHICommandListImmediate& RHICmdList)
         {
-            if (InputRT->GetRenderTargetResource() && InputRT->GetRenderTargetResource()->GetRenderTargetTexture() ||
-                IntermediateRT->GetRenderTargetResource() && IntermediateRT->GetRenderTargetResource()->GetRenderTargetTexture())
+            if (IntermediateRT->GetRenderTargetResource() && IntermediateRT->GetRenderTargetResource()->GetRenderTargetTexture() &&
+                InputRT->GetRenderTargetResource() && InputRT->GetRenderTargetResource()->GetRenderTargetTexture())
             {
-                Render_RenderingThread(RHICmdList, InputRT->GetRenderTargetResource()->GetRenderTargetTexture(), IntermediateRT->GetRenderTargetResource()->GetRenderTargetTexture(),
+                Render_RenderingThread(RHICmdList, IntermediateRT->GetRenderTargetResource()->GetRenderTargetTexture(), InputRT->GetRenderTargetResource()->GetRenderTargetTexture(),
                     FIntPoint(InputRT->SizeX, InputRT->SizeY), ShaderParams, true);
             }
         }
     );
 
     ENQUEUE_RENDER_COMMAND(TerranMassGaussianBlurColumn)(
-        [IntermediateRT, OutputRT, ShaderParams](FRHICommandListImmediate& RHICmdList)
+        [OutputRT, IntermediateRT, ShaderParams](FRHICommandListImmediate& RHICmdList)
         {
-            if (IntermediateRT->GetRenderTargetResource() && IntermediateRT->GetRenderTargetResource()->GetRenderTargetTexture() ||
-                OutputRT->GetRenderTargetResource() && OutputRT->GetRenderTargetResource()->GetRenderTargetTexture())
+            if (OutputRT->GetRenderTargetResource() && OutputRT->GetRenderTargetResource()->GetRenderTargetTexture() &&
+                IntermediateRT->GetRenderTargetResource() && IntermediateRT->GetRenderTargetResource()->GetRenderTargetTexture())
             {
-                Render_RenderingThread(RHICmdList, IntermediateRT->GetRenderTargetResource()->GetRenderTargetTexture(), OutputRT->GetRenderTargetResource()->GetRenderTargetTexture(),
+                Render_RenderingThread(RHICmdList, OutputRT->GetRenderTargetResource()->GetRenderTargetTexture(), IntermediateRT->GetRenderTargetResource()->GetRenderTargetTexture(),
                     FIntPoint(IntermediateRT->SizeX, IntermediateRT->SizeY), ShaderParams, false);
             }
         }

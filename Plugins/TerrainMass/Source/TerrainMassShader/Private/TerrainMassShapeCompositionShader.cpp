@@ -27,7 +27,6 @@ public:
         BlendTextureSamplerParam.Bind(Initializer.ParameterMap, TEXT("BlendTextureSampler"));
         SideFalloffTextureParam.Bind(Initializer.ParameterMap, TEXT("SideFalloffTexture"));
         SideFalloffTextureSamplerParam.Bind(Initializer.ParameterMap, TEXT("SideFalloffTextureSampler"));
-        InvTextureSizeParam.Bind(Initializer.ParameterMap, TEXT("InvTextureSize"));
         ElevationParam.Bind(Initializer.ParameterMap, TEXT("Elevation"));
     }
 
@@ -41,7 +40,6 @@ public:
                 TStaticSamplerState<>::GetRHI(), Params.SideFalloffTexture->Resource->TextureRHI);
         }
 
-        SetShaderValue(RHICmdList, RHICmdList.GetBoundPixelShader(), InvTextureSizeParam, Params.InvTextureSize);
         SetShaderValue(RHICmdList, RHICmdList.GetBoundPixelShader(), ElevationParam, Params.Elevation);
     }
 
@@ -60,13 +58,12 @@ private:
     LAYOUT_FIELD(FShaderResourceParameter, BlendTextureSamplerParam);
 	LAYOUT_FIELD(FShaderResourceParameter, SideFalloffTextureParam);
 	LAYOUT_FIELD(FShaderResourceParameter, SideFalloffTextureSamplerParam);
-	LAYOUT_FIELD(FShaderParameter, InvTextureSizeParam);
 	LAYOUT_FIELD(FShaderParameter, ElevationParam);
 };
 
 IMPLEMENT_GLOBAL_SHADER(FTerrainMassShapeCompositionShaderPS, "/TerrainMassShaders/TerrainMassShapeComposition.usf", "MainPS", SF_Pixel);
 
-static void Render_RenderingThread(FRHICommandListImmediate& RHICmdList, FRHITexture* InputTexture, FRHITexture* BlendTexture, FRHITexture* OutputTexture, 
+static void Render_RenderingThread(FRHICommandListImmediate& RHICmdList, FRHITexture* OutputTexture, FRHITexture* InputTexture, FRHITexture* BlendTexture,
     const FIntPoint& Size, const FTerrainMassShapeCompositionShaderParameter& ShaderParams)
 {
     IRendererModule* RendererModule = &FModuleManager::GetModuleChecked<IRendererModule>("Renderer");
@@ -107,18 +104,19 @@ static void Render_RenderingThread(FRHICommandListImmediate& RHICmdList, FRHITex
     RHICmdList.EndRenderPass();
 }
 
-void FTerrainMassShapeCompositionShader::Render(UTextureRenderTarget2D* InputRT, UTextureRenderTarget2D* BlendRT, UTextureRenderTarget2D* OutputRT, 
+void FTerrainMassShapeCompositionShader::Render(UTextureRenderTarget2D* OutputRT, UTextureRenderTarget2D* InputRT, UTextureRenderTarget2D* BlendRT,
     const FTerrainMassShapeCompositionShaderParameter& ShaderParams)
 {
     ENQUEUE_RENDER_COMMAND(TerranMassShapeComposition)(
         [InputRT, BlendRT, OutputRT, ShaderParams](FRHICommandListImmediate& RHICmdList)
         {
-            if (InputRT->GetRenderTargetResource() && InputRT->GetRenderTargetResource()->GetRenderTargetTexture() &&
-                BlendRT->GetRenderTargetResource() && BlendRT->GetRenderTargetResource()->GetRenderTargetTexture() &&
-                OutputRT->GetRenderTargetResource() && OutputRT->GetRenderTargetResource()->GetRenderTargetTexture())
+            if (OutputRT->GetRenderTargetResource() && OutputRT->GetRenderTargetResource()->GetRenderTargetTexture() &&
+                InputRT->GetRenderTargetResource() && InputRT->GetRenderTargetResource()->GetRenderTargetTexture() &&
+                BlendRT->GetRenderTargetResource() && BlendRT->GetRenderTargetResource()->GetRenderTargetTexture())
             {
-                Render_RenderingThread(RHICmdList, InputRT->GetRenderTargetResource()->GetRenderTargetTexture(), BlendRT->GetRenderTargetResource()->GetRenderTargetTexture(),
-                    OutputRT->GetRenderTargetResource()->GetRenderTargetTexture(), FIntPoint(InputRT->SizeX, InputRT->SizeY), ShaderParams);
+                Render_RenderingThread(RHICmdList, OutputRT->GetRenderTargetResource()->GetRenderTargetTexture(), 
+                    InputRT->GetRenderTargetResource()->GetRenderTargetTexture(), BlendRT->GetRenderTargetResource()->GetRenderTargetTexture(),
+                    FIntPoint(InputRT->SizeX, InputRT->SizeY), ShaderParams);
             }
         }
     );

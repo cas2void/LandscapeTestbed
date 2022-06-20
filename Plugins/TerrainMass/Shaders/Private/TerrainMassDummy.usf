@@ -3,15 +3,15 @@
 // return: [-32768, 32767]
 float UnpackHeight(float2 InPackedHeight)
 {
-    return float(((int)round(InPackedHeight.r * 255) << 8 | (int)round(InPackedHeight.g * 255)) - 32768);
+	return float(((int)round(InPackedHeight.r * 255) << 8 | (int)round(InPackedHeight.g * 255)) - 32768);
 }
 
 // InUnpackedHeight: [-32768, 32767]
 // return: ([0, 1], [0, 1])
 float2 PackHeight(float InUnpackedHeight)
 {
-    int IntHeight = (int)clamp(InUnpackedHeight + 32768, 0, 65535);
-    return float2((float)(IntHeight >> 8 & 255) / 255.0, (float)(IntHeight & 255) / 255.0);
+	int IntHeight = (int)clamp(InUnpackedHeight + 32768, 0, 65535);
+	return float2((float)(IntHeight >> 8 & 255) / 255.0, (float)(IntHeight & 255) / 255.0);
 }
 
 //
@@ -22,9 +22,9 @@ float4 UVScaleBias;
 float4 InvTargetSizeAndTextureSize;
 
 void MainVS(in float2 InPosition : ATTRIBUTE0,
-    in float2 InTexCoord : ATTRIBUTE1,
-    out float2 OutTexCoord : TEXCOORD0,
-    out float4 OutPosition : SV_POSITION)
+	in float2 InTexCoord : ATTRIBUTE1,
+	out float2 OutTexCoord : TEXCOORD0,
+	out float4 OutPosition : SV_POSITION)
 {
 	OutPosition.zw = float2(0, 1);
 	OutPosition.xy = -1.0f + 2.0f * (PosScaleBias.zw + (InPosition.xy * PosScaleBias.xy)) * InvTargetSizeAndTextureSize.xy;
@@ -45,19 +45,19 @@ float Radius;
 
 void MainPS(in float2 SvTexCoord : TEXCOORD0, in float4 SvPosition : SV_POSITION, out float4 OutColor : SV_Target0)
 {
-    float4 InputPixel = InputTexture.Sample(InputTextureSampler, SvTexCoord);
-    float InputHeight = UnpackHeight(float2(InputPixel.r, InputPixel.g));
+	float4 InputPixel = InputTexture.Sample(InputTextureSampler, SvTexCoord);
+	float InputHeight = UnpackHeight(float2(InputPixel.r, InputPixel.g));
 	
 	float2 CenterTextureSpace = Center * InvTextureSize;
 	float2 TerrainTexcoords = SvTexCoord - float2(0.5, 0.5) * InvTextureSize;
 	
-    float CurrentDist = distance(CenterTextureSpace, TerrainTexcoords);
+	float CurrentDist = distance(CenterTextureSpace, TerrainTexcoords);
 	float NormalizedDist = saturate(CurrentDist / Radius);
 	float2 FalloffTexCoords = float2(1 - NormalizedDist, 0);
 	float MappedDist = SideFalloffTexture.Sample(SideFalloffTextureSampler, FalloffTexCoords);
-    
+	
 	float CompositeHeight = lerp(InputHeight, Center.z, MappedDist);
 	float2 OutputHeight = PackHeight(CompositeHeight);
-    
-    OutColor = float4(OutputHeight.x, OutputHeight.y, 0, 1);
+	
+	OutColor = float4(OutputHeight.x, OutputHeight.y, 0, 1);
 }

@@ -16,23 +16,23 @@ float Sigma;
 
 float Gaussian(int X)
 {
-    return (1 / (TWO_PI_ROOT * Sigma)) * pow(E, -(X * X) / (2 * Sigma * Sigma));
+	return (1 / (TWO_PI_ROOT * Sigma)) * pow(E, -(X * X) / (2 * Sigma * Sigma));
 }
 
 void MainPS(in float2 SvTexCoord : TEXCOORD0, in float4 SvPosition : SV_POSITION, out float4 OutColor : SV_Target0)
 {   
-    float KernelSum = 0;
-    float SumIntensity = 0;
-    for (int Offset = -KernelSize; Offset <= KernelSize; Offset++)
-    {
-        float GaussValue = Gaussian(Offset);
-        KernelSum += GaussValue;
-        
-        float2 UV = SvTexCoord + InvTextureSize * float2(Offset, Offset) * Direction;
-        float SampleIntensity = InputTexture.Sample(InputTextureSampler, UV).r;
-        SumIntensity += GaussValue * SampleIntensity;
-    }
-    float AverageIntensity = SumIntensity / KernelSum;
-    
-    OutColor = float4(AverageIntensity, 0, 0, 1);
+	float KernelSum = 0;
+	float SumIntensity = 0;
+	for (int Offset = -KernelSize; Offset <= KernelSize; Offset++)
+	{
+		float GaussValue = Gaussian(Offset);
+		KernelSum += GaussValue;
+		
+		float2 UV = SvTexCoord + InvTextureSize * float2(Offset, Offset) * Direction;
+		float SampleIntensity = InputTexture.Sample(InputTextureSampler, UV).r;
+		SumIntensity += GaussValue * SampleIntensity;
+	}
+	float AverageIntensity = SumIntensity / KernelSum;
+	
+	OutColor = float4(AverageIntensity, 0, 0, 1);
 }

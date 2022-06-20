@@ -7,14 +7,14 @@
 float4x4 World2UV;
 
 void MainVS(in float3 InPosition : ATTRIBUTE0,
-    //in float4 InTexCoord : ATTRIBUTE1,
-    out float4 OutPosition : SV_POSITION)
+	//in float4 InTexCoord : ATTRIBUTE1,
+	out float4 OutPosition : SV_POSITION)
 {
-    float4 UVSpacePosition = mul(float4(InPosition, 1), World2UV);
-    
-    OutPosition.zw = float2(0, 1);
-    OutPosition.xy = -1.0 + 2.0 * UVSpacePosition.xy;
-    OutPosition.y *= -1;
+	float4 UVSpacePosition = mul(float4(InPosition, 1), World2UV);
+	
+	OutPosition.zw = float2(0, 1);
+	OutPosition.xy = -1.0 + 2.0 * UVSpacePosition.xy;
+	OutPosition.y *= -1;
 }
 
 //
@@ -23,8 +23,8 @@ void MainVS(in float3 InPosition : ATTRIBUTE0,
 
 void MainPS(in float4 SvPosition : SV_POSITION, in bool bIsFrontFace : SV_IsFrontFace, out float4 OutColor : SV_Target0)
 {
-    float Alpha = bIsFrontFace ? 1.0f : 0.0f;
-    float Intensity = lerp(1, -1, Alpha);
-    
-    OutColor = float4(Intensity, 0, 0, 1);
+	float Alpha = bIsFrontFace ? 1.0f : 0.0f;
+	float Intensity = lerp(1, -1, Alpha);
+	
+	OutColor = float4(Intensity, 0, 0, 1);
 }

@@ -104,7 +104,7 @@ protected:
 	UPROPERTY(EditAnywhere, Category = "Landscape|Falloff")
 	FScalarRamp SideFalloffRamp;
 
-	UPROPERTY(Transient, VisibleInstanceOnly, Category = "Landscape", AdvancedDisplay)
+	UPROPERTY(Transient, VisibleInstanceOnly, Category = "Landscape|Falloff", AdvancedDisplay)
 	UTexture2DDynamic* SideFalloffTexture;
 
 	//

@@ -96,14 +96,12 @@ static void Render_RenderingThread(FRHICommandListImmediate& RHICmdList, FRHITex
     VertexBuffer.AddUninitialized(ShapeVertices.Num());
     FMemory::Memcpy(VertexBuffer.GetData(), ShapeVertices.GetData(), ShapeVertices.Num() * sizeof(FTerrainMassShapeVertex));
 
-    // Create vertex buffer. Fill buffer with initial data upon creation
+    // Create vertex buffer. Fill buffer with initial data upon creation.
     FRHIResourceCreateInfo CreateInfoVB(&VertexBuffer);
     FVertexBufferRHIRef VertexBufferRHI = RHICreateVertexBuffer(VertexBuffer.GetResourceDataSize(), BUF_Static, CreateInfoVB);
 
-    // Setup index buffer
+    // Index buffer
     TResourceArray<uint16, INDEXBUFFER_ALIGNMENT> IndexBuffer;
-    const int32 NumPrimitives = ShapeVertices.Num() - 2;
-    const int32 NumIndices = NumPrimitives * 3;
     IndexBuffer.AddUninitialized(ShapeIndices.Num());
     FMemory::Memcpy(IndexBuffer.GetData(), ShapeIndices.GetData(), ShapeIndices.Num() * sizeof(uint16));
 

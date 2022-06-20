@@ -26,5 +26,5 @@ struct FTerrainMassShapeShaderParameter
 class TERRAINMASSSHADER_API FTerrainMassShapeShader
 {
 public:
-	static void Render(UTextureRenderTarget2D* OutputRT, const TArray<FTerrainMassShapeVertex>& ShapePoints, const FTerrainMassShapeShaderParameter& ShaderParams);
+	static void Render(UTextureRenderTarget2D* OutputRT, const TArray<FTerrainMassShapeVertex>& ShapeVertices, const TArray<uint16>& ShapeIndices, const FTerrainMassShapeShaderParameter& ShaderParams);
 };

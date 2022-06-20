@@ -96,16 +96,28 @@ UTextureRenderTarget2D* ATerrainMassShapeBrush::Render_Native(bool InIsHeightmap
     //
     // Shape
     //
-    TArray<FTerrainMassShapeVertex> ShapePoints;
+    TArray<FTerrainMassShapeVertex> ShapeVertices;
     for (float Time = 0.0f; Time < SplineComponent->Duration; Time += 0.01f)
     {
         FVector WorldLocation = SplineComponent->GetLocationAtTime(Time, ESplineCoordinateSpace::World);
-        ShapePoints.Emplace(WorldLocation);
+        ShapeVertices.Emplace(WorldLocation);
     }
 
-    if (ShapePoints.Num() < 3)
+    if (ShapeVertices.Num() < 3)
     {
         return nullptr;
+    }
+
+    TArray<uint16> ShapeIndices;
+    const int32 NumPrimitives = ShapeVertices.Num() - 2;
+    const int32 NumIndices = NumPrimitives * 3;
+    ShapeIndices.AddUninitialized(NumIndices);
+
+    for (int32 Index = 0; Index < NumPrimitives; Index++)
+    {
+        ShapeIndices[Index * 3 + 0] = 0;
+        ShapeIndices[Index * 3 + 1] = Index + 1;
+        ShapeIndices[Index * 3 + 2] = Index + 2;
     }
 
     FVector2D InvTextureSize = FVector2D(1.0f) / FVector2D(RenderTargetSize);
@@ -120,7 +132,7 @@ UTextureRenderTarget2D* ATerrainMassShapeBrush::Render_Native(bool InIsHeightmap
     ScaleTransform.SetScale3D(FVector(1.0f) / LandscapeUVScale);
     ShapeShaderParams.World2UV = Landscape->GetActorTransform().ToMatrixWithScale().Inverse() * ScaleTransform.ToMatrixWithScale();
 
-    FTerrainMassShapeShader::Render(ShapeRT, ShapePoints, ShapeShaderParams);
+    FTerrainMassShapeShader::Render(ShapeRT, ShapeVertices, ShapeIndices, ShapeShaderParams);
 
     //
     // Jump Flooding

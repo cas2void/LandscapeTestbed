@@ -19,7 +19,6 @@ struct FTerrainMassShapeVertex
 
 struct FTerrainMassShapeShaderParameter
 {
-	FVector2D InvTextureSize;
 	FMatrix World2UV;
 };
 

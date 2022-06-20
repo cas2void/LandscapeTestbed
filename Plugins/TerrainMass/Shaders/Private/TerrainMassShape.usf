@@ -5,7 +5,6 @@
 //
 
 float4x4 World2UV;
-float2 InvTextureSize;
 
 void MainVS(in float3 InPosition : ATTRIBUTE0,
     //in float4 InTexCoord : ATTRIBUTE1,

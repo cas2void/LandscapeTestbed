@@ -39,6 +39,7 @@ UTextureRenderTarget2D* ATerrainMassShapeBrush::Render_Native(bool InIsHeightmap
     check(InCombinedResult);
 
     FIntPoint RenderTargetSize(InCombinedResult->SizeX, InCombinedResult->SizeY);
+    FVector2D InvTextureSize = FVector2D(1.0f) / FVector2D(RenderTargetSize);
 
     if (!OutputRT || OutputRT->SizeX != RenderTargetSize.X || OutputRT->SizeY != RenderTargetSize.Y)
     {
@@ -96,6 +97,8 @@ UTextureRenderTarget2D* ATerrainMassShapeBrush::Render_Native(bool InIsHeightmap
     //
     // Shape
     //
+
+    // Vertex Buffer
     TArray<FTerrainMassShapeVertex> ShapeVertices;
     for (float Time = 0.0f; Time < SplineComponent->Duration; Time += 0.01f)
     {
@@ -108,11 +111,11 @@ UTextureRenderTarget2D* ATerrainMassShapeBrush::Render_Native(bool InIsHeightmap
         return nullptr;
     }
 
+    // Index Buffer
     TArray<uint16> ShapeIndices;
     const int32 NumPrimitives = ShapeVertices.Num() - 2;
     const int32 NumIndices = NumPrimitives * 3;
     ShapeIndices.AddUninitialized(NumIndices);
-
     for (int32 Index = 0; Index < NumPrimitives; Index++)
     {
         ShapeIndices[Index * 3 + 0] = 0;
@@ -120,17 +123,25 @@ UTextureRenderTarget2D* ATerrainMassShapeBrush::Render_Native(bool InIsHeightmap
         ShapeIndices[Index * 3 + 2] = Index + 2;
     }
 
-    FVector2D InvTextureSize = FVector2D(1.0f) / FVector2D(RenderTargetSize);
-
     FTerrainMassShapeShaderParameter ShapeShaderParams;
-    ShapeShaderParams.InvTextureSize = InvTextureSize;
 
+    // Transform vertex from world to uv space
     int32 MinX, MinY, MaxX, MaxY;
     Landscape->GetLandscapeInfo()->GetLandscapeExtent(MinX, MinY, MaxX, MaxY);
-    FVector LandscapeUVScale = FVector(MaxX - MinX, MaxY - MinY, LANDSCAPE_ZSCALE);
+    FVector2D LandscapeSize(MaxX - MinX, MaxY - MinY);
+
     FTransform ScaleTransform(FTransform::Identity);
+    FVector LandscapeUVScale = FVector(LandscapeSize, LANDSCAPE_ZSCALE);
     ScaleTransform.SetScale3D(FVector(1.0f) / LandscapeUVScale);
-    ShapeShaderParams.World2UV = Landscape->GetActorTransform().ToMatrixWithScale().Inverse() * ScaleTransform.ToMatrixWithScale();
+
+    FTransform UVOffsetTransform(FTransform::Identity);
+    if (bUVOffset)
+    {
+        FVector2D LandscapeUVOffset = (LandscapeSize - FVector2D(RenderTargetSize)) * 0.5f * InvTextureSize;
+        UVOffsetTransform.SetLocation(FVector(LandscapeUVOffset, 0.0f));
+    }
+
+    ShapeShaderParams.World2UV = Landscape->GetActorTransform().ToMatrixWithScale().Inverse() * ScaleTransform.ToMatrixWithScale() * UVOffsetTransform.ToMatrixNoScale();
 
     FTerrainMassShapeShader::Render(ShapeRT, ShapeVertices, ShapeIndices, ShapeShaderParams);
 

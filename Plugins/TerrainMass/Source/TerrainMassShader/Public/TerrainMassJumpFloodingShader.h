@@ -7,7 +7,12 @@
 struct FTerrainMassJumpFloodingShaderParameter
 {
 	FVector2D InvTextureSize;
-	float Radius;
+};
+
+struct FTerrainMassDistanceFieldShaderParameter
+{
+	FVector2D InvTextureSize;
+	FVector2D Width;
 };
 
 class TERRAINMASSSHADER_API FTerrainMassJumpFloodingShader
@@ -18,4 +23,6 @@ public:
 	static void Flood(UTextureRenderTarget2D* OutputRTs[], int32& OutputIndex, int32 InputIndex, int32 NumIteration, const FTerrainMassJumpFloodingShaderParameter& ShaderParams);
 
 	static void Flood(UTextureRenderTarget2D* OutputRTs[], int32& OutputIndex, int32 InputIndex, const FTerrainMassJumpFloodingShaderParameter& ShaderParams);
+
+	static void DistanceField(UTextureRenderTarget2D* OutputRT, UTextureRenderTarget2D* InputRT, const FTerrainMassDistanceFieldShaderParameter& ShaderParams);
 };

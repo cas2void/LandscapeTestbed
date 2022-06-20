@@ -2,16 +2,16 @@
 
 Texture2D<float4> InputTexture;
 SamplerState InputTextureSampler;
-float2 InvTextureSize;
-float KernelSize;
 
 void EncodePS(in float2 SvTexCoord : TEXCOORD0, in float4 SvPosition : SV_POSITION, out float4 OutColor : SV_Target0)
 {
     float InputIntensity = InputTexture.Sample(InputTextureSampler, SvTexCoord).r;
-    float IsValidValue = saturate(InputIntensity - 0.000001);
-    float2 Encoded = lerp(float2(-1, -1), SvTexCoord, float2(IsValidValue, IsValidValue));
+    float2 Encoded = (InputIntensity - 0.000001) > 0 ? SvTexCoord : float2(-1, -1);
     OutColor = float4(Encoded, 0, 1);
 }
+
+float2 InvTextureSize;
+float KernelSize;
 
 void MainPS(in float2 SvTexCoord : TEXCOORD0, in float4 SvPosition : SV_POSITION, out float4 OutColor : SV_Target0)
 {
@@ -22,11 +22,11 @@ void MainPS(in float2 SvTexCoord : TEXCOORD0, in float4 SvPosition : SV_POSITION
     };
     
     float2 CurrentClosestUV = InputTexture.Sample(InputTextureSampler, SvTexCoord).rg;
-    float CurrentDistanceSquared = 65504;
+    float MinDistanceSquared = 65504;
     if (CurrentClosestUV.x > 0 && CurrentClosestUV.y > 0)
     {
         float2 ToCurrent = CurrentClosestUV - SvTexCoord;
-        CurrentDistanceSquared = dot(ToCurrent, ToCurrent);
+        MinDistanceSquared = dot(ToCurrent, ToCurrent);
     }
     
     for (int Index = 0; Index < 8; Index++)
@@ -38,12 +38,24 @@ void MainPS(in float2 SvTexCoord : TEXCOORD0, in float4 SvPosition : SV_POSITION
         {
             float2 ToNeighbor = NeighborClosestUV - SvTexCoord;
             float NeighborDistanceSquared = dot(ToNeighbor, ToNeighbor);
-            if (NeighborDistanceSquared < CurrentDistanceSquared)
+            if (NeighborDistanceSquared < MinDistanceSquared)
             {
-                CurrentClosestUV = NeighborUV;
+                CurrentClosestUV = NeighborClosestUV;
+                MinDistanceSquared = NeighborDistanceSquared;
             }
         }
     }
     
     OutColor = float4(CurrentClosestUV, 0, 1);
+}
+
+float Width;
+
+void DistanceFieldPS(in float2 SvTexCoord : TEXCOORD0, in float4 SvPosition : SV_POSITION, out float4 OutColor : SV_Target0)
+{
+    float2 CurrentClosestUV = InputTexture.Sample(InputTextureSampler, SvTexCoord).rg;
+    float CurrentDistance = distance(SvTexCoord, CurrentClosestUV);
+    float NormalizedDistance = 1 - saturate(CurrentDistance / (Width * InvTextureSize));
+    
+    OutColor = float4(NormalizedDistance, 0, 0, 1);
 }

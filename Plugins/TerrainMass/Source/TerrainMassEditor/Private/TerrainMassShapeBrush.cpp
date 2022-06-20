@@ -123,16 +123,6 @@ UTextureRenderTarget2D* ATerrainMassShapeBrush::Render_Native(bool InIsHeightmap
     FTerrainMassShapeShader::Render(ShapeRT, ShapePoints, ShapeShaderParams);
 
     //
-    // Blur
-    //
-    FTerrainMassGaussianBlurShaderParameter BlurShaderParams;
-    BlurShaderParams.InvTextureSize = InvTextureSize;
-    BlurShaderParams.KernelSize = KernelSize;
-    BlurShaderParams.Sigma = Sigma;
-
-    FTerrainMassGaussianBlurShader::Render(ShapeRT, BlurRT, BlurIntermediateRT, BlurShaderParams);
-
-    //
     // Jump Flooding
     //
 
@@ -140,7 +130,7 @@ UTextureRenderTarget2D* ATerrainMassShapeBrush::Render_Native(bool InIsHeightmap
     JumpFloodingShaderParams.InvTextureSize = InvTextureSize;
 
     int32 InputIndex = 0;
-    FTerrainMassJumpFloodingShader::Encode(JumpFloodingRTs[InputIndex], BlurRT);
+    FTerrainMassJumpFloodingShader::Encode(JumpFloodingRTs[InputIndex], ShapeRT);
 
     OutputIndex = 0;
     if (bSetIteration)
@@ -151,6 +141,22 @@ UTextureRenderTarget2D* ATerrainMassShapeBrush::Render_Native(bool InIsHeightmap
     {
         FTerrainMassJumpFloodingShader::Flood(JumpFloodingRTs, OutputIndex, InputIndex, JumpFloodingShaderParams);
     }
+
+    FTerrainMassDistanceFieldShaderParameter DistanceFieldShaderParams;
+    DistanceFieldShaderParams.InvTextureSize = InvTextureSize;
+    DistanceFieldShaderParams.Width = FVector2D(Width) / FVector2D(Landscape->GetActorScale());
+
+    FTerrainMassJumpFloodingShader::DistanceField(DistanceFieldRT, JumpFloodingRTs[OutputIndex], DistanceFieldShaderParams);
+
+    //
+    // Blur
+    //
+    FTerrainMassGaussianBlurShaderParameter BlurShaderParams;
+    BlurShaderParams.InvTextureSize = InvTextureSize;
+    BlurShaderParams.KernelSize = KernelSize;
+    BlurShaderParams.Sigma = Sigma;
+
+    FTerrainMassGaussianBlurShader::Render(DistanceFieldRT, BlurRT, BlurIntermediateRT, BlurShaderParams);
 
     //
     // Composition

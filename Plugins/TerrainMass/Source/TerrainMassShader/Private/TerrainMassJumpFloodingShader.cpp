@@ -223,3 +223,98 @@ void FTerrainMassJumpFloodingShader::Flood(UTextureRenderTarget2D* OutputRTs[], 
 
     RenderJumpFlooding(OutputRTs, OutputIndex, InputIndex, MaxIteration, MaxIteration, ShaderParams);
 }
+
+class FTerrainMassJumpFloodingDistanceFieldShaderPS : public FGlobalShader
+{
+    DECLARE_GLOBAL_SHADER(FTerrainMassJumpFloodingDistanceFieldShaderPS);
+
+public:
+    FTerrainMassJumpFloodingDistanceFieldShaderPS()
+        : FGlobalShader()
+    {}
+
+    FTerrainMassJumpFloodingDistanceFieldShaderPS(const ShaderMetaType::CompiledShaderInitializerType& Initializer)
+        : FGlobalShader(Initializer)
+    {
+        InputTextureParam.Bind(Initializer.ParameterMap, TEXT("InputTexture"));
+        InputTextureSamplerParam.Bind(Initializer.ParameterMap, TEXT("InputTextureSampler"));
+        InvTextureSizeParam.Bind(Initializer.ParameterMap, TEXT("InvTextureSize"));
+        WidthParam.Bind(Initializer.ParameterMap, TEXT("Width"));
+    }
+
+    void SetParameters(FRHICommandList& RHICmdList, const FTerrainMassDistanceFieldShaderParameter& Params)
+    {
+        SetShaderValue(RHICmdList, RHICmdList.GetBoundPixelShader(), InvTextureSizeParam, Params.InvTextureSize);
+        SetShaderValue(RHICmdList, RHICmdList.GetBoundPixelShader(), WidthParam, Params.Width);
+    }
+
+    void SetInput(FRHICommandList& RHICmdList, FRHITexture* InputTexture)
+    {
+        SetTextureParameter(RHICmdList, RHICmdList.GetBoundPixelShader(), InputTextureParam, InputTextureSamplerParam,
+            TStaticSamplerState<>::GetRHI(), InputTexture);
+    }
+
+private:
+    LAYOUT_FIELD(FShaderResourceParameter, InputTextureParam);
+    LAYOUT_FIELD(FShaderResourceParameter, InputTextureSamplerParam);
+    LAYOUT_FIELD(FShaderParameter, InvTextureSizeParam);
+    LAYOUT_FIELD(FShaderParameter, WidthParam);
+};
+
+IMPLEMENT_GLOBAL_SHADER(FTerrainMassJumpFloodingDistanceFieldShaderPS, "/TerrainMassShaders/TerrainMassJumpFlooding.usf", "DistanceFieldPS", SF_Pixel);
+
+static void DistanceField_RenderingThread(FRHICommandListImmediate& RHICmdList, FRHITexture* OutputTexture, FRHITexture* InputTexture, const FIntPoint& Size,
+    const FTerrainMassDistanceFieldShaderParameter& ShaderParams)
+{
+    IRendererModule* RendererModule = &FModuleManager::GetModuleChecked<IRendererModule>("Renderer");
+    FRHIRenderPassInfo RPInfo(OutputTexture, ERenderTargetActions::Load_Store);
+    RHICmdList.BeginRenderPass(RPInfo, TEXT("TerrainMass"));
+    {
+        RHICmdList.SetViewport(0, 0, 0, Size.X, Size.Y, 1);
+
+        FGraphicsPipelineStateInitializer GraphicsPSOInit;
+        RHICmdList.ApplyCachedRenderTargets(GraphicsPSOInit);
+        GraphicsPSOInit.BlendState = TStaticBlendState<>::GetRHI();
+        GraphicsPSOInit.RasterizerState = TStaticRasterizerState<>::GetRHI();
+        GraphicsPSOInit.DepthStencilState = TStaticDepthStencilState<false, CF_Always>::GetRHI();
+
+        FGlobalShaderMap* ShaderMap = GetGlobalShaderMap(GMaxRHIFeatureLevel);
+        TShaderMapRef<FScreenVS> VertexShader(ShaderMap);
+        TShaderMapRef<FTerrainMassJumpFloodingDistanceFieldShaderPS> PixelShader(ShaderMap);
+        PixelShader->SetParameters(RHICmdList, ShaderParams);
+        PixelShader->SetInput(RHICmdList, InputTexture);
+
+        GraphicsPSOInit.BoundShaderState.VertexDeclarationRHI = GFilterVertexDeclaration.VertexDeclarationRHI;
+        GraphicsPSOInit.BoundShaderState.VertexShaderRHI = VertexShader.GetVertexShader();
+        GraphicsPSOInit.BoundShaderState.PixelShaderRHI = PixelShader.GetPixelShader();
+        GraphicsPSOInit.PrimitiveType = PT_TriangleList;
+
+        SetGraphicsPipelineState(RHICmdList, GraphicsPSOInit);
+
+        RendererModule->DrawRectangle(
+            RHICmdList,
+            0, 0,             // Dest X, Y
+            Size.X, Size.Y,   // Dest Width, Height
+            0, 0,             // Source U, V
+            1, 1,             // Source USize, VSize
+            Size,             // Target buffer size
+            FIntPoint(1, 1),  // Source texture size
+            VertexShader);
+    }
+    RHICmdList.EndRenderPass();
+}
+
+void FTerrainMassJumpFloodingShader::DistanceField(UTextureRenderTarget2D* OutputRT, UTextureRenderTarget2D* InputRT, const FTerrainMassDistanceFieldShaderParameter& ShaderParams)
+{
+    ENQUEUE_RENDER_COMMAND(TerranMassJumpFlooding)(
+        [OutputRT, InputRT, ShaderParams](FRHICommandListImmediate& RHICmdList)
+        {
+            if (OutputRT->GetRenderTargetResource() && OutputRT->GetRenderTargetResource()->GetRenderTargetTexture() ||
+                InputRT->GetRenderTargetResource() && InputRT->GetRenderTargetResource()->GetRenderTargetTexture())
+            {
+                DistanceField_RenderingThread(RHICmdList, OutputRT->GetRenderTargetResource()->GetRenderTargetTexture(), InputRT->GetRenderTargetResource()->GetRenderTargetTexture(),
+                    FIntPoint(InputRT->SizeX, InputRT->SizeY), ShaderParams);
+            }
+        }
+    );
+}

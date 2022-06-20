@@ -83,6 +83,9 @@ protected:
 	UPROPERTY(Transient, VisibleAnywhere, Category = "Landscape")
 	int32 OutputIndex = -1;
 
+	UPROPERTY(EditAnywhere, Category = "Landscape")
+	float Width = 400.0f;
+
 	//
 	// Shape Falloff
 	//

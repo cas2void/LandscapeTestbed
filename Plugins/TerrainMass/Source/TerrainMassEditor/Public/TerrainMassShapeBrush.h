@@ -4,12 +4,23 @@
 #include "LandscapeBlueprintBrush.h"
 #include "Engine/TextureRenderTarget2D.h"
 #include "ScalarRamp.h"
+#include "TerrainMassShapeVertex.h"
 #include "TerrainMassShapeBrush.generated.h"
+
+enum class EShapeBrushDirtyLevel : uint8
+{
+	ShapeData,
+	ShapeRT,
+	JumpFlooding,
+	DistanceField,
+	Blur,
+	Max
+};
 
 /**
  * 
  */
-UCLASS()
+UCLASS(NotBlueprintable, NotPlaceable, HideCategories = (Collision, Mobility))
 class TERRAINMASSEDITOR_API ATerrainMassShapeBrush : public ALandscapeBlueprintBrush
 {
 	GENERATED_BODY()
@@ -61,11 +72,28 @@ protected:
 	UTextureRenderTarget2D* BlurRT;
 
 	//
+	// Dirty Flags
+	//
+protected:
+	UPROPERTY(VisibleAnywhere, Transient, Category = "Landscape|Dirty Flags")
+	TArray<bool> DirtyFlags;
+
+	void MarkDirty(EShapeBrushDirtyLevel DirtyLevel);
+	bool IsDirty(EShapeBrushDirtyLevel DirtyLevel) const;
+	void ResetDirty(EShapeBrushDirtyLevel DirtyLevel);
+
+	//
 	// Shape
 	//
 protected:
 	UPROPERTY(EditAnywhere, Category = "Landscape|Shape")
 	bool bUVOffset = true;
+
+	UPROPERTY(Transient)
+	TArray<FTerrainMassShapeVertex> ShapeVertices;
+
+	UPROPERTY(Transient)
+	TArray<uint16> ShapeIndices;
 
 	//
 	// Jump Flooding
@@ -97,7 +125,7 @@ protected:
 	float Sigma = 3.0f;
 
 	//
-	// Shape Falloff
+	// Compostion
 	//
 protected:
 	
@@ -108,7 +136,7 @@ protected:
 	UTexture2DDynamic* SideFalloffTexture;
 
 	//
-	// Spline
+	// Components
 	//
 protected:
 	UPROPERTY(VisibleAnywhere)
@@ -116,4 +144,18 @@ protected:
 
 	UPROPERTY(VisibleAnywhere)
 	class UArrowComponent* ArrowComponent;
+
+	//
+	// Transform Delegates
+	//
+	void OnTransformUpdated(USceneComponent* UpdatedComponent, EUpdateTransformFlags UpdateTransformFlags, ETeleportType Teleport);
+
+	UPROPERTY(Transient)
+	FVector PreviousLocation;
+
+	UPROPERTY(Transient)
+	FQuat PreviousRotation;
+
+	UPROPERTY(Transient)
+	FVector PreviousScale;
 };

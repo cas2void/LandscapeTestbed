@@ -3,19 +3,7 @@
 #include "CoreMinimal.h"
 #include "Engine/TextureRenderTarget2D.h"
 #include "Engine/Texture2DDynamic.h"
-
-//
-// Vertex Layout
-//
-struct FTerrainMassShapeVertex
-{
-	FVector Position;
-	//FVector4 ExtraData;
-
-	FTerrainMassShapeVertex(FVector InPosition)
-		: Position(InPosition)
-	{}
-};
+#include "TerrainMassShapeVertex.h"
 
 struct FTerrainMassShapeShaderParameter
 {

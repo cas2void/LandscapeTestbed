@@ -9,6 +9,7 @@
 #include "Components/ArrowComponent.h"
 #include "Editor.h"
 
+#include "TerrainMassSplineComponent.h"
 #include "ScalarRamp.h"
 #include "TerrainMassShapeShader.h"
 #include "TerrainMassGaussianBlurShader.h"
@@ -30,7 +31,7 @@ ATerrainMassShapeBrush::ATerrainMassShapeBrush()
     ArrowComponent->bIsScreenSizeScaled = true;
     SetRootComponent(ArrowComponent);
 
-    SplineComponent = CreateDefaultSubobject<USplineComponent>(FName(TEXT("Spline")));
+    SplineComponent = CreateDefaultSubobject<UTerrainMassSplineComponent>(FName(TEXT("Spline")));
     SplineComponent->SetRelativeRotation(FRotator(-90.0f, 0.0f, 0.0f));
     SplineComponent->SetupAttachment(ArrowComponent);
 }
@@ -74,8 +75,6 @@ UTextureRenderTarget2D* ATerrainMassShapeBrush::Render_Native(bool InIsHeightmap
     {
         BlurRT = UKismetRenderingLibrary::CreateRenderTarget2D(this, RenderTargetSize.X, RenderTargetSize.Y, RTF_R16f);
     }
-
-    UKismetRenderingLibrary::ClearRenderTarget2D(this, ShapeRT);
 
     if (!OutputRT)
     {
@@ -155,6 +154,7 @@ UTextureRenderTarget2D* ATerrainMassShapeBrush::Render_Native(bool InIsHeightmap
 
         ShapeShaderParams.World2UV = SplineComponent->GetComponentTransform().ToMatrixWithScale() * Landscape->GetActorTransform().ToMatrixWithScale().Inverse() * ScaleTransform.ToMatrixWithScale() * UVOffsetTransform.ToMatrixNoScale();
 
+        UKismetRenderingLibrary::ClearRenderTarget2D(this, ShapeRT);
         FTerrainMassShapeShader::Render(ShapeRT, ShapeVertices, ShapeIndices, ShapeShaderParams);
 
         UE_LOG(LogTemp, Warning, TEXT("ATerrainMassShapeBrush::ShapeRT"));
@@ -247,6 +247,9 @@ void ATerrainMassShapeBrush::Initialize_Native(const FTransform& InLandscapeTran
     
     DirtyFlags.Empty();
     DirtyFlags.Init(true, static_cast<int32>(EShapeBrushDirtyLevel::Max));
+
+    SplineComponent->OnSplineUpdated().RemoveAll(this);
+    SplineComponent->OnSplineUpdated().AddUObject(this, &ATerrainMassShapeBrush::OnSplineUpdated);
 
     const float MinFloat = TNumericLimits<float>::Lowest();
     PreviousLocation = FVector(MinFloat);
@@ -346,4 +349,9 @@ void ATerrainMassShapeBrush::OnTransformUpdated(USceneComponent* UpdatedComponen
     PreviousLocation = CurrentLocation;
     PreviousRotation = CurrentRotation;
     PreviousScale = CurrentScale;
+}
+
+void ATerrainMassShapeBrush::OnSplineUpdated()
+{
+    MarkDirty(EShapeBrushDirtyLevel::ShapeData);
 }

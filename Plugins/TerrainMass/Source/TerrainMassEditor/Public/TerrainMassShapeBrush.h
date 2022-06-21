@@ -140,7 +140,7 @@ protected:
 	//
 protected:
 	UPROPERTY(VisibleAnywhere)
-	class USplineComponent* SplineComponent;
+	class UTerrainMassSplineComponent* SplineComponent;
 
 	UPROPERTY(VisibleAnywhere)
 	class UArrowComponent* ArrowComponent;
@@ -148,6 +148,7 @@ protected:
 	//
 	// Transform Delegates
 	//
+protected:
 	void OnTransformUpdated(USceneComponent* UpdatedComponent, EUpdateTransformFlags UpdateTransformFlags, ETeleportType Teleport);
 
 	UPROPERTY(Transient)
@@ -158,4 +159,10 @@ protected:
 
 	UPROPERTY(Transient)
 	FVector PreviousScale;
+
+	//
+	// Spline Delegates
+	//
+protected:
+	void OnSplineUpdated();
 };

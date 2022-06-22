@@ -9,6 +9,7 @@
 #include "Components/ArrowComponent.h"
 #include "Editor.h"
 
+#include "TerrainMassHandleComponent.h"
 #include "TerrainMassSplineComponent.h"
 #include "ScalarRamp.h"
 #include "TerrainMassShapeShader.h"
@@ -22,17 +23,14 @@ ATerrainMassShapeBrush::ATerrainMassShapeBrush()
     SetAffectsHeightmap(true);
     SetAffectsWeightmap(true);
 
-    ArrowComponent = CreateDefaultSubobject<UArrowComponent>(FName(TEXT("Arrow")));
-    ArrowComponent->SetRelativeRotation(FRotator(90.0f, 0.0f, 0.0f));
+    ArrowComponent = CreateDefaultSubobject<UTerrainMassHandleComponent>(FName(TEXT("Arrow")));
     ArrowComponent->SetupAttachment(RootComponent);
     ArrowComponent->SetArrowColor(FLinearColor::Yellow);
     ArrowComponent->ArrowSize = 40.0f;
     ArrowComponent->ArrowLength = 25.0f;
-    ArrowComponent->bIsScreenSizeScaled = true;
     SetRootComponent(ArrowComponent);
 
     SplineComponent = CreateDefaultSubobject<UTerrainMassSplineComponent>(FName(TEXT("Spline")));
-    SplineComponent->SetRelativeRotation(FRotator(-90.0f, 0.0f, 0.0f));
     SplineComponent->SetupAttachment(ArrowComponent);
 }
 
@@ -128,7 +126,7 @@ UTextureRenderTarget2D* ATerrainMassShapeBrush::Render_Native(bool InIsHeightmap
             ShapeIndices[Index * 3 + 2] = Index + 2;
         }
 
-        UE_LOG(LogTemp, Warning, TEXT("ATerrainMassShapeBrush::ShapeData"));
+        //UE_LOG(LogTemp, Warning, TEXT("ATerrainMassShapeBrush::ShapeData"));
         ResetDirty(EShapeBrushDirtyLevel::ShapeData);
     }
 
@@ -157,7 +155,7 @@ UTextureRenderTarget2D* ATerrainMassShapeBrush::Render_Native(bool InIsHeightmap
         UKismetRenderingLibrary::ClearRenderTarget2D(this, ShapeRT);
         FTerrainMassShapeShader::Render(ShapeRT, ShapeVertices, ShapeIndices, ShapeShaderParams);
 
-        UE_LOG(LogTemp, Warning, TEXT("ATerrainMassShapeBrush::ShapeRT"));
+        //UE_LOG(LogTemp, Warning, TEXT("ATerrainMassShapeBrush::ShapeRT"));
         ResetDirty(EShapeBrushDirtyLevel::ShapeRT);
     }
 
@@ -182,7 +180,7 @@ UTextureRenderTarget2D* ATerrainMassShapeBrush::Render_Native(bool InIsHeightmap
             FTerrainMassJumpFloodingShader::Flood(JumpFloodingRTs, OutputIndex, InputIndex, JumpFloodingShaderParams);
         }
 
-        UE_LOG(LogTemp, Warning, TEXT("ATerrainMassShapeBrush::JumpFlooding"));
+        //UE_LOG(LogTemp, Warning, TEXT("ATerrainMassShapeBrush::JumpFlooding"));
         ResetDirty(EShapeBrushDirtyLevel::JumpFlooding);
     }
 
@@ -194,7 +192,7 @@ UTextureRenderTarget2D* ATerrainMassShapeBrush::Render_Native(bool InIsHeightmap
 
         FTerrainMassJumpFloodingShader::DistanceField(DistanceFieldRT, JumpFloodingRTs[OutputIndex], DistanceFieldShaderParams);
 
-        UE_LOG(LogTemp, Warning, TEXT("ATerrainMassShapeBrush::DistanceField"));
+        //UE_LOG(LogTemp, Warning, TEXT("ATerrainMassShapeBrush::DistanceField"));
         ResetDirty(EShapeBrushDirtyLevel::DistanceField);
     }
 
@@ -213,7 +211,7 @@ UTextureRenderTarget2D* ATerrainMassShapeBrush::Render_Native(bool InIsHeightmap
             FTerrainMassGaussianBlurShader::Render(BlurRT, DistanceFieldRT, BlurIntermediateRT, BlurShaderParams);
         }
 
-        UE_LOG(LogTemp, Warning, TEXT("ATerrainMassShapeBrush::Blur"));
+        //UE_LOG(LogTemp, Warning, TEXT("ATerrainMassShapeBrush::Blur"));
         ResetDirty(EShapeBrushDirtyLevel::Blur);
     }
 
@@ -243,7 +241,7 @@ UTextureRenderTarget2D* ATerrainMassShapeBrush::Render_Native(bool InIsHeightmap
 
 void ATerrainMassShapeBrush::Initialize_Native(const FTransform& InLandscapeTransform, const FIntPoint& InLandscapeSize, const FIntPoint& InLandscapeRenderTargetSize)
 {
-    UE_LOG(LogTemp, Warning, TEXT("ATerrainMassShapeBrush::Initialize_Native"));
+    //UE_LOG(LogTemp, Warning, TEXT("ATerrainMassShapeBrush::Initialize_Native"));
     
     DirtyFlags.Empty();
     DirtyFlags.Init(true, static_cast<int32>(EShapeBrushDirtyLevel::Max));

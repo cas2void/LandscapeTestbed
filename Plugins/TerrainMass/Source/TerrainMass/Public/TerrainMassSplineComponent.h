@@ -20,6 +20,10 @@ class TERRAINMASS_API UTerrainMassSplineComponent : public USplineComponent
 public:
 	virtual void UpdateSpline() override;
 
+	//
+	// Update Delegates
+	//
+public:
 	DECLARE_MULTICAST_DELEGATE(FTerrainMassSplineUpdatedDelegate);
 	FTerrainMassSplineUpdatedDelegate& OnSplineUpdated() { return TerrainMassSplineUpdatedDelegate; }
 	const FTerrainMassSplineUpdatedDelegate& OnSplineUpdated() const { return TerrainMassSplineUpdatedDelegate; }

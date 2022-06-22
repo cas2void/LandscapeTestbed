@@ -14,7 +14,10 @@ struct TERRAINMASSSHADER_API FTerrainMassShapeVertex
 	GENERATED_BODY()
 
 public:
+	UPROPERTY()
 	FVector Position;
+
+	//UPROPERTY()
 	//FVector4 ExtraData;
 
 	FTerrainMassShapeVertex()

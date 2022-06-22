@@ -20,7 +20,7 @@ enum class EShapeBrushDirtyLevel : uint8
 /**
  * 
  */
-UCLASS(NotBlueprintable, NotPlaceable, HideCategories = (Collision, Mobility))
+UCLASS(/*NotBlueprintable, */NotPlaceable, HideCategories = (Collision, Mobility))
 class TERRAINMASSEDITOR_API ATerrainMassShapeBrush : public ALandscapeBlueprintBrush
 {
 	GENERATED_BODY()
@@ -143,7 +143,7 @@ protected:
 	class UTerrainMassSplineComponent* SplineComponent;
 
 	UPROPERTY(VisibleAnywhere)
-	class UArrowComponent* ArrowComponent;
+	class UTerrainMassHandleComponent* ArrowComponent;
 
 	//
 	// Transform Delegates

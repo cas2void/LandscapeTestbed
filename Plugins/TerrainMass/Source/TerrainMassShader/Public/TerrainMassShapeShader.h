@@ -7,7 +7,7 @@
 
 struct FTerrainMassShapeShaderParameter
 {
-	FMatrix World2UV;
+	FMatrix Local2UV;
 };
 
 class TERRAINMASSSHADER_API FTerrainMassShapeShader

@@ -45,16 +45,16 @@ public:
     FTerrainMassShapeShaderVS(const ShaderMetaType::CompiledShaderInitializerType& Initializer)
         : FGlobalShader(Initializer)
     {
-        World2UVParam.Bind(Initializer.ParameterMap, TEXT("World2UV"));
+        Local2UVParam.Bind(Initializer.ParameterMap, TEXT("Local2UV"));
     }
 
     void SetParameters(FRHICommandList& RHICmdList, const FTerrainMassShapeShaderParameter& Params)
     {
-        SetShaderValue(RHICmdList, RHICmdList.GetBoundVertexShader(), World2UVParam, Params.World2UV);
+        SetShaderValue(RHICmdList, RHICmdList.GetBoundVertexShader(), Local2UVParam, Params.Local2UV);
     }
 
 private:
-    LAYOUT_FIELD(FShaderParameter, World2UVParam);
+    LAYOUT_FIELD(FShaderParameter, Local2UVParam);
 };
 
 IMPLEMENT_GLOBAL_SHADER(FTerrainMassShapeShaderVS, "/TerrainMassShaders/TerrainMassShape.usf", "MainVS", SF_Vertex);

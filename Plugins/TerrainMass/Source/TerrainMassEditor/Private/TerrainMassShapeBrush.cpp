@@ -105,8 +105,8 @@ UTextureRenderTarget2D* ATerrainMassShapeBrush::Render_Native(bool InIsHeightmap
         ShapeVertices.Empty();
         for (float Time = 0.0f; Time < SplineComponent->Duration; Time += 0.01f)
         {
-            FVector WorldLocation = SplineComponent->GetLocationAtTime(Time, ESplineCoordinateSpace::Local);
-            ShapeVertices.Emplace(WorldLocation);
+            FVector LocalLocation = SplineComponent->GetLocationAtTime(Time, ESplineCoordinateSpace::Local);
+            ShapeVertices.Emplace(LocalLocation);
         }
 
         if (ShapeVertices.Num() < 3)
@@ -139,18 +139,23 @@ UTextureRenderTarget2D* ATerrainMassShapeBrush::Render_Native(bool InIsHeightmap
         Landscape->GetLandscapeInfo()->GetLandscapeExtent(MinX, MinY, MaxX, MaxY);
         FVector2D LandscapeSize(MaxX - MinX, MaxY - MinY);
 
-        FTransform ScaleTransform(FTransform::Identity);
-        FVector LandscapeUVScale = FVector(LandscapeSize, LANDSCAPE_ZSCALE);
-        ScaleTransform.SetScale3D(FVector(1.0f) / LandscapeUVScale);
+        FTransform HeightmapTransform(FTransform::Identity);
+        FVector HeightmapScale = FVector(LandscapeSize, LANDSCAPE_ZSCALE);
+        HeightmapTransform.SetScale3D(FVector(1.0f) / HeightmapScale);
 
-        FTransform UVOffsetTransform(FTransform::Identity);
+        FTransform UVScaleTransform(FTransform::Identity);
         if (bUVOffset)
         {
-            FVector2D LandscapeUVOffset = (LandscapeSize - FVector2D(RenderTargetSize)) * 0.5f * InvTextureSize;
-            UVOffsetTransform.SetLocation(FVector(LandscapeUVOffset, 0.0f));
+            FVector2D LandscapeUVOffset = LandscapeSize * InvTextureSize;
+            UVScaleTransform.SetScale3D(FVector(LandscapeUVOffset, 1.0f));
         }
 
-        ShapeShaderParams.World2UV = SplineComponent->GetComponentTransform().ToMatrixWithScale() * Landscape->GetActorTransform().ToMatrixWithScale().Inverse() * ScaleTransform.ToMatrixWithScale() * UVOffsetTransform.ToMatrixNoScale();
+        FTransform HalfPixelTransform(FTransform::Identity);
+        FVector2D HalfPixelOffset = InvTextureSize * 0.5f;
+        HalfPixelTransform.SetLocation(FVector(HalfPixelOffset, 0.0f));
+
+        ShapeShaderParams.Local2UV = SplineComponent->GetComponentTransform().ToMatrixWithScale() * Landscape->GetActorTransform().ToMatrixWithScale().Inverse() * 
+            HeightmapTransform.ToMatrixWithScale() * UVScaleTransform.ToMatrixWithScale() * HalfPixelTransform.ToMatrixNoScale();
 
         UKismetRenderingLibrary::ClearRenderTarget2D(this, ShapeRT);
         FTerrainMassShapeShader::Render(ShapeRT, ShapeVertices, ShapeIndices, ShapeShaderParams);

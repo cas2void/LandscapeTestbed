@@ -4,13 +4,13 @@
 // Vertex Shader
 //
 
-float4x4 World2UV;
+float4x4 Local2UV;
 
 void MainVS(in float3 InPosition : ATTRIBUTE0,
 	//in float4 InTexCoord : ATTRIBUTE1,
 	out float4 OutPosition : SV_POSITION)
 {
-	float4 UVSpacePosition = mul(float4(InPosition, 1), World2UV);
+	float4 UVSpacePosition = mul(float4(InPosition, 1), Local2UV);
 	
 	OutPosition.zw = float2(0, 1);
 	OutPosition.xy = -1.0 + 2.0 * UVSpacePosition.xy;

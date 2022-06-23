@@ -72,24 +72,24 @@ static void TerrainMassBuildConeVerts(float Angle1, float Angle2, float Scale, f
 
 		FDynamicMeshVertex V0, V1, V2;
 
-		V0.Position = FVector(0) + FVector(0, 0, ZOffset);
+		V0.Position = FVector(0, 0, ZOffset);
 		V0.TextureCoordinate[0].X = 0.0f;
 		V0.TextureCoordinate[0].Y = (float)i / NumSides;
-		V0.SetTangents(TriTangentX, TriTangentY, FVector(0, 0, -1));
+		V0.SetTangents(TriTangentX, TriTangentY, FVector(0, 0, 1));
 		int32 I0 = OutVerts.Add(V0);
 
 		V1.Position = ConeVerts[i];
 		V1.TextureCoordinate[0].X = 1.0f;
 		V1.TextureCoordinate[0].Y = (float)i / NumSides;
 		FVector TriTangentZPrev = ConeVerts[i] ^ ConeVerts[i == 0 ? NumSides - 1 : i - 1]; // Normal of the previous face connected to this face
-		V1.SetTangents(TriTangentX, TriTangentY, (TriTangentZPrev + TriTangentZ).GetSafeNormal());
+		V1.SetTangents(TriTangentX, TriTangentY, -(TriTangentZPrev + TriTangentZ).GetSafeNormal());
 		int32 I1 = OutVerts.Add(V1);
 
 		V2.Position = ConeVerts[(i + 1) % NumSides];
 		V2.TextureCoordinate[0].X = 1.0f;
 		V2.TextureCoordinate[0].Y = (float)((i + 1) % NumSides) / NumSides;
 		FVector TriTangentZNext = ConeVerts[(i + 2) % NumSides] ^ ConeVerts[(i + 1) % NumSides]; // Normal of the next face connected to this face
-		V2.SetTangents(TriTangentX, TriTangentY, (TriTangentZNext + TriTangentZ).GetSafeNormal());
+		V2.SetTangents(TriTangentX, TriTangentY, -(TriTangentZNext + TriTangentZ).GetSafeNormal());
 		int32 I2 = OutVerts.Add(V2);
 
 		// Flip winding for negative scale

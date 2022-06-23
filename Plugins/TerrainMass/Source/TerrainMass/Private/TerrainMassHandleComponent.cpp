@@ -225,15 +225,16 @@ public:
 	FTerrainMassHandleSceneProxy(UTerrainMassHandleComponent* Component)
 		: FPrimitiveSceneProxy(Component)
 		, VertexFactory(GetScene().GetFeatureLevel(), "FTerrainMassHandleSceneProxy")
-		, ArrowColor(Component->ArrowColor)
-		, ArrowSize(Component->ArrowSize)
-		, ArrowLength(Component->ArrowLength)
+		, HandleColor(Component->HandleColor)
+		, HandleSize(Component->HandleSize)
+		, HandleLength(Component->HandleLength)
+		, bKeepHandleSize(Component->bKeepHandleSize)
 	{
 		bWillEverBeLit = false;
 
 		const float HeadAngle = FMath::DegreesToRadians(ARROW_HEAD_ANGLE);
-		const float DefaultLength = ArrowSize * ARROW_SCALE;
-		const float TotalLength = ArrowSize * ArrowLength;
+		const float DefaultLength = HandleSize * ARROW_SCALE;
+		const float TotalLength = HandleSize * HandleLength;
 		const float HeadLength = DefaultLength * ARROW_HEAD_FACTOR;
 		const float ShaftRadius = DefaultLength * ARROW_RADIUS_FACTOR;
 		const float ShaftLength = (TotalLength - HeadLength * 0.5); // 10% overlap between shaft and head
@@ -262,17 +263,21 @@ public:
 
 	virtual void GetDynamicMeshElements(const TArray<const FSceneView*>& Views, const FSceneViewFamily& ViewFamily, uint32 VisibilityMap, FMeshElementCollector& Collector) const override
 	{
-		QUICK_SCOPE_CYCLE_COUNTER(STAT_ArrowSceneProxy_DrawDynamicElements);
+		QUICK_SCOPE_CYCLE_COUNTER(STAT_HandleSceneProxy_DrawDynamicElements);
 
 		FMatrix EffectiveLocalToWorld = GetLocalToWorld();
+		if (bKeepHandleSize)
+		{
+			EffectiveLocalToWorld.RemoveScaling();
+		}
 
-		auto ArrowMaterialRenderProxy = new FColoredMaterialRenderProxy(
+		auto HandleMaterialRenderProxy = new FColoredMaterialRenderProxy(
 			GEngine->ArrowMaterial->GetRenderProxy(),
-			ArrowColor,
+			HandleColor,
 			"GizmoColor"
 		);
 
-		Collector.RegisterOneFrameMaterialProxy(ArrowMaterialRenderProxy);
+		Collector.RegisterOneFrameMaterialProxy(HandleMaterialRenderProxy);
 
 		for (int32 ViewIndex = 0; ViewIndex < Views.Num(); ViewIndex++)
 		{
@@ -286,7 +291,7 @@ public:
 				BatchElement.IndexBuffer = &IndexBuffer;
 				Mesh.bWireframe = false;
 				Mesh.VertexFactory = &VertexFactory;
-				Mesh.MaterialRenderProxy = ArrowMaterialRenderProxy;
+				Mesh.MaterialRenderProxy = HandleMaterialRenderProxy;
 
 				FDynamicPrimitiveUniformBuffer& DynamicPrimitiveUniformBuffer = Collector.AllocateOneFrameResource<FDynamicPrimitiveUniformBuffer>();
 				DynamicPrimitiveUniformBuffer.Set(EffectiveLocalToWorld, EffectiveLocalToWorld, GetBounds(), GetLocalBounds(), true, false, DrawsVelocity(), false);
@@ -330,18 +335,19 @@ private:
 	FLocalVertexFactory VertexFactory;
 
 	FVector Origin;
-	FColor ArrowColor;
-	float ArrowSize;
-	float ArrowLength;
+	FColor HandleColor;
+	float HandleSize;
+	float HandleLength;
+	bool bKeepHandleSize;
 };
 
 UTerrainMassHandleComponent::UTerrainMassHandleComponent()
 {
 	SetCollisionProfileName(UCollisionProfile::NoCollision_ProfileName);
-	ArrowColor = FColor(255, 0, 0, 255);
+	HandleColor = FColor(255, 0, 0, 255);
 
-	ArrowSize = 1.0f;
-	ArrowLength = ARROW_SCALE;
+	HandleSize = 1.0f;
+	HandleLength = ARROW_SCALE;
 	bHiddenInGame = true;
 	bUseEditorCompositing = true;
 	SetGenerateOverlapEvents(false);
@@ -355,13 +361,13 @@ FPrimitiveSceneProxy* UTerrainMassHandleComponent::CreateSceneProxy()
 #if WITH_EDITOR
 bool UTerrainMassHandleComponent::ComponentIsTouchingSelectionBox(const FBox& InSelBBox, const FEngineShowFlags& ShowFlags, const bool bConsiderOnlyBSP, const bool bMustEncompassEntireComponent) const
 {
-	// Arrow components not treated as 'selectable' in editor
+	// Handle components not treated as 'selectable' in editor
 	return false;
 }
 
 bool UTerrainMassHandleComponent::ComponentIsTouchingSelectionFrustum(const FConvexVolume& InFrustum, const FEngineShowFlags& ShowFlags, const bool bConsiderOnlyBSP, const bool bMustEncompassEntireComponent) const
 {
-	// Arrow components not treated as 'selectable' in editor
+	// Handle components not treated as 'selectable' in editor
 	return false;
 }
 #endif
@@ -369,11 +375,11 @@ bool UTerrainMassHandleComponent::ComponentIsTouchingSelectionFrustum(const FCon
 
 FBoxSphereBounds UTerrainMassHandleComponent::CalcBounds(const FTransform& LocalToWorld) const
 {
-	return FBoxSphereBounds(FBox(FVector(0, -ARROW_SCALE, -ARROW_SCALE), FVector(ArrowSize * ArrowLength * 3.0f, ARROW_SCALE, ARROW_SCALE))).TransformBy(LocalToWorld);
+	return FBoxSphereBounds(FBox(FVector(0, -ARROW_SCALE, -ARROW_SCALE), FVector(HandleSize * HandleLength * 3.0f, ARROW_SCALE, ARROW_SCALE))).TransformBy(LocalToWorld);
 }
 
-void UTerrainMassHandleComponent::SetArrowColor(FLinearColor NewColor)
+void UTerrainMassHandleComponent::SetHandleColor(FLinearColor NewColor)
 {
-	ArrowColor = NewColor.ToFColor(true);
+	HandleColor = NewColor.ToFColor(true);
 	MarkRenderStateDirty();
 }

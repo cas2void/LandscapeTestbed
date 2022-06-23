@@ -5,8 +5,6 @@
 #include "LandscapeInfo.h"
 #include "Curves/CurveFloat.h"
 #include "Kismet/KismetRenderingLibrary.h"
-#include "Components/SplineComponent.h"
-#include "Components/ArrowComponent.h"
 #include "Editor.h"
 
 #include "TerrainMassHandleComponent.h"
@@ -23,15 +21,15 @@ ATerrainMassShapeBrush::ATerrainMassShapeBrush()
     SetAffectsHeightmap(true);
     SetAffectsWeightmap(true);
 
-    ArrowComponent = CreateDefaultSubobject<UTerrainMassHandleComponent>(FName(TEXT("Arrow")));
-    ArrowComponent->SetupAttachment(RootComponent);
-    ArrowComponent->SetArrowColor(FLinearColor::Yellow);
-    ArrowComponent->ArrowSize = 40.0f;
-    ArrowComponent->ArrowLength = 25.0f;
-    SetRootComponent(ArrowComponent);
+    HandleComponent = CreateDefaultSubobject<UTerrainMassHandleComponent>(FName(TEXT("Handle")));
+    HandleComponent->SetupAttachment(RootComponent);
+    HandleComponent->SetHandleColor(FLinearColor::Yellow);
+    HandleComponent->HandleSize = 40.0f;
+    HandleComponent->HandleLength = 25.0f;
+    SetRootComponent(HandleComponent);
 
     SplineComponent = CreateDefaultSubobject<UTerrainMassSplineComponent>(FName(TEXT("Spline")));
-    SplineComponent->SetupAttachment(ArrowComponent);
+    SplineComponent->SetupAttachment(HandleComponent);
 }
 
 UTextureRenderTarget2D* ATerrainMassShapeBrush::Render_Native(bool InIsHeightmap, UTextureRenderTarget2D* InCombinedResult, const FName& InWeightmapLayerName)
@@ -227,8 +225,8 @@ UTextureRenderTarget2D* ATerrainMassShapeBrush::Render_Native(bool InIsHeightmap
         FTerrainMassShapeCompositionShaderParameter CompositionShaderParams;
         CompositionShaderParams.SideFalloffTexture = SideFalloffTexture;
 
-        FVector ArrowLocation = ArrowComponent->GetComponentLocation();
-        float ElevationInHeightMap = Landscape->GetActorTransform().InverseTransformPosition(ArrowLocation).Z * LANDSCAPE_INV_ZSCALE;
+        FVector HandleLocation = HandleComponent->GetComponentLocation();
+        float ElevationInHeightMap = Landscape->GetActorTransform().InverseTransformPosition(HandleLocation).Z * LANDSCAPE_INV_ZSCALE;
         CompositionShaderParams.Elevation = ElevationInHeightMap;
 
         if (bBlur)

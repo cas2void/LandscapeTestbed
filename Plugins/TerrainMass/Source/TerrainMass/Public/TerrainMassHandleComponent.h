@@ -17,21 +17,25 @@ class TERRAINMASS_API UTerrainMassHandleComponent : public UPrimitiveComponent
 public:
 	UTerrainMassHandleComponent();
 
-	/** Color to draw arrow */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category=ArrowComponent)
-	FColor ArrowColor;
+	// Color to draw arrow
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category=HandleComponent)
+	FColor HandleColor;
 
-	/** Relative size to scale drawn arrow by */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category=ArrowComponent)
-	float ArrowSize;
+	// Relative size to scale drawn arrow by
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category=HandleComponent)
+	float HandleSize;
 
-	/** Total length of drawn arrow including head */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category=ArrowComponent)
-	float ArrowLength;
+	// Total length of drawn arrow including head
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category=HandleComponent)
+	float HandleLength;
+
+	// Ignore scene component scale
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category=HandleComponent)
+	bool bKeepHandleSize = true;
 
 	/** Updates the arrow's colour, and tells it to refresh */
-	UFUNCTION(BlueprintCallable, DisplayName="SetArrowColor", Category="Components|Arrow")
-	virtual void SetArrowColor(FLinearColor NewColor);
+	UFUNCTION(BlueprintCallable, DisplayName="SetHandleColor", Category="Components|Handle")
+	virtual void SetHandleColor(FLinearColor NewColor);
 
 	//~ Begin UPrimitiveComponent Interface.
 	virtual FPrimitiveSceneProxy* CreateSceneProxy() override;

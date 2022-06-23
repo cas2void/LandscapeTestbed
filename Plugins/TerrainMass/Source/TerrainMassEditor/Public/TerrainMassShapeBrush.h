@@ -143,7 +143,7 @@ protected:
 	class UTerrainMassSplineComponent* SplineComponent;
 
 	UPROPERTY(VisibleAnywhere)
-	class UTerrainMassHandleComponent* ArrowComponent;
+	class UTerrainMassHandleComponent* HandleComponent;
 
 	//
 	// Transform Delegates

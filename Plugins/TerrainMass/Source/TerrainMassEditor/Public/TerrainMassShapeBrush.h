@@ -20,7 +20,7 @@ enum class EShapeBrushDirtyLevel : uint8
 /**
  * 
  */
-UCLASS(/*NotBlueprintable, */NotPlaceable, HideCategories = (Collision, Mobility))
+UCLASS(NotBlueprintable, NotPlaceable, HideCategories = (Collision, Mobility))
 class TERRAINMASSEDITOR_API ATerrainMassShapeBrush : public ALandscapeBlueprintBrush
 {
 	GENERATED_BODY()
@@ -53,29 +53,29 @@ public:
 	// Brush Rendering
 	//
 protected:
-	UPROPERTY(VisibleAnywhere, Transient, Category = "Landscape|Buffers")
+	UPROPERTY(VisibleAnywhere, Transient, NonTransactional, Category = "Landscape|Buffers")
 	UTextureRenderTarget2D* OutputRT;
 
-	UPROPERTY(VisibleAnywhere, Transient, Category = "Landscape|Buffers")
+	UPROPERTY(VisibleAnywhere, Transient, NonTransactional, Category = "Landscape|Buffers")
 	UTextureRenderTarget2D* ShapeRT;
 
-	UPROPERTY(VisibleAnywhere, Transient, Category = "Landscape|Buffers")
+	UPROPERTY(VisibleAnywhere, Transient, NonTransactional, Category = "Landscape|Buffers")
 	UTextureRenderTarget2D* JumpFloodingRTs[2];
 
-	UPROPERTY(VisibleAnywhere, Transient, Category = "Landscape|Buffers")
+	UPROPERTY(VisibleAnywhere, Transient, NonTransactional, Category = "Landscape|Buffers")
 	UTextureRenderTarget2D* DistanceFieldRT;
 
-	UPROPERTY(VisibleAnywhere, Transient, Category = "Landscape|Buffers")
+	UPROPERTY(VisibleAnywhere, Transient, NonTransactional, Category = "Landscape|Buffers")
 	UTextureRenderTarget2D* BlurIntermediateRT;
 
-	UPROPERTY(VisibleAnywhere, Transient, Category = "Landscape|Buffers")
+	UPROPERTY(VisibleAnywhere, Transient, NonTransactional, Category = "Landscape|Buffers")
 	UTextureRenderTarget2D* BlurRT;
 
 	//
 	// Dirty Flags
 	//
 protected:
-	UPROPERTY(VisibleAnywhere, Transient, Category = "Landscape|Dirty Flags")
+	UPROPERTY(VisibleAnywhere, Transient, NonTransactional, Category = "Landscape|Dirty Flags")
 	TArray<bool> DirtyFlags;
 
 	void MarkDirty(EShapeBrushDirtyLevel DirtyLevel);
@@ -89,10 +89,10 @@ protected:
 	UPROPERTY(EditAnywhere, Category = "Landscape|Shape")
 	bool bUVOffset = true;
 
-	UPROPERTY(Transient)
+	UPROPERTY(Transient, NonTransactional)
 	TArray<FTerrainMassShapeVertex> ShapeVertices;
 
-	UPROPERTY(Transient)
+	UPROPERTY(Transient, NonTransactional)
 	TArray<uint16> ShapeIndices;
 
 	//
@@ -105,7 +105,7 @@ protected:
 	UPROPERTY(EditAnywhere, Category = "Landscape|Distance Field", meta = (UIMin = 0, UIMax = 15, EditCondition = "bSetIteration"))
 	int32 NumIteration = 1;
 
-	UPROPERTY(Transient, VisibleAnywhere, Category = "Landscape|Distance Field")
+	UPROPERTY(VisibleAnywhere, Transient, NonTransactional, Category = "Landscape|Distance Field")
 	int32 OutputIndex = -1;
 
 	UPROPERTY(EditAnywhere, Category = "Landscape|Distance Field")
@@ -132,7 +132,7 @@ protected:
 	UPROPERTY(EditAnywhere, Category = "Landscape|Falloff")
 	FScalarRamp SideFalloffRamp;
 
-	UPROPERTY(Transient, VisibleInstanceOnly, Category = "Landscape|Falloff", AdvancedDisplay)
+	UPROPERTY(VisibleInstanceOnly, Transient, NonTransactional, Category = "Landscape|Falloff", AdvancedDisplay)
 	UTexture2DDynamic* SideFalloffTexture;
 
 	//
@@ -151,13 +151,13 @@ protected:
 protected:
 	void OnTransformUpdated(USceneComponent* UpdatedComponent, EUpdateTransformFlags UpdateTransformFlags, ETeleportType Teleport);
 
-	UPROPERTY(Transient)
+	UPROPERTY(Transient, NonTransactional)
 	FVector PreviousLocation;
 
-	UPROPERTY(Transient)
+	UPROPERTY(Transient, NonTransactional)
 	FQuat PreviousRotation;
 
-	UPROPERTY(Transient)
+	UPROPERTY(Transient, NonTransactional)
 	FVector PreviousScale;
 
 	//

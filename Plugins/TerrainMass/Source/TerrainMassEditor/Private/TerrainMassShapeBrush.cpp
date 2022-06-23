@@ -266,8 +266,6 @@ void ATerrainMassShapeBrush::Initialize_Native(const FTransform& InLandscapeTran
 #if WITH_EDITOR
 void ATerrainMassShapeBrush::PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent)
 {
-    Super::PostEditChangeProperty(PropertyChangedEvent);
-
     if (PropertyChangedEvent.GetPropertyName() == GET_MEMBER_NAME_CHECKED(ATerrainMassShapeBrush, SideFalloffRamp) ||
         PropertyChangedEvent.MemberProperty->GetFName() == GET_MEMBER_NAME_CHECKED(ATerrainMassShapeBrush, SideFalloffRamp))
     {
@@ -292,6 +290,15 @@ void ATerrainMassShapeBrush::PostEditChangeProperty(FPropertyChangedEvent& Prope
     {
         MarkDirty(EShapeBrushDirtyLevel::Blur);
     }
+
+    // Undo operation in editor fires property changed event of type Unspecified.
+    // Transform undo is also included, so this will overide OnTransformUpdated's ShapeRT dirty flag, which is fine for this brush.
+    if (PropertyChangedEvent.ChangeType == EPropertyChangeType::Unspecified)
+    {
+        MarkDirty(EShapeBrushDirtyLevel::ShapeData);
+    }
+
+    Super::PostEditChangeProperty(PropertyChangedEvent);
 }
 #endif
 

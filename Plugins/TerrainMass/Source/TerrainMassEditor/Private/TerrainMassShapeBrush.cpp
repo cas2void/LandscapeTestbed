@@ -223,7 +223,7 @@ UTextureRenderTarget2D* ATerrainMassShapeBrush::Render_Native(bool InIsHeightmap
     //
     {
         FTerrainMassShapeCompositionShaderParameter CompositionShaderParams;
-        CompositionShaderParams.SideFalloffTexture = SideFalloffTexture;
+        CompositionShaderParams.SideFalloffTexture = SideFalloffRamp.GetTexture();
 
         FVector HandleLocation = HandleComponent->GetComponentLocation();
         float ElevationInHeightMap = Landscape->GetActorTransform().InverseTransformPosition(HandleLocation).Z * LANDSCAPE_INV_ZSCALE;
@@ -264,12 +264,7 @@ void ATerrainMassShapeBrush::Initialize_Native(const FTransform& InLandscapeTran
 #if WITH_EDITOR
 void ATerrainMassShapeBrush::PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent)
 {
-    if (PropertyChangedEvent.GetPropertyName() == GET_MEMBER_NAME_CHECKED(ATerrainMassShapeBrush, SideFalloffRamp) ||
-        PropertyChangedEvent.MemberProperty->GetFName() == GET_MEMBER_NAME_CHECKED(ATerrainMassShapeBrush, SideFalloffRamp))
-    {
-        SideFalloffRamp.WriteTexture(SideFalloffTexture);
-    }
-    else if (PropertyChangedEvent.GetPropertyName() == GET_MEMBER_NAME_CHECKED(ATerrainMassShapeBrush, bUVOffset))
+    if (PropertyChangedEvent.GetPropertyName() == GET_MEMBER_NAME_CHECKED(ATerrainMassShapeBrush, bUVOffset))
     {
         MarkDirty(EShapeBrushDirtyLevel::ShapeRT);
     }
@@ -303,12 +298,6 @@ void ATerrainMassShapeBrush::PostEditChangeProperty(FPropertyChangedEvent& Prope
 void ATerrainMassShapeBrush::PostRegisterAllComponents()
 {
     Super::PostRegisterAllComponents();
-
-    if (!SideFalloffTexture)
-    {
-        SideFalloffTexture = FScalarRamp::CreateTexture(256);
-        SideFalloffRamp.WriteTexture(SideFalloffTexture);
-    }
 }
 
 void ATerrainMassShapeBrush::MarkDirty(EShapeBrushDirtyLevel DirtyLevel)

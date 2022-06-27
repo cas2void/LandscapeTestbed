@@ -49,7 +49,7 @@ UTextureRenderTarget2D* ATerrainMassDummyBrush::Render_Native(bool InIsHeightmap
     Center.Z *= LANDSCAPE_INV_ZSCALE;
 
     FTerrainMassDummyShaderParameter ShaderParams;
-    ShaderParams.SideFalloffTexture = SideFalloffTexture;
+    ShaderParams.SideFalloffTexture = SideFalloffRamp.GetTexture();
     ShaderParams.InvTextureSize = FVector2D(1.0f) / FVector2D(RenderTargetSize);
     ShaderParams.Center = Center;
     ShaderParams.Radius = Radius * RadiusScale / RenderTargetSize.X;
@@ -73,22 +73,10 @@ void ATerrainMassDummyBrush::Initialize_Native(const FTransform& InLandscapeTran
 void ATerrainMassDummyBrush::PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent)
 {
     Super::PostEditChangeProperty(PropertyChangedEvent);
-
-    if (PropertyChangedEvent.GetPropertyName() == GET_MEMBER_NAME_CHECKED(ATerrainMassDummyBrush, SideFalloffRamp) ||
-        PropertyChangedEvent.MemberProperty->GetFName() == GET_MEMBER_NAME_CHECKED(ATerrainMassDummyBrush, SideFalloffRamp))
-    {
-        SideFalloffRamp.WriteTexture(SideFalloffTexture);
-    }
 }
 #endif
 
 void ATerrainMassDummyBrush::PostRegisterAllComponents()
 {
     Super::PostRegisterAllComponents();
-
-    if (!SideFalloffTexture)
-    {
-        SideFalloffTexture = FScalarRamp::CreateTexture(256);
-        SideFalloffRamp.WriteTexture(SideFalloffTexture);
-    }
 }

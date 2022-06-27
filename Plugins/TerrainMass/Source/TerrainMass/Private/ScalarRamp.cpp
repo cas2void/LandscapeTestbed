@@ -4,19 +4,38 @@
 
 #include "ScalarRampShader.h"
 
-UTexture2DDynamic* FScalarRamp::CreateTexture(int32 Size)
+void FScalarRamp::SetSize(int32 TextureSize)
 {
-	FTexture2DDynamicCreateInfo CreateInfo(PF_G8, false, false, TF_Bilinear, AM_Clamp);
-	UTexture2DDynamic* RampTexture = UTexture2DDynamic::Create(Size, 1, CreateInfo);
+	Size = TextureSize;
 
-	FScalarRampShader::WaitForGPU();
-
-	return RampTexture;
+	CreateTexture();
 }
 
-void FScalarRamp::WriteTexture(UTexture2DDynamic* OutTexture)
+void FScalarRamp::CreateTexture()
 {
-	check(OutTexture);
+	FTexture2DDynamicCreateInfo CreateInfo(PF_G16, false, false, TF_Bilinear, AM_Clamp);
+	Texture = UTexture2DDynamic::Create(Size, 1, CreateInfo);
 
-	FScalarRampShader::RenderRampToTexture(Curve, OutTexture);
+	FScalarRampShader::WaitForGPU();
+}
+
+void FScalarRamp::WriteTexture()
+{
+	if (!Texture)
+	{
+		CreateTexture();
+	}
+
+	FScalarRampShader::RenderRampToTexture(Curve, Texture);
+}
+
+UTexture2DDynamic* FScalarRamp::GetTexture()
+{
+	if (!Texture)
+	{
+		CreateTexture();
+		WriteTexture();
+	}
+
+	return Texture;
 }

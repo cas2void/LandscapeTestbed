@@ -128,12 +128,8 @@ protected:
 	// Compostion
 	//
 protected:
-	
 	UPROPERTY(EditAnywhere, Category = "Landscape|Falloff")
 	FScalarRamp SideFalloffRamp;
-
-	UPROPERTY(VisibleInstanceOnly, Transient, NonTransactional, Category = "Landscape|Falloff", AdvancedDisplay)
-	UTexture2DDynamic* SideFalloffTexture;
 
 	//
 	// Components

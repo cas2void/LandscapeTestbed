@@ -15,6 +15,8 @@ void FScalarRampShader::WaitForGPU()
 
 void FScalarRampShader::RenderRampToTexture(const FRuntimeFloatCurve& Curve, UTexture2DDynamic* ScalarRampTexture)
 {
+    check(ScalarRampTexture);
+
     ENQUEUE_RENDER_COMMAND(UpdateScalarRampTexture)(
         [Curve, ScalarRampTexture](FRHICommandListImmediate& RHICmdList)
         {
@@ -22,7 +24,7 @@ void FScalarRampShader::RenderRampToTexture(const FRuntimeFloatCurve& Curve, UTe
             if (RHITexture2D)
             {
                 uint32 DestStride;
-                uint8* Buffer = static_cast<uint8*>(RHILockTexture2D(RHITexture2D, 0, RLM_WriteOnly, DestStride, false));
+                uint16* Buffer = static_cast<uint16*>(RHILockTexture2D(RHITexture2D, 0, RLM_WriteOnly, DestStride, false));
                 if (Buffer)
                 {
                     uint32 TextureWidth = RHITexture2D->GetSizeX();
@@ -33,16 +35,15 @@ void FScalarRampShader::RenderRampToTexture(const FRuntimeFloatCurve& Curve, UTe
 
                     if (RichCurve->GetNumKeys() < 1)
                     {
-                    	FMemory::Memzero(Buffer, TextureWidth * sizeof(uint8));
+                    	FMemory::Memzero(Buffer, TextureWidth * sizeof(uint16));
                     }
                     else
                     {
                     	for (int32 Index = 0; Index < static_cast<int32>(TextureWidth); Index++)
                     	{
                             float Time = (float)Index / (float)(TextureWidth - 1);
-                            float CurveValue = Time;
-                            CurveValue = FMath::Clamp(RichCurve->Eval(Time), 0.0f, 1.0f);
-                    		Buffer[Index] = (uint8)(CurveValue * 255);
+                            float CurveValue = FMath::Clamp(RichCurve->Eval(Time), 0.0f, 1.0f);
+                    		Buffer[Index] = (uint16)(CurveValue * 65535);
                     	}
                     }
                 }

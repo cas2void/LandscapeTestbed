@@ -32,13 +32,9 @@ void MainPS(in float2 SvTexCoord : TEXCOORD0, in float4 SvPosition : SV_POSITION
 	
 	float BlendWeight = BlendTexture.Sample(BlendTextureSampler, SvTexCoord);
 	BlendWeight = saturate(BlendWeight);
+	float MappedWeight = SideFalloffTexture.Sample(SideFalloffTextureSampler, float2(BlendWeight, 0));
 	
-	//float CurrentDist = distance(CenterTextureSpace, TerrainTexcoords);
-	//float NormalizedDist = saturate(CurrentDist / Radius);
-	//float2 FalloffTexCoords = float2(1 - NormalizedDist, 0);
-	//float MappedDist = SideFalloffTexture.Sample(SideFalloffTextureSampler, FalloffTexCoords);
-	
-	float CompositeHeight = lerp(InputHeight, Elevation, BlendWeight);
+	float CompositeHeight = lerp(InputHeight, Elevation, MappedWeight);
 	float2 OutputHeight = PackHeight(CompositeHeight);
 	
 	OutColor = float4(OutputHeight.x, OutputHeight.y, 0, 1);

@@ -28,8 +28,8 @@ public:
 	FRuntimeFloatCurve Curve;
 
 protected:
-	UPROPERTY(EditAnywhere, meta = (UIMin = 2, ClampMin = 2))
-	int32 Size = 256;
+	UPROPERTY(EditAnywhere, meta = (UIMin = 2, UIMax = 2048, ClampMin = 2, ClampMax = 8192))
+	int32 Size = 512;
 
 	UPROPERTY(VisibleInstanceOnly, Transient, NonTransactional, AdvancedDisplay)
 	UTexture2DDynamic* Texture;

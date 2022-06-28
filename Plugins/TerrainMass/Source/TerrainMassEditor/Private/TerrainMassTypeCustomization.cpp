@@ -7,6 +7,7 @@
 #include "DetailWidgetRow.h"
 #include "IDetailChildrenBuilder.h"
 #include "IDetailGroup.h"
+#include "Framework/Application/SlateApplication.h"
 
 #include "ScalarRamp.h"
 
@@ -48,6 +49,9 @@ void FScalarRampTypeCustomization::CustomizeChildren(TSharedRef<IPropertyHandle>
 			[Ramp]()
 			{
 				Ramp->WriteTexture();
+
+				bool bFinished = FSlateApplication::Get().GetPressedMouseButtons().Num() < 1;
+				Ramp->OnRampModified.Broadcast(Ramp->GetCurve(), bFinished);
 			}));
 
 		ChildBuilder.AddProperty(CurveProperty.ToSharedRef());

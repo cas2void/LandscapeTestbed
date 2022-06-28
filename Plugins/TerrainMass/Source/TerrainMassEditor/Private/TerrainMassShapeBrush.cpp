@@ -305,6 +305,7 @@ void ATerrainMassShapeBrush::PostEditChangeProperty(FPropertyChangedEvent& Prope
 void ATerrainMassShapeBrush::PostRegisterAllComponents()
 {
     Super::PostRegisterAllComponents();
+
 }
 
 void ATerrainMassShapeBrush::MarkDirty(EShapeBrushDirtyLevel DirtyLevel)

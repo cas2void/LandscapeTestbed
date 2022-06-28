@@ -16,20 +16,28 @@ struct TERRAINMASS_API FScalarRamp
 	GENERATED_BODY()
 
 public:
+	FScalarRamp();
+
 	void SetSize(int32 TextureSize);
+
+	UTexture2DDynamic* GetTexture();
+
+	FRuntimeFloatCurve& GetCurve() { return Curve; }
+
+	const FRuntimeFloatCurve& GetCurve() const { return Curve; }
+
+	void SetDefaultCurve();
 
 	void CreateTexture();
 
 	void WriteTexture();
 
-	UTexture2DDynamic* GetTexture();
-
+protected:
 	UPROPERTY(EditAnywhere)
 	FRuntimeFloatCurve Curve;
 
-protected:
 	UPROPERTY(EditAnywhere, meta = (UIMin = 2, UIMax = 1024, ClampMin = 2, ClampMax = 1024))
-	int32 Size = 512;
+	int32 Size = 128;
 
 	UPROPERTY(VisibleInstanceOnly, Transient, NonTransactional, AdvancedDisplay)
 	UTexture2DDynamic* Texture;

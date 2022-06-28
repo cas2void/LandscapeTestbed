@@ -275,6 +275,13 @@ void ATerrainMassShapeBrush::PostEditChangeProperty(FPropertyChangedEvent& Prope
     }
     else if (PropertyChangedEvent.GetPropertyName() == GET_MEMBER_NAME_CHECKED(ATerrainMassShapeBrush, Width))
     {
+        ALandscape* Landscape = GetOwningLandscape();
+        if (Landscape)
+        {
+            int32 WidthInHeightmap = FMath::RoundToInt(Width / Landscape->GetActorScale3D().X);
+            SideFalloffRamp.SetSize(WidthInHeightmap);
+        }
+
         MarkDirty(EShapeBrushDirtyLevel::DistanceField);
     }
     else if (PropertyChangedEvent.GetPropertyName() == GET_MEMBER_NAME_CHECKED(ATerrainMassShapeBrush, bBlur) ||

@@ -6,9 +6,13 @@
 
 void FScalarRamp::SetSize(int32 TextureSize)
 {
-	Size = TextureSize;
-
-	CreateTexture();
+	Size = FMath::Clamp(static_cast<int32>(FMath::RoundUpToPowerOfTwo(TextureSize)), 32, 256);
+	
+	if (!Texture || Texture->SizeX != Size)
+	{
+		CreateTexture();
+		WriteTexture();
+	}
 }
 
 void FScalarRamp::CreateTexture()

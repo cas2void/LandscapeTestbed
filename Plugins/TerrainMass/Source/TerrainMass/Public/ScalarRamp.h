@@ -28,7 +28,7 @@ public:
 	FRuntimeFloatCurve Curve;
 
 protected:
-	UPROPERTY(EditAnywhere, meta = (UIMin = 2, UIMax = 2048, ClampMin = 2, ClampMax = 8192))
+	UPROPERTY(EditAnywhere, meta = (UIMin = 2, UIMax = 1024, ClampMin = 2, ClampMax = 1024))
 	int32 Size = 512;
 
 	UPROPERTY(VisibleInstanceOnly, Transient, NonTransactional, AdvancedDisplay)

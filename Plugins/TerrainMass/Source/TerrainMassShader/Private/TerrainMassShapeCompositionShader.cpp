@@ -37,7 +37,7 @@ public:
             Params.SideFalloffTexture->Resource->TextureRHI)
         {
             SetTextureParameter(RHICmdList, RHICmdList.GetBoundPixelShader(), SideFalloffTextureParam, SideFalloffTextureSamplerParam,
-                TStaticSamplerState<>::GetRHI(), Params.SideFalloffTexture->Resource->TextureRHI);
+                TStaticSamplerState<SF_Bilinear>::GetRHI(), Params.SideFalloffTexture->Resource->TextureRHI);
         }
 
         SetShaderValue(RHICmdList, RHICmdList.GetBoundPixelShader(), ElevationParam, Params.Elevation);

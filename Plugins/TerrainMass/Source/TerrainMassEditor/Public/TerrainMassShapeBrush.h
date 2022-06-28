@@ -9,12 +9,20 @@
 
 enum class EShapeBrushDirtyLevel : uint8
 {
-	ShapeData,
+	ShapeVertex,
 	ShapeRT,
 	JumpFlooding,
 	DistanceField,
 	Blur,
 	Max
+};
+
+struct FShapeBrushRenderingContext
+{
+	FIntPoint RenderTargetSize;
+	FVector2D InvTextureSize;
+	TEnumAsByte<ETextureRenderTargetFormat> OutputFormat;
+	class ALandscape* Landscape;
 };
 
 /**
@@ -53,6 +61,14 @@ public:
 	// Brush Rendering
 	//
 protected:
+	bool AllocateRenderTargets(FShapeBrushRenderingContext& RenderingContext);
+	bool GenerateShapeVertex(FShapeBrushRenderingContext& RenderingContext);
+	void RenderShape(FShapeBrushRenderingContext& RenderingContext);
+	void JumpFlooding(FShapeBrushRenderingContext& RenderingContext);
+	void GenerateDistanceField(FShapeBrushRenderingContext& RenderingContext);
+	void BlurDistanceField(FShapeBrushRenderingContext& RenderingContext);
+	void FinalComposite(FShapeBrushRenderingContext& RenderingContext, UTextureRenderTarget2D* InCombinedResult);
+
 	UPROPERTY(VisibleAnywhere, Transient, NonTransactional, Category = "Landscape|Buffers")
 	UTextureRenderTarget2D* OutputRT;
 

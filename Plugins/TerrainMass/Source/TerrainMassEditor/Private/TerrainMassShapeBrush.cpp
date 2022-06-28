@@ -36,43 +36,19 @@ UTextureRenderTarget2D* ATerrainMassShapeBrush::Render_Native(bool InIsHeightmap
 {
     check(InCombinedResult);
 
-    FIntPoint RenderTargetSize(InCombinedResult->SizeX, InCombinedResult->SizeY);
-    FVector2D InvTextureSize = FVector2D(1.0f) / FVector2D(RenderTargetSize);
-
-    if (!OutputRT || OutputRT->SizeX != RenderTargetSize.X || OutputRT->SizeY != RenderTargetSize.Y)
+    ALandscape* Landscape = GetOwningLandscape();
+    if (!Landscape || !Landscape->GetLandscapeInfo())
     {
-        OutputRT = UKismetRenderingLibrary::CreateRenderTarget2D(this, RenderTargetSize.X, RenderTargetSize.Y, InCombinedResult->RenderTargetFormat);
+        return nullptr;
     }
 
-    if (!ShapeRT || ShapeRT->SizeX != RenderTargetSize.X || ShapeRT->SizeY != RenderTargetSize.Y)
-    {
-        ShapeRT = UKismetRenderingLibrary::CreateRenderTarget2D(this, RenderTargetSize.X, RenderTargetSize.Y, RTF_R16f);
-    }
+    FShapeBrushRenderingContext RenderingContext;
+    RenderingContext.RenderTargetSize = FIntPoint(InCombinedResult->SizeX, InCombinedResult->SizeY);
+    RenderingContext.InvTextureSize = FVector2D(1.0f) / FVector2D(RenderingContext.RenderTargetSize);
+    RenderingContext.OutputFormat = InCombinedResult->RenderTargetFormat;
+    RenderingContext.Landscape = Landscape;
 
-    for (int32 Index = 0; Index < 2; Index++)
-    {
-        if (!JumpFloodingRTs[Index] || JumpFloodingRTs[Index]->SizeX != RenderTargetSize.X || JumpFloodingRTs[Index]->SizeY != RenderTargetSize.Y)
-        {
-            JumpFloodingRTs[Index] = UKismetRenderingLibrary::CreateRenderTarget2D(this, RenderTargetSize.X, RenderTargetSize.Y, RTF_RG16f);
-        }
-    }
-
-    if (!DistanceFieldRT || DistanceFieldRT->SizeX != RenderTargetSize.X || DistanceFieldRT->SizeY != RenderTargetSize.Y)
-    {
-        DistanceFieldRT = UKismetRenderingLibrary::CreateRenderTarget2D(this, RenderTargetSize.X, RenderTargetSize.Y, RTF_R16f);
-    }
-
-    if (!BlurIntermediateRT || BlurIntermediateRT->SizeX != RenderTargetSize.X || BlurIntermediateRT->SizeY != RenderTargetSize.Y)
-    {
-        BlurIntermediateRT = UKismetRenderingLibrary::CreateRenderTarget2D(this, RenderTargetSize.X, RenderTargetSize.Y, RTF_R16f);
-    }
-
-    if (!BlurRT || BlurRT->SizeX != RenderTargetSize.X || BlurRT->SizeY != RenderTargetSize.Y)
-    {
-        BlurRT = UKismetRenderingLibrary::CreateRenderTarget2D(this, RenderTargetSize.X, RenderTargetSize.Y, RTF_R16f);
-    }
-
-    if (!OutputRT)
+    if (!AllocateRenderTargets(RenderingContext))
     {
         // LandscapeEditLayers.cpp - ALandscape::RegenerateLayersHeightmaps
         //
@@ -84,12 +60,6 @@ UTextureRenderTarget2D* ATerrainMassShapeBrush::Render_Native(bool InIsHeightmap
         return nullptr;
     }
 
-    ALandscape* Landscape = GetOwningLandscape();
-    if (!Landscape || !Landscape->GetLandscapeInfo())
-    {
-        return nullptr;
-    }
-
     //
     // Brush Rendering
     //
@@ -97,66 +67,20 @@ UTextureRenderTarget2D* ATerrainMassShapeBrush::Render_Native(bool InIsHeightmap
     //
     // Shape
     //
-    if (IsDirty(EShapeBrushDirtyLevel::ShapeData))
+    if (IsDirty(EShapeBrushDirtyLevel::ShapeVertex))
     {
-        // Vertex Buffer
-        ShapeVertices.Empty();
-        for (float Time = 0.0f; Time < SplineComponent->Duration; Time += 0.01f)
-        {
-            FVector LocalLocation = SplineComponent->GetLocationAtTime(Time, ESplineCoordinateSpace::Local);
-            ShapeVertices.Emplace(LocalLocation);
-        }
-
-        if (ShapeVertices.Num() < 3)
+        if (!GenerateShapeVertex(RenderingContext))
         {
             return nullptr;
         }
 
-        // Index Buffer
-        ShapeIndices.Empty();
-        const int32 NumPrimitives = ShapeVertices.Num() - 2;
-        const int32 NumIndices = NumPrimitives * 3;
-        ShapeIndices.AddUninitialized(NumIndices);
-        for (int32 Index = 0; Index < NumPrimitives; Index++)
-        {
-            ShapeIndices[Index * 3 + 0] = 0;
-            ShapeIndices[Index * 3 + 1] = Index + 1;
-            ShapeIndices[Index * 3 + 2] = Index + 2;
-        }
-
         //UE_LOG(LogTemp, Warning, TEXT("ATerrainMassShapeBrush::ShapeData"));
-        ResetDirty(EShapeBrushDirtyLevel::ShapeData);
+        ResetDirty(EShapeBrushDirtyLevel::ShapeVertex);
     }
 
     if (IsDirty(EShapeBrushDirtyLevel::ShapeRT))
     {
-        FTerrainMassShapeShaderParameter ShapeShaderParams;
-
-        // Transform vertex from world to uv space
-        int32 MinX, MinY, MaxX, MaxY;
-        Landscape->GetLandscapeInfo()->GetLandscapeExtent(MinX, MinY, MaxX, MaxY);
-        FVector2D LandscapeSize(MaxX - MinX, MaxY - MinY);
-
-        FTransform HeightmapTransform(FTransform::Identity);
-        FVector HeightmapScale = FVector(LandscapeSize, LANDSCAPE_ZSCALE);
-        HeightmapTransform.SetScale3D(FVector(1.0f) / HeightmapScale);
-
-        FTransform UVScaleTransform(FTransform::Identity);
-        if (bUVOffset)
-        {
-            FVector2D LandscapeUVOffset = LandscapeSize * InvTextureSize;
-            UVScaleTransform.SetScale3D(FVector(LandscapeUVOffset, 1.0f));
-        }
-
-        FTransform HalfPixelTransform(FTransform::Identity);
-        FVector2D HalfPixelOffset = InvTextureSize * 0.5f;
-        HalfPixelTransform.SetLocation(FVector(HalfPixelOffset, 0.0f));
-
-        ShapeShaderParams.Local2UV = SplineComponent->GetComponentTransform().ToMatrixWithScale() * Landscape->GetActorTransform().ToMatrixWithScale().Inverse() * 
-            HeightmapTransform.ToMatrixWithScale() * UVScaleTransform.ToMatrixWithScale() * HalfPixelTransform.ToMatrixNoScale();
-
-        UKismetRenderingLibrary::ClearRenderTarget2D(this, ShapeRT);
-        FTerrainMassShapeShader::Render(ShapeRT, ShapeVertices, ShapeIndices, ShapeShaderParams);
+        RenderShape(RenderingContext);
 
         //UE_LOG(LogTemp, Warning, TEXT("ATerrainMassShapeBrush::ShapeRT"));
         ResetDirty(EShapeBrushDirtyLevel::ShapeRT);
@@ -167,21 +91,7 @@ UTextureRenderTarget2D* ATerrainMassShapeBrush::Render_Native(bool InIsHeightmap
     //
     if (IsDirty(EShapeBrushDirtyLevel::JumpFlooding))
     {
-        FTerrainMassJumpFloodingShaderParameter JumpFloodingShaderParams;
-        JumpFloodingShaderParams.InvTextureSize = InvTextureSize;
-
-        int32 InputIndex = 0;
-        FTerrainMassJumpFloodingShader::Encode(JumpFloodingRTs[InputIndex], ShapeRT);
-
-        OutputIndex = 0;
-        if (bSetIteration)
-        {
-            FTerrainMassJumpFloodingShader::Flood(JumpFloodingRTs, OutputIndex, InputIndex, NumIteration, JumpFloodingShaderParams);
-        }
-        else
-        {
-            FTerrainMassJumpFloodingShader::Flood(JumpFloodingRTs, OutputIndex, InputIndex, JumpFloodingShaderParams);
-        }
+        JumpFlooding(RenderingContext);
 
         //UE_LOG(LogTemp, Warning, TEXT("ATerrainMassShapeBrush::JumpFlooding"));
         ResetDirty(EShapeBrushDirtyLevel::JumpFlooding);
@@ -189,11 +99,7 @@ UTextureRenderTarget2D* ATerrainMassShapeBrush::Render_Native(bool InIsHeightmap
 
     if (IsDirty(EShapeBrushDirtyLevel::DistanceField))
     {
-        FTerrainMassDistanceFieldShaderParameter DistanceFieldShaderParams;
-        DistanceFieldShaderParams.InvTextureSize = InvTextureSize;
-        DistanceFieldShaderParams.Width = FVector2D(Width) / FVector2D(Landscape->GetActorScale());
-
-        FTerrainMassJumpFloodingShader::DistanceField(DistanceFieldRT, JumpFloodingRTs[OutputIndex], DistanceFieldShaderParams);
+        GenerateDistanceField(RenderingContext);
 
         //UE_LOG(LogTemp, Warning, TEXT("ATerrainMassShapeBrush::DistanceField"));
         ResetDirty(EShapeBrushDirtyLevel::DistanceField);
@@ -204,15 +110,7 @@ UTextureRenderTarget2D* ATerrainMassShapeBrush::Render_Native(bool InIsHeightmap
     //
     if (IsDirty(EShapeBrushDirtyLevel::Blur))
     {
-        if (bBlur)
-        {
-            FTerrainMassGaussianBlurShaderParameter BlurShaderParams;
-            BlurShaderParams.InvTextureSize = InvTextureSize;
-            BlurShaderParams.KernelSize = KernelSize;
-            BlurShaderParams.Sigma = Sigma;
-
-            FTerrainMassGaussianBlurShader::Render(BlurRT, DistanceFieldRT, BlurIntermediateRT, BlurShaderParams);
-        }
+        BlurDistanceField(RenderingContext);
 
         //UE_LOG(LogTemp, Warning, TEXT("ATerrainMassShapeBrush::Blur"));
         ResetDirty(EShapeBrushDirtyLevel::Blur);
@@ -222,21 +120,7 @@ UTextureRenderTarget2D* ATerrainMassShapeBrush::Render_Native(bool InIsHeightmap
     // Composition
     //
     {
-        FTerrainMassShapeCompositionShaderParameter CompositionShaderParams;
-        CompositionShaderParams.SideFalloffTexture = SideFalloffRamp.GetTexture();
-
-        FVector HandleLocation = HandleComponent->GetComponentLocation();
-        float ElevationInHeightMap = Landscape->GetActorTransform().InverseTransformPosition(HandleLocation).Z * LANDSCAPE_INV_ZSCALE;
-        CompositionShaderParams.Elevation = ElevationInHeightMap;
-
-        if (bBlur)
-        {
-            FTerrainMassShapeCompositionShader::Render(OutputRT, InCombinedResult, BlurRT, CompositionShaderParams);
-        }
-        else
-        {
-            FTerrainMassShapeCompositionShader::Render(OutputRT, InCombinedResult, DistanceFieldRT, CompositionShaderParams);
-        }
+        FinalComposite(RenderingContext, InCombinedResult);
     }
 
     return OutputRT;
@@ -295,7 +179,7 @@ void ATerrainMassShapeBrush::PostEditChangeProperty(FPropertyChangedEvent& Prope
     // Transform undo is also included, so this will overide OnTransformUpdated's ShapeRT dirty flag, which is fine for this brush.
     if (PropertyChangedEvent.ChangeType == EPropertyChangeType::Unspecified)
     {
-        MarkDirty(EShapeBrushDirtyLevel::ShapeData);
+        MarkDirty(EShapeBrushDirtyLevel::ShapeVertex);
     }
 
     Super::PostEditChangeProperty(PropertyChangedEvent);
@@ -306,6 +190,167 @@ void ATerrainMassShapeBrush::PostRegisterAllComponents()
 {
     Super::PostRegisterAllComponents();
 
+}
+
+bool ATerrainMassShapeBrush::AllocateRenderTargets(FShapeBrushRenderingContext& RenderingContext)
+{
+    FIntPoint RenderTargetSize = RenderingContext.RenderTargetSize;
+
+    if (!OutputRT || OutputRT->SizeX != RenderTargetSize.X || OutputRT->SizeY != RenderTargetSize.Y)
+    {
+        OutputRT = UKismetRenderingLibrary::CreateRenderTarget2D(this, RenderTargetSize.X, RenderTargetSize.Y, RenderingContext.OutputFormat);
+    }
+
+    if (!ShapeRT || ShapeRT->SizeX != RenderTargetSize.X || ShapeRT->SizeY != RenderTargetSize.Y)
+    {
+        ShapeRT = UKismetRenderingLibrary::CreateRenderTarget2D(this, RenderTargetSize.X, RenderTargetSize.Y, RTF_R16f);
+    }
+
+    for (int32 Index = 0; Index < 2; Index++)
+    {
+        if (!JumpFloodingRTs[Index] || JumpFloodingRTs[Index]->SizeX != RenderTargetSize.X || JumpFloodingRTs[Index]->SizeY != RenderTargetSize.Y)
+        {
+            JumpFloodingRTs[Index] = UKismetRenderingLibrary::CreateRenderTarget2D(this, RenderTargetSize.X, RenderTargetSize.Y, RTF_RG16f);
+        }
+    }
+
+    if (!DistanceFieldRT || DistanceFieldRT->SizeX != RenderTargetSize.X || DistanceFieldRT->SizeY != RenderTargetSize.Y)
+    {
+        DistanceFieldRT = UKismetRenderingLibrary::CreateRenderTarget2D(this, RenderTargetSize.X, RenderTargetSize.Y, RTF_R16f);
+    }
+
+    if (!BlurIntermediateRT || BlurIntermediateRT->SizeX != RenderTargetSize.X || BlurIntermediateRT->SizeY != RenderTargetSize.Y)
+    {
+        BlurIntermediateRT = UKismetRenderingLibrary::CreateRenderTarget2D(this, RenderTargetSize.X, RenderTargetSize.Y, RTF_R16f);
+    }
+
+    if (!BlurRT || BlurRT->SizeX != RenderTargetSize.X || BlurRT->SizeY != RenderTargetSize.Y)
+    {
+        BlurRT = UKismetRenderingLibrary::CreateRenderTarget2D(this, RenderTargetSize.X, RenderTargetSize.Y, RTF_R16f);
+    }
+
+    return OutputRT && ShapeRT && JumpFloodingRTs[0] && JumpFloodingRTs[1] && DistanceFieldRT && BlurIntermediateRT && BlurRT;
+}
+
+bool ATerrainMassShapeBrush::GenerateShapeVertex(FShapeBrushRenderingContext& RenderingContext)
+{
+    // Vertex Buffer
+    ShapeVertices.Empty();
+    for (float Time = 0.0f; Time < SplineComponent->Duration; Time += 0.01f)
+    {
+        FVector LocalLocation = SplineComponent->GetLocationAtTime(Time, ESplineCoordinateSpace::Local);
+        ShapeVertices.Emplace(LocalLocation);
+    }
+
+    if (ShapeVertices.Num() < 3)
+    {
+        return false;
+    }
+
+    // Index Buffer
+    ShapeIndices.Empty();
+    const int32 NumPrimitives = ShapeVertices.Num() - 2;
+    const int32 NumIndices = NumPrimitives * 3;
+    ShapeIndices.AddUninitialized(NumIndices);
+    for (int32 Index = 0; Index < NumPrimitives; Index++)
+    {
+        ShapeIndices[Index * 3 + 0] = 0;
+        ShapeIndices[Index * 3 + 1] = Index + 1;
+        ShapeIndices[Index * 3 + 2] = Index + 2;
+    }
+
+    return true;
+}
+
+void ATerrainMassShapeBrush::RenderShape(FShapeBrushRenderingContext& RenderingContext)
+{
+    FTerrainMassShapeShaderParameter ShapeShaderParams;
+
+    // Transform vertex from world to uv space
+    int32 MinX, MinY, MaxX, MaxY;
+    RenderingContext.Landscape->GetLandscapeInfo()->GetLandscapeExtent(MinX, MinY, MaxX, MaxY);
+    FVector2D LandscapeSize(MaxX - MinX, MaxY - MinY);
+
+    FTransform HeightmapTransform(FTransform::Identity);
+    FVector HeightmapScale = FVector(LandscapeSize, LANDSCAPE_ZSCALE);
+    HeightmapTransform.SetScale3D(FVector(1.0f) / HeightmapScale);
+
+    FTransform UVScaleTransform(FTransform::Identity);
+    if (bUVOffset)
+    {
+        FVector2D LandscapeUVOffset = LandscapeSize * RenderingContext.InvTextureSize;
+        UVScaleTransform.SetScale3D(FVector(LandscapeUVOffset, 1.0f));
+    }
+
+    FTransform HalfPixelTransform(FTransform::Identity);
+    FVector2D HalfPixelOffset = RenderingContext.InvTextureSize * 0.5f;
+    HalfPixelTransform.SetLocation(FVector(HalfPixelOffset, 0.0f));
+
+    ShapeShaderParams.Local2UV = SplineComponent->GetComponentTransform().ToMatrixWithScale() * RenderingContext.Landscape->GetActorTransform().ToMatrixWithScale().Inverse() *
+        HeightmapTransform.ToMatrixWithScale() * UVScaleTransform.ToMatrixWithScale() * HalfPixelTransform.ToMatrixNoScale();
+
+    UKismetRenderingLibrary::ClearRenderTarget2D(this, ShapeRT);
+    FTerrainMassShapeShader::Render(ShapeRT, ShapeVertices, ShapeIndices, ShapeShaderParams);
+}
+
+void ATerrainMassShapeBrush::JumpFlooding(FShapeBrushRenderingContext& RenderingContext)
+{
+    FTerrainMassJumpFloodingShaderParameter JumpFloodingShaderParams;
+    JumpFloodingShaderParams.InvTextureSize = RenderingContext.InvTextureSize;
+
+    int32 InputIndex = 0;
+    FTerrainMassJumpFloodingShader::Encode(JumpFloodingRTs[InputIndex], ShapeRT);
+
+    OutputIndex = 0;
+    if (bSetIteration)
+    {
+        FTerrainMassJumpFloodingShader::Flood(JumpFloodingRTs, OutputIndex, InputIndex, NumIteration, JumpFloodingShaderParams);
+    }
+    else
+    {
+        FTerrainMassJumpFloodingShader::Flood(JumpFloodingRTs, OutputIndex, InputIndex, JumpFloodingShaderParams);
+    }
+}
+
+void ATerrainMassShapeBrush::GenerateDistanceField(FShapeBrushRenderingContext& RenderingContext)
+{
+    FTerrainMassDistanceFieldShaderParameter DistanceFieldShaderParams;
+    DistanceFieldShaderParams.InvTextureSize = RenderingContext.InvTextureSize;
+    DistanceFieldShaderParams.Width = FVector2D(Width) / FVector2D(RenderingContext.Landscape->GetActorScale());
+
+    FTerrainMassJumpFloodingShader::DistanceField(DistanceFieldRT, JumpFloodingRTs[OutputIndex], DistanceFieldShaderParams);
+}
+
+void ATerrainMassShapeBrush::BlurDistanceField(FShapeBrushRenderingContext& RenderingContext)
+{
+    if (bBlur)
+    {
+        FTerrainMassGaussianBlurShaderParameter BlurShaderParams;
+        BlurShaderParams.InvTextureSize = RenderingContext.InvTextureSize;
+        BlurShaderParams.KernelSize = KernelSize;
+        BlurShaderParams.Sigma = Sigma;
+
+        FTerrainMassGaussianBlurShader::Render(BlurRT, DistanceFieldRT, BlurIntermediateRT, BlurShaderParams);
+    }
+}
+
+void ATerrainMassShapeBrush::FinalComposite(FShapeBrushRenderingContext& RenderingContext, UTextureRenderTarget2D* InCombinedResult)
+{
+    FTerrainMassShapeCompositionShaderParameter CompositionShaderParams;
+    CompositionShaderParams.SideFalloffTexture = SideFalloffRamp.GetTexture();
+
+    FVector HandleLocation = HandleComponent->GetComponentLocation();
+    float ElevationInHeightMap = RenderingContext.Landscape->GetActorTransform().InverseTransformPosition(HandleLocation).Z * LANDSCAPE_INV_ZSCALE;
+    CompositionShaderParams.Elevation = ElevationInHeightMap;
+
+    if (bBlur)
+    {
+        FTerrainMassShapeCompositionShader::Render(OutputRT, InCombinedResult, BlurRT, CompositionShaderParams);
+    }
+    else
+    {
+        FTerrainMassShapeCompositionShader::Render(OutputRT, InCombinedResult, DistanceFieldRT, CompositionShaderParams);
+    }
 }
 
 void ATerrainMassShapeBrush::MarkDirty(EShapeBrushDirtyLevel DirtyLevel)
@@ -358,5 +403,5 @@ void ATerrainMassShapeBrush::OnTransformUpdated(USceneComponent* UpdatedComponen
 
 void ATerrainMassShapeBrush::OnSplineUpdated()
 {
-    MarkDirty(EShapeBrushDirtyLevel::ShapeData);
+    MarkDirty(EShapeBrushDirtyLevel::ShapeVertex);
 }

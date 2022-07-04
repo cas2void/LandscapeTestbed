@@ -8,6 +8,7 @@
 struct FTerrainMassShapeShaderParameter
 {
 	FMatrix Local2UV;
+	bool bTriangulation;
 };
 
 class TERRAINMASSSHADER_API FTerrainMassShapeShader

@@ -148,7 +148,8 @@ void ATerrainMassShapeBrush::Initialize_Native(const FTransform& InLandscapeTran
 #if WITH_EDITOR
 void ATerrainMassShapeBrush::PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent)
 {
-    if (PropertyChangedEvent.GetPropertyName() == GET_MEMBER_NAME_CHECKED(ATerrainMassShapeBrush, bUVOffset))
+    if (PropertyChangedEvent.GetPropertyName() == GET_MEMBER_NAME_CHECKED(ATerrainMassShapeBrush, bUVOffset) ||
+        PropertyChangedEvent.GetPropertyName() == GET_MEMBER_NAME_CHECKED(ATerrainMassShapeBrush, bTriangulation))
     {
         MarkDirty(EShapeBrushDirtyLevel::ShapeRT);
     }
@@ -288,6 +289,7 @@ void ATerrainMassShapeBrush::RenderShape(FShapeBrushRenderingContext& RenderingC
 
     ShapeShaderParams.Local2UV = SplineComponent->GetComponentTransform().ToMatrixWithScale() * RenderingContext.Landscape->GetActorTransform().ToMatrixWithScale().Inverse() *
         HeightmapTransform.ToMatrixWithScale() * UVScaleTransform.ToMatrixWithScale() * HalfPixelTransform.ToMatrixNoScale();
+    ShapeShaderParams.bTriangulation = bTriangulation;
 
     UKismetRenderingLibrary::ClearRenderTarget2D(this, ShapeRT);
     FTerrainMassShapeShader::Render(ShapeRT, ShapeVertices, ShapeIndices, ShapeShaderParams);

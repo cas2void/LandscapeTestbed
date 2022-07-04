@@ -118,7 +118,14 @@ static void Render_RenderingThread(FRHICommandListImmediate& RHICmdList, FRHITex
 
         FGraphicsPipelineStateInitializer GraphicsPSOInit;
         RHICmdList.ApplyCachedRenderTargets(GraphicsPSOInit);
-        GraphicsPSOInit.BlendState = TStaticBlendState<>::GetRHI();
+        if (ShaderParams.bTriangulation)
+        {
+            GraphicsPSOInit.BlendState = TStaticBlendState<CW_RGBA, BO_Add, BF_One, BF_One>::GetRHI();
+        }
+        else
+        {
+            GraphicsPSOInit.BlendState = TStaticBlendState<>::GetRHI();
+        }
         GraphicsPSOInit.RasterizerState = TStaticRasterizerState<>::GetRHI();
         GraphicsPSOInit.DepthStencilState = TStaticDepthStencilState<false, CF_Always>::GetRHI();
 

@@ -105,6 +105,9 @@ protected:
 	UPROPERTY(EditAnywhere, Category = "Landscape|Shape")
 	bool bUVOffset = true;
 
+	UPROPERTY(EditAnywhere, Category = "Landscape|Shape")
+	bool bTriangulation = true;
+
 	UPROPERTY(Transient, NonTransactional)
 	TArray<FTerrainMassShapeVertex> ShapeVertices;
 

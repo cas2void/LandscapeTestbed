@@ -40,6 +40,8 @@ public class TerrainMassEditor : ModuleRules
                 "LandscapeEditorUtilities",
                 "Landscape",
                 "PropertyEditor",
+                "UnrealEd",
+                "ComponentVisualizers",
                 "TerrainMass",
                 "TerrainMassShader",
             }

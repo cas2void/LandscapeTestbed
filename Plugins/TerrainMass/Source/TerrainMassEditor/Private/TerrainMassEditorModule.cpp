@@ -1,9 +1,15 @@
 #include "TerrainMassEditorModule.h"
 
 #include "PropertyEditorModule.h"
+#include "UnrealEdGlobals.h"
+#include "Editor/UnrealEdEngine.h"
 
 #include "ScalarRamp.h"
 #include "TerrainMassTypeCustomization.h"
+#include "TerrainMassRingComponent.h"
+#include "TerrainMassRingComponentDetails.h"
+#include "TerrainMassRingComponentVisualizer.h"
+#include "Components/SplineComponent.h"
 
 #define LOCTEXT_NAMESPACE "FTerrainMassEditorModule"
 
@@ -13,7 +19,21 @@ void FTerrainMassEditorModule::StartupModule()
 	FPropertyEditorModule& PropertyEditorModule = FModuleManager::LoadModuleChecked<FPropertyEditorModule>("PropertyEditor");
 	PropertyEditorModule.RegisterCustomPropertyTypeLayout(FScalarRamp::StaticStruct()->GetFName(),
 		FOnGetPropertyTypeCustomizationInstance::CreateStatic(&FScalarRampTypeCustomization::MakeInstance));
+
+	//PropertyEditorModule.RegisterCustomClassLayout(UTerrainMassRingComponent::StaticClass()->GetFName(), FOnGetDetailCustomizationInstance::CreateStatic(&FTerrainMassRingComponentDetails::MakeInstance));
+
+	//PropertyEditorModule.UnregisterCustomClassLayout(USplineComponent::StaticClass()->GetFName());
+
 	PropertyEditorModule.NotifyCustomizationModuleChanged();
+	//
+	// Component Visualizer
+	//
+	if (GUnrealEd)
+	{
+		TSharedPtr<FTerrainMassRingComponentVisualizer> ComponentVisualizer = MakeShareable(new FTerrainMassRingComponentVisualizer);
+		GUnrealEd->RegisterComponentVisualizer(UTerrainMassRingComponent::StaticClass()->GetFName(), ComponentVisualizer);
+		ComponentVisualizer->OnRegister();
+	}
 }
 
 void FTerrainMassEditorModule::ShutdownModule()
@@ -24,7 +44,18 @@ void FTerrainMassEditorModule::ShutdownModule()
 	{
 		FPropertyEditorModule& PropertyEditorModule = FModuleManager::LoadModuleChecked<FPropertyEditorModule>("PropertyEditor");
 		PropertyEditorModule.UnregisterCustomPropertyTypeLayout(FScalarRamp::StaticStruct()->GetFName());
+
+		//PropertyEditorModule.UnregisterCustomClassLayout(UTerrainMassRingComponent::StaticClass()->GetFName());
+
 		PropertyEditorModule.NotifyCustomizationModuleChanged();
+	}
+
+	//
+	// Component Visualizer
+	//
+	if (GUnrealEd)
+	{
+		GUnrealEd->UnregisterComponentVisualizer(UTerrainMassRingComponent::StaticClass()->GetFName());
 	}
 }
 

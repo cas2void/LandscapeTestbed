@@ -209,7 +209,6 @@ static void TerrainMassBuildCylinderVerts(const FVector& Base, const FVector& XA
 		OutIndices.Add(V3);
 		OutIndices.Add(V1);
 	}
-
 }
 
 /** Represents a UTerrainMassHandleComponent to the scene manager. */

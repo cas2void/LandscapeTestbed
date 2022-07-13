@@ -22,6 +22,7 @@ void FTerrainMassEditorModule::StartupModule()
 
 	//PropertyEditorModule.RegisterCustomClassLayout(UTerrainMassRingComponent::StaticClass()->GetFName(), FOnGetDetailCustomizationInstance::CreateStatic(&FTerrainMassRingComponentDetails::MakeInstance));
 
+	// If FTerrainMassRingComponentVisualizer is not extended from FSplineComponentVisualizer, USplineComponent's detail customization need to be unregistered.
 	//PropertyEditorModule.UnregisterCustomClassLayout(USplineComponent::StaticClass()->GetFName());
 
 	PropertyEditorModule.NotifyCustomizationModuleChanged();
@@ -30,9 +31,9 @@ void FTerrainMassEditorModule::StartupModule()
 	//
 	if (GUnrealEd)
 	{
-		TSharedPtr<FTerrainMassRingComponentVisualizer> ComponentVisualizer = MakeShareable(new FTerrainMassRingComponentVisualizer);
-		GUnrealEd->RegisterComponentVisualizer(UTerrainMassRingComponent::StaticClass()->GetFName(), ComponentVisualizer);
-		ComponentVisualizer->OnRegister();
+		TSharedPtr<FTerrainMassRingComponentVisualizer> RingComponentVisualizer = MakeShareable(new FTerrainMassRingComponentVisualizer);
+		GUnrealEd->RegisterComponentVisualizer(UTerrainMassRingComponent::StaticClass()->GetFName(), RingComponentVisualizer);
+		RingComponentVisualizer->OnRegister();
 	}
 }
 

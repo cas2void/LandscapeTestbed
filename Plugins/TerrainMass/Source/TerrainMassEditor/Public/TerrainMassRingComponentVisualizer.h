@@ -5,21 +5,21 @@
 #include "CoreMinimal.h"
 #include "SplineComponentVisualizer.h"
 
-struct HTerrainMassDummyVisProxy : public HComponentVisProxy
+struct HTerrainMassRingVisProxy : public HComponentVisProxy
 {
     DECLARE_HIT_PROXY();
 
-    HTerrainMassDummyVisProxy(const UActorComponent* InComponent)
+    HTerrainMassRingVisProxy(const UActorComponent* InComponent)
         : HComponentVisProxy(InComponent)
     {}
 };
 
-struct HTerrainMassDummyHandleProxy : public HTerrainMassDummyVisProxy
+struct HTerrainMassRingHandleProxy : public HTerrainMassRingVisProxy
 {
     DECLARE_HIT_PROXY();
 
-    HTerrainMassDummyHandleProxy(const UActorComponent* InComponent)
-        : HTerrainMassDummyVisProxy(InComponent)
+    HTerrainMassRingHandleProxy(const UActorComponent* InComponent)
+        : HTerrainMassRingVisProxy(InComponent)
     {}
 };
 
@@ -41,4 +41,8 @@ public:
     virtual bool GetWidgetLocation(const FEditorViewportClient* ViewportClient, FVector& OutLocation) const override;
 
     virtual bool HandleInputDelta(FEditorViewportClient* ViewportClient, FViewport* Viewport, FVector& DeltaTranslate, FRotator& DeltaRotate, FVector& DeltaScale) override;
+
+    virtual void EndEditing() override;
+
+    bool bHandleSelected;
 };

@@ -7,108 +7,127 @@
 
 #include "TerrainMassRingComponent.h"
 
-IMPLEMENT_HIT_PROXY(HTerrainMassDummyVisProxy, HComponentVisProxy);
-IMPLEMENT_HIT_PROXY(HTerrainMassDummyHandleProxy, HTerrainMassDummyVisProxy);
+IMPLEMENT_HIT_PROXY(HTerrainMassRingVisProxy, HComponentVisProxy);
+IMPLEMENT_HIT_PROXY(HTerrainMassRingHandleProxy, HTerrainMassRingVisProxy);
 
 void FTerrainMassRingComponentVisualizer::OnRegister()
 {
-	FSplineComponentVisualizer::OnRegister();
+    FSplineComponentVisualizer::OnRegister();
 }
 
 void FTerrainMassRingComponentVisualizer::DrawVisualization(const UActorComponent* Component, const FSceneView* View, FPrimitiveDrawInterface* PDI)
 {
     ////UE_LOG(LogTemp, Warning, TEXT("FTerrainMassRingComponentVisualizer::DrawVisualization"));
-    //const UTerrainMassRingComponent* DummyComponent = Cast<const UTerrainMassRingComponent>(Component);
-    //if (DummyComponent)
-    //{
-    //    const FMatrix Local2World = DummyComponent->GetComponentTransform().ToMatrixNoScale();
-
-    //    float Angle = FMath::DegreesToRadians(20.0f);
-
-    //    TArray<FDynamicMeshVertex> MeshVerts;
-    //    TArray<uint32> MeshIndices;
-    //    BuildConeVerts(Angle, Angle, 100.f, 0.f, 32, MeshVerts, MeshIndices);
-
-    //    FDynamicMeshBuilder MeshBuilder(PDI->View->GetFeatureLevel());
-    //    MeshBuilder.AddVertices(MeshVerts);
-    //    MeshBuilder.AddTriangles(MeshIndices);
-
-    //    PDI->SetHitProxy(new HTerrainMassDummyHandleProxy(Component));
-    //    MeshBuilder.Draw(PDI, Local2World, GEngine->ArrowMaterial->GetRenderProxy(), SDPG_World, 0.f);
-    //    PDI->SetHitProxy(nullptr);
-    //}
 
     FSplineComponentVisualizer::DrawVisualization(Component, View, PDI);
+    const UTerrainMassRingComponent* RingComponent = Cast<const UTerrainMassRingComponent>(Component);
+    if (RingComponent)
+    {
+        TArray<FDynamicMeshVertex> MeshVerts;
+        TArray<uint32> MeshIndices;
+        RingComponent->CreateHandleGeometry(MeshVerts, MeshIndices);
+
+        FDynamicMeshBuilder MeshBuilder(PDI->View->GetFeatureLevel());
+        MeshBuilder.AddVertices(MeshVerts);
+        MeshBuilder.AddTriangles(MeshIndices);
+
+        FMatrix EffectiveLocalToWorld = RingComponent->GetComponentTransform().ToMatrixNoScale();
+        PDI->SetHitProxy(new HTerrainMassRingHandleProxy(Component));
+        MeshBuilder.Draw(PDI, EffectiveLocalToWorld, GEngine->ArrowMaterial->GetRenderProxy(), SDPG_World, 0.f);
+        PDI->SetHitProxy(nullptr);
+    }
 }
 
 bool FTerrainMassRingComponentVisualizer::VisProxyHandleClick(FEditorViewportClient* InViewportClient, HComponentVisProxy* VisProxy, const FViewportClick& Click)
 {
-    return FSplineComponentVisualizer::VisProxyHandleClick(InViewportClient, VisProxy, Click);
+    bool Result = FSplineComponentVisualizer::VisProxyHandleClick(InViewportClient, VisProxy, Click);
+
+    if (VisProxy && VisProxy->Component.IsValid())
+    {
+        check(SelectionState);
+
+        if (VisProxy->IsA(HTerrainMassRingHandleProxy::StaticGetType()))
+        {
+            USplineComponent* SplineComp = GetEditedSplineComponent();
+            if (SplineComp != nullptr)
+            {
+                SelectionState->SetCachedRotation(SplineComp->GetComponentRotation().Quaternion());
+            }
+
+            SelectionState->ModifySelectedKeys().Reset();
+            SelectionState->SetLastKeyIndexSelected(INDEX_NONE);
+            //SelectionState->SetCachedRotation(FQuat());
+            SelectionState->ClearSelectedSegmentIndex();
+            SelectionState->ClearSelectedTangentHandle();
+
+            bHandleSelected = true;
+        }
+        else
+        {
+            bHandleSelected = false;
+        }
+    }
+
+    return Result;
 }
 
 bool FTerrainMassRingComponentVisualizer::GetWidgetLocation(const FEditorViewportClient* ViewportClient, FVector& OutLocation) const
 {
-    return FSplineComponentVisualizer::GetWidgetLocation(ViewportClient, OutLocation);
+    bool Result = false;
+    if (bHandleSelected)
+    {
+        USplineComponent* SplineComp = GetEditedSplineComponent();
+        if (SplineComp != nullptr)
+        {
+            check(SelectionState);
+            OutLocation = SplineComp->GetComponentLocation();
+            Result = true;
+        }
+    }
+    else
+    {
+        Result = FSplineComponentVisualizer::GetWidgetLocation(ViewportClient, OutLocation);
+    }
+
+    return Result;
 }
 
 bool FTerrainMassRingComponentVisualizer::HandleInputDelta(FEditorViewportClient* ViewportClient, FViewport* Viewport, FVector& DeltaTranslate, FRotator& DeltaRotate, FVector& DeltaScale)
 {
-	ResetTempModes();
+    if (bHandleSelected)
+    {
+        return false;
+    }
 
-	USplineComponent* SplineComp = GetEditedSplineComponent();
-	if (SplineComp != nullptr)
-	{
-		if (IsAnySelectedKeyIndexOutOfRange(SplineComp))
-		{
-			// Something external has changed the number of spline points, meaning that the cached selected keys are no longer valid
-			EndEditing();
-			return false;
-		}
+    ResetTempModes();
 
-		check(SelectionState);
-		if (SelectionState->GetSelectedTangentHandle() != INDEX_NONE)
-		{
-			return TransformSelectedTangent(DeltaTranslate);
-		}
-		//else if (ViewportClient->IsAltPressed())
-		//{
-		//	if (ViewportClient->GetWidgetMode() == FWidget::WM_Translate && ViewportClient->GetCurrentWidgetAxis() != EAxisList::None && SelectionState->GetSelectedKeys().Num() == 1)
-		//	{
-		//		static const int MaxDuplicationDelay = 3;
+    USplineComponent* SplineComp = GetEditedSplineComponent();
+    if (SplineComp != nullptr)
+    {
+        if (IsAnySelectedKeyIndexOutOfRange(SplineComp))
+        {
+            // Something external has changed the number of spline points, meaning that the cached selected keys are no longer valid
+            EndEditing();
+            return false;
+        }
 
-		//		FVector Drag = DeltaTranslate;
+        check(SelectionState);
+        if (SelectionState->GetSelectedTangentHandle() != INDEX_NONE)
+        {
+            return TransformSelectedTangent(DeltaTranslate);
+        }
+        else
+        {
+            return TransformSelectedKeys(DeltaTranslate, DeltaRotate, DeltaScale);
+        }
+    }
 
-		//		if (bAllowDuplication)
-		//		{
-		//			if (DuplicateDelay < MaxDuplicationDelay)
-		//			{
-		//				DuplicateDelay++;
-		//				DuplicateDelayAccumulatedDrag += DeltaTranslate;
-		//			}
-		//			else
-		//			{
-		//				Drag += DuplicateDelayAccumulatedDrag;
-		//				DuplicateDelayAccumulatedDrag = FVector::ZeroVector;
+    return false;
+}
 
-		//				bAllowDuplication = false;
-		//				bDuplicatingSplineKey = true;
+void FTerrainMassRingComponentVisualizer::EndEditing()
+{
+    FSplineComponentVisualizer::EndEditing();
 
-		//				DuplicateKeyForAltDrag(Drag);
-		//			}
-		//		}
-		//		else
-		//		{
-		//			UpdateDuplicateKeyForAltDrag(Drag);
-		//		}
-
-		//		return true;
-		//	}
-		//}
-		else
-		{
-			return TransformSelectedKeys(DeltaTranslate, DeltaRotate, DeltaScale);
-		}
-	}
-
-	return false;
+    bHandleSelected = false;
 }

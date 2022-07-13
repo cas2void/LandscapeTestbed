@@ -289,6 +289,22 @@ public:
         	{
         		const FSceneView* View = Views[ViewIndex];
 
+                // Calculate the view-dependent scaling factor.
+                float ViewScale = 1.0f;
+                if (View->ViewMatrices.GetProjectionMatrix().M[3][3] != 1.0f)
+                {
+                    const float ZoomFactor = FMath::Min<float>(View->ViewMatrices.GetProjectionMatrix().M[0][0], View->ViewMatrices.GetProjectionMatrix().M[1][1]);
+                    if (ZoomFactor != 0.0f)
+                    {
+                        // Note: we can't just ignore the perspective scaling here if the object's origin is behind the camera, so preserve the scale minus its sign.
+                        const float Radius = FMath::Abs(View->WorldToScreen(EffectiveLocalToWorld.GetOrigin()).W * (DEFAULT_SCREEN_SIZE / ZoomFactor));
+                        if (Radius < 1.0f)
+                        {
+                            ViewScale *= Radius;
+                        }
+                    }
+                }
+
         		// Draw the mesh.
         		FMeshBatch& Mesh = Collector.AllocateMesh();
         		FMeshBatchElement& BatchElement = Mesh.Elements[0];
@@ -298,7 +314,7 @@ public:
         		Mesh.MaterialRenderProxy = HandleMaterialRenderProxy;
 
         		FDynamicPrimitiveUniformBuffer& DynamicPrimitiveUniformBuffer = Collector.AllocateOneFrameResource<FDynamicPrimitiveUniformBuffer>();
-        		DynamicPrimitiveUniformBuffer.Set(EffectiveLocalToWorld, EffectiveLocalToWorld, GetBounds(), GetLocalBounds(), true, false, DrawsVelocity(), false);
+        		DynamicPrimitiveUniformBuffer.Set(FScaleMatrix(ViewScale) * EffectiveLocalToWorld, FScaleMatrix(ViewScale) * EffectiveLocalToWorld, GetBounds(), GetLocalBounds(), true, false, DrawsVelocity(), false);
         		BatchElement.PrimitiveUniformBufferResource = &DynamicPrimitiveUniformBuffer.UniformBuffer;
 
         		BatchElement.FirstIndex = 0;

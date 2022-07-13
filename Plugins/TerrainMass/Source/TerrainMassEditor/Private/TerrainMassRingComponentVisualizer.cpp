@@ -48,19 +48,34 @@ bool FTerrainMassRingComponentVisualizer::VisProxyHandleClick(FEditorViewportCli
 
         if (VisProxy->IsA(HTerrainMassRingHandleProxy::StaticGetType()))
         {
-            USplineComponent* SplineComp = GetEditedSplineComponent();
-            if (SplineComp != nullptr)
+            const USplineComponent* SplineComp = CastChecked<const USplineComponent>(VisProxy->Component.Get());
+
+            AActor* OldSplineOwningActor = SelectionState->GetSplinePropertyPath().GetParentOwningActor();
+            FComponentPropertyPath NewSplinePropertyPath(SplineComp);
+            SelectionState->SetSplinePropertyPath(NewSplinePropertyPath);
+            AActor* NewSplineOwningActor = NewSplinePropertyPath.GetParentOwningActor();
+
+            if (NewSplinePropertyPath.IsValid())
             {
-                SelectionState->SetCachedRotation(SplineComp->GetComponentRotation().Quaternion());
+                if (OldSplineOwningActor != NewSplineOwningActor)
+                {
+                    // Reset selection state if we are selecting a different actor to the one previously selected
+                    ChangeSelectionState(INDEX_NONE, false);
+                    SelectionState->ClearSelectedSegmentIndex();
+                    SelectionState->ClearSelectedTangentHandle();
+                    SelectionState->ModifySelectedKeys().Reset();
+
+                    USplineComponent* EditedSplineComp = GetEditedSplineComponent();
+                    if (EditedSplineComp != nullptr)
+                    {
+                        SelectionState->SetCachedRotation(EditedSplineComp->GetComponentRotation().Quaternion());
+                    }
+                }
             }
 
-            SelectionState->ModifySelectedKeys().Reset();
-            SelectionState->SetLastKeyIndexSelected(INDEX_NONE);
-            //SelectionState->SetCachedRotation(FQuat());
-            SelectionState->ClearSelectedSegmentIndex();
-            SelectionState->ClearSelectedTangentHandle();
-
             bHandleSelected = true;
+
+            Result = true;
         }
         else
         {

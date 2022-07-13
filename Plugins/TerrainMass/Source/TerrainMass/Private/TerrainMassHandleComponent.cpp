@@ -13,7 +13,7 @@
 #define ARROW_HEAD_ANGLE	(20.f)
 
 // Copy from PrimitiveDrawingUtils.cpp
-static FVector TerrainMassCalcConeVert(float Angle1, float Angle2, float AzimuthAngle)
+static FVector TerrainMassHandleCalcConeVert(float Angle1, float Angle2, float AzimuthAngle)
 {
 	float ang1 = FMath::Clamp<float>(Angle1, 0.01f, (float)PI - 0.01f);
 	float ang2 = FMath::Clamp<float>(Angle2, 0.01f, (float)PI - 0.01f);
@@ -51,7 +51,7 @@ static FVector TerrainMassCalcConeVert(float Angle1, float Angle2, float Azimuth
 }
 
 // Copy from PrimitiveDrawingUtils.cpp
-static void TerrainMassBuildConeVerts(float Angle1, float Angle2, float Scale, float ZOffset, uint32 NumSides, TArray<FDynamicMeshVertex>& OutVerts, TArray<uint32>& OutIndices)
+static void TerrainMassHandleBuildConeVerts(float Angle1, float Angle2, float Scale, float ZOffset, uint32 NumSides, TArray<FDynamicMeshVertex>& OutVerts, TArray<uint32>& OutIndices)
 {
 	TArray<FVector> ConeVerts;
 	ConeVerts.AddUninitialized(NumSides);
@@ -60,7 +60,7 @@ static void TerrainMassBuildConeVerts(float Angle1, float Angle2, float Scale, f
 	{
 		float Fraction = (float)i / (float)(NumSides);
 		float Azi = 2.f * PI * Fraction;
-		ConeVerts[i] = (TerrainMassCalcConeVert(Angle1, Angle2, Azi) * Scale) + FVector(0, 0, ZOffset);
+		ConeVerts[i] = (TerrainMassHandleCalcConeVert(Angle1, Angle2, Azi) * Scale) + FVector(0, 0, ZOffset);
 	}
 
 	for (uint32 i = 0; i < NumSides; i++)
@@ -109,7 +109,7 @@ static void TerrainMassBuildConeVerts(float Angle1, float Angle2, float Scale, f
 }
 
 // Copy from PrimitiveDrawingUtils.cpp
-static void TerrainMassBuildCylinderVerts(const FVector& Base, const FVector& XAxis, const FVector& YAxis, const FVector& ZAxis, float Radius, float HalfHeight, uint32 Sides, TArray<FDynamicMeshVertex>& OutVerts, TArray<uint32>& OutIndices)
+static void TerrainMassHandleBuildCylinderVerts(const FVector& Base, const FVector& XAxis, const FVector& YAxis, const FVector& ZAxis, float Radius, float HalfHeight, uint32 Sides, TArray<FDynamicMeshVertex>& OutVerts, TArray<uint32>& OutIndices)
 {
 	const float	AngleDelta = 2.0f * PI / Sides;
 	FVector	LastVertex = Base + XAxis * Radius;
@@ -240,8 +240,8 @@ public:
 		const FVector ShaftCenter = FVector(0, 0, 0.5f * ShaftLength);
 
 		TArray<FDynamicMeshVertex> OutVerts;
-		TerrainMassBuildConeVerts(HeadAngle, HeadAngle, -HeadLength, TotalLength, 32, OutVerts, IndexBuffer.Indices);
-		TerrainMassBuildCylinderVerts(ShaftCenter, FVector::XAxisVector, FVector::YAxisVector, FVector::ZAxisVector, ShaftRadius, 0.5f * ShaftLength, 16, OutVerts, IndexBuffer.Indices);
+		TerrainMassHandleBuildConeVerts(HeadAngle, HeadAngle, -HeadLength, TotalLength, 32, OutVerts, IndexBuffer.Indices);
+		TerrainMassHandleBuildCylinderVerts(ShaftCenter, FVector::XAxisVector, FVector::YAxisVector, FVector::ZAxisVector, ShaftRadius, 0.5f * ShaftLength, 16, OutVerts, IndexBuffer.Indices);
 
 		VertexBuffers.InitFromDynamicVertex(&VertexFactory, OutVerts);
 

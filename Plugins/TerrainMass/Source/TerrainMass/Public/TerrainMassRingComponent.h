@@ -40,11 +40,11 @@ public:
 
 	// Relative size to scale drawn arrow by
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category=HandleComponent)
-	float HandleSize;
+	float HandleSize = 40.0f;
 
 	// Total length of drawn arrow including head
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category=HandleComponent)
-	float HandleLength;
+	float HandleLength = 25.0;
 
 	void CreateHandleGeometry(TArray<FDynamicMeshVertex>& OutVerts, TArray<uint32>& OutIndices) const;
 

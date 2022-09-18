@@ -41,6 +41,8 @@ public class ManipulatorEditor : ModuleRules
 				// ... add private dependencies that you statically link with here ...	
 				"UnrealEd",
 				"LevelEditor",
+				"InteractiveToolsFramework",
+				"EditorInteractiveToolsFramework",
 				"Manipulator",
 			}
 			);

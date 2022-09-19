@@ -11,6 +11,8 @@
 #include "BaseGizmos/TransformGizmo.h"
 
 #include "Manipulable.h"
+#include "BoxGizmoBuilder.h"
+#include "BoxGizmo.h"
 
 #define LOCTEXT_NAMESPACE "UManipulatorEdMode"
 
@@ -38,37 +40,7 @@ bool UManipulatorEdMode::IsCompatibleWith(FEditorModeID OtherModeID) const
 
 void UManipulatorEdMode::ActorSelectionChangeNotify()
 {
-    FEditorModeTools* ModeManager = GetModeManager();
-    if (ModeManager)
-    {
-        bool bCreateGizmo = true;
-        USelection* Selection = ModeManager->GetSelectedActors();
-        if (Selection)
-        {
-            TArray<AActor*> SelectedActors;
-            Selection->GetSelectedObjects<AActor>(SelectedActors);
-
-            for (const auto& Actor : SelectedActors)
-            {
-                if (!Actor->Implements<UManipulable>())
-                {
-                    bCreateGizmo = false;
-                    break;
-                }
-            }
-        }
-
-        if (bCreateGizmo)
-        {
-            ModeManager->SetShowWidget(false);
-            RecreateGizmo();
-        }
-        else
-        {
-            DestroyGizmo();
-            ModeManager->SetShowWidget(true);
-        }
-    }
+    SwitchGizmo();
 }
 
 void UManipulatorEdMode::Enter()
@@ -80,13 +52,15 @@ void UManipulatorEdMode::Enter()
 
     Super::Enter();
 
+    ToolsContext->GizmoManager->RegisterGizmoType(UBoxGizmoBuilder::BuilderIdentifier, NewObject<UBoxGizmoBuilder>());
+
     WidgetModeChangedHandle =
-        GetModeManager()->OnWidgetModeChanged().AddLambda([this](FWidget::EWidgetMode) { RecreateGizmo(); });
+        GetModeManager()->OnWidgetModeChanged().AddLambda([this](FWidget::EWidgetMode) { SwitchGizmo(); });
 }
 
 void UManipulatorEdMode::Exit()
 {
-    if (!ToolsContext)
+    if (!ToolsContext || !GetModeManager())
     {
         return;
     }
@@ -94,60 +68,94 @@ void UManipulatorEdMode::Exit()
     GetModeManager()->OnWidgetModeChanged().Remove(WidgetModeChangedHandle);
     WidgetModeChangedHandle.Reset();
 
+    ToolsContext->GizmoManager->DeregisterGizmoType(UBoxGizmoBuilder::BuilderIdentifier);
+
     Super::Exit();
 }
 
-void UManipulatorEdMode::RecreateGizmo()
+void UManipulatorEdMode::SwitchGizmo()
 {
-    DestroyGizmo();
-
-    ETransformGizmoSubElements Elements = ETransformGizmoSubElements::None;
-    bool bUseContextCoordinateSystem = true;
-    FWidget::EWidgetMode WidgetMode = GetModeManager()->GetWidgetMode();
-    switch (WidgetMode)
+    bool bCreateCustomGizmo = true;
+    USelection* Selection = GetModeManager()->GetSelectedActors();
+    if (Selection)
     {
-    case FWidget::EWidgetMode::WM_Translate:
-        Elements = ETransformGizmoSubElements::TranslateAllAxes | ETransformGizmoSubElements::TranslateAllPlanes;
-        break;
-    case FWidget::EWidgetMode::WM_Rotate:
-        Elements = ETransformGizmoSubElements::RotateAllAxes;
-        break;
-    case FWidget::EWidgetMode::WM_Scale:
-        Elements = ETransformGizmoSubElements::ScaleAllAxes | ETransformGizmoSubElements::ScaleAllPlanes;
-        bUseContextCoordinateSystem = false;
-        break;
-    case FWidget::EWidgetMode::WM_2D:
-        Elements = ETransformGizmoSubElements::RotateAxisY | ETransformGizmoSubElements::TranslatePlaneXZ;
-        break;
-    default:
-        Elements = ETransformGizmoSubElements::FullTranslateRotateScale;
-        break;
+        TArray<AActor*> SelectedActors;
+        Selection->GetSelectedObjects<AActor>(SelectedActors);
+
+        for (const auto& Actor : SelectedActors)
+        {
+            if (!Actor->Implements<UManipulable>())
+            {
+                bCreateCustomGizmo = false;
+                break;
+            }
+        }
     }
-    UTransformGizmo* TransformGizmo = ToolsContext->GizmoManager->CreateCustomTransformGizmo(Elements);
-    TransformGizmo->bUseContextCoordinateSystem = bUseContextCoordinateSystem;
 
-    TArray<AActor*> SelectedActors;
-    GetModeManager()->GetSelectedActors()->GetSelectedObjects<AActor>(SelectedActors);
-
-    UTransformProxy* TransformProxy = NewObject<UTransformProxy>();
-    for (auto Actor : SelectedActors)
+    if (bCreateCustomGizmo)
     {
-        USceneComponent* SceneComponent = Actor->GetRootComponent();
-        TransformProxy->AddComponent(SceneComponent);
+        GetModeManager()->SetShowWidget(false);
+        RecreateCustomGizmo();
     }
-    TransformGizmo->SetActiveTarget(TransformProxy);
-    TransformGizmo->SetVisibility(SelectedActors.Num() > 0);
-
-    Gizmo = TransformGizmo;
+    else
+    {
+        DestroyCustomGizmo();
+        GetModeManager()->SetShowWidget(true);
+    }
 }
 
-void UManipulatorEdMode::DestroyGizmo()
+void UManipulatorEdMode::RecreateCustomGizmo()
 {
-    check(ToolsContext);
-    check(ToolsContext->GizmoManager);
-    if (Gizmo)
+    DestroyCustomGizmo();
+
+    UBoxGizmo* BoxGizmo = Cast<UBoxGizmo>(ToolsContext->GizmoManager->CreateGizmo(UBoxGizmoBuilder::BuilderIdentifier));
+    CustomGizmo = BoxGizmo;
+
+    //ETransformGizmoSubElements Elements = ETransformGizmoSubElements::None;
+    //bool bUseContextCoordinateSystem = true;
+    //FWidget::EWidgetMode WidgetMode = GetModeManager()->GetWidgetMode();
+    //switch (WidgetMode)
+    //{
+    //case FWidget::EWidgetMode::WM_Translate:
+    //    Elements = ETransformGizmoSubElements::TranslateAllAxes | ETransformGizmoSubElements::TranslateAllPlanes;
+    //    break;
+    //case FWidget::EWidgetMode::WM_Rotate:
+    //    Elements = ETransformGizmoSubElements::RotateAllAxes;
+    //    break;
+    //case FWidget::EWidgetMode::WM_Scale:
+    //    Elements = ETransformGizmoSubElements::ScaleAllAxes | ETransformGizmoSubElements::ScaleAllPlanes;
+    //    bUseContextCoordinateSystem = false;
+    //    break;
+    //case FWidget::EWidgetMode::WM_2D:
+    //    Elements = ETransformGizmoSubElements::RotateAxisY | ETransformGizmoSubElements::TranslatePlaneXZ;
+    //    break;
+    //default:
+    //    Elements = ETransformGizmoSubElements::FullTranslateRotateScale;
+    //    break;
+    //}
+    //UTransformGizmo* TransformGizmo = ToolsContext->GizmoManager->CreateCustomTransformGizmo(Elements);
+    //TransformGizmo->bUseContextCoordinateSystem = bUseContextCoordinateSystem;
+
+    //TArray<AActor*> SelectedActors;
+    //GetModeManager()->GetSelectedActors()->GetSelectedObjects<AActor>(SelectedActors);
+
+    //UTransformProxy* TransformProxy = NewObject<UTransformProxy>();
+    //for (auto Actor : SelectedActors)
+    //{
+    //    USceneComponent* SceneComponent = Actor->GetRootComponent();
+    //    TransformProxy->AddComponent(SceneComponent);
+    //}
+    //TransformGizmo->SetActiveTarget(TransformProxy);
+    //TransformGizmo->SetVisibility(SelectedActors.Num() > 0);
+
+    //CustomGizmo = TransformGizmo;
+}
+
+void UManipulatorEdMode::DestroyCustomGizmo()
+{
+    if (CustomGizmo)
     {
-        ToolsContext->GizmoManager->DestroyGizmo(Gizmo);
+        ToolsContext->GizmoManager->DestroyGizmo(CustomGizmo);
     }
 }
 

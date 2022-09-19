@@ -42,10 +42,12 @@ public:
 	//
 protected:
 	UPROPERTY(VisibleAnywhere)
-	class UInteractiveGizmo* Gizmo;
+	class UInteractiveGizmo* CustomGizmo;
 
-	void RecreateGizmo();
-	void DestroyGizmo();
+	void SwitchGizmo();
+
+	void RecreateCustomGizmo();
+	void DestroyCustomGizmo();
 
 	FDelegateHandle WidgetModeChangedHandle;
 };

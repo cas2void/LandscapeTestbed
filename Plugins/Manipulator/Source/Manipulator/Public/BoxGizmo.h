@@ -4,7 +4,10 @@
 
 #include "CoreMinimal.h"
 #include "InteractiveGizmo.h"
+#include "InteractiveToolChange.h"
 #include "Engine/World.h"
+#include "Manipulable.h"
+#include "Components/PrimitiveComponent.h"
 #include "BoxGizmo.generated.h"
 
 /**
@@ -36,4 +39,31 @@ protected:
 	// GizmoActors will be spawned in this World
 	UPROPERTY(Transient, NonTransactional)
 	UWorld* World;
+
+	//
+	// Manipulated Target
+	//
+public:
+	void SetActiveTarget(const TScriptInterface<IManipulable>& Target, IToolContextTransactionProvider* TransactionProvider = nullptr);
+	void ClearActiveTarget();
+
+protected:
+	UPROPERTY()
+	TScriptInterface<IManipulable> ActiveTarget;
+
+	//
+	// Sub Gizmos
+	//
+protected:
+	// list of currently-active child gizmos
+	UPROPERTY()
+	TArray<UInteractiveGizmo*> ActiveGizmos;
+
+	// List of current-active child components
+	UPROPERTY()
+	TArray<UPrimitiveComponent*> ActiveComponents;
+
+	void CreateSubGizmos();
+	void CreateElevationGizmo(const FBoxSphereBounds& Bounds);
+	void CreateCornerGizmo(const FBoxSphereBounds& Bounds, bool bPositiveX, bool bPositiveY);
 };

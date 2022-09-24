@@ -46,7 +46,7 @@ protected:
 
 	void SwitchGizmo();
 
-	void RecreateCustomGizmo();
+	void RecreateCustomGizmo(const TArray<TScriptInterface<class IManipulable>>& Targets);
 	void DestroyCustomGizmo();
 
 	FDelegateHandle WidgetModeChangedHandle;

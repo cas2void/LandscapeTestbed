@@ -6,6 +6,30 @@
 #include "UObject/Interface.h"
 #include "Manipulable.generated.h"
 
+USTRUCT()
+struct FManipulableTransform
+{
+	GENERATED_BODY()
+
+	UPROPERTY()
+	bool bValid = false;
+
+	UPROPERTY()
+	FTransform Transform;
+};
+
+USTRUCT()
+struct FManipulableBounds
+{
+	GENERATED_BODY()
+
+	UPROPERTY()
+	bool bValid = false;
+
+	UPROPERTY()
+	FBoxSphereBounds Bounds;
+};
+
 // This class does not need to be modified.
 UINTERFACE(MinimalAPI)
 class UManipulable : public UInterface
@@ -22,4 +46,6 @@ class MANIPULATOR_API IManipulable
 
 	// Add interface functions to this class. This is the class that will be inherited to implement this interface.
 public:
+	virtual FManipulableTransform GetTransform() const;
+	virtual FManipulableBounds GetBounds() const;
 };

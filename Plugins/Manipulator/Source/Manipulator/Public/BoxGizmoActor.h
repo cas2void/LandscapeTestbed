@@ -20,10 +20,13 @@ public:
 
 public:
 	UPrimitiveComponent* GetElevationComponent() { return ElevationComponent; }
-	UPrimitiveComponent* GetPlaneTopLeftComponent() { return PlaneTopLeftComponent; }
-	UPrimitiveComponent* GetPlaneTopRightComponent() { return PlaneTopRightComponent; }
-	UPrimitiveComponent* GetPlaneBottomRightComponent() { return PlaneBottomRightComponent; }
-	UPrimitiveComponent* GetPlaneBottomLeftComponent() { return PlaneBottomLeftComponent; }
+	UPrimitiveComponent* GetPlanTopLeftComponent() { return PlanTopLeftComponent; }
+	UPrimitiveComponent* GetPlanTopRightComponent() { return PlanTopRightComponent; }
+	UPrimitiveComponent* GetPlanBottomRightComponent() { return PlanBottomRightComponent; }
+	UPrimitiveComponent* GetPlanBottomLeftComponent() { return PlanBottomLeftComponent; }
+
+	TArray<UPrimitiveComponent*> GetGizmoComponents();
+	UPrimitiveComponent* GetPlanCornerComponent(bool bPositiveX, bool bPositiveY);
 
 protected:
 	/** X Axis Translation Component */
@@ -31,14 +34,14 @@ protected:
 	UPrimitiveComponent* ElevationComponent;
 
 	UPROPERTY()
-	UPrimitiveComponent* PlaneTopLeftComponent;
+	UPrimitiveComponent* PlanTopLeftComponent;
 
 	UPROPERTY()
-	UPrimitiveComponent* PlaneTopRightComponent;
+	UPrimitiveComponent* PlanTopRightComponent;
 
 	UPROPERTY()
-	UPrimitiveComponent* PlaneBottomRightComponent;
+	UPrimitiveComponent* PlanBottomRightComponent;
 
 	UPROPERTY()
-	UPrimitiveComponent* PlaneBottomLeftComponent;
+	UPrimitiveComponent* PlanBottomLeftComponent;
 };

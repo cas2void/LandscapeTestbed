@@ -34,42 +34,83 @@ ABoxGizmoActor::ABoxGizmoActor()
 	ElevationComponent = TempElevationComponent;
 
 	// Plane top left
-	URectGizmoComponent* TempPlaneTopLeftComponent = CreateDefaultSubobject<URectGizmoComponent>(TEXT("GizmoPlaneTopLeft"));
-	TempPlaneTopLeftComponent->Color = GizmoColor;
-	//PlaneTopLeftComponent->OffsetX = 140.0f;
-	//PlaneTopLeftComponent->OffsetY = -10.0f;
-	//PlaneTopLeftComponent->LengthX = 7.0f;
-	//PlaneTopLeftComponent->LengthY = 20.0f;
-	TempPlaneTopLeftComponent->SetThickness(10.0f);
-	TempPlaneTopLeftComponent->SetSegmentFlags(0x1 | 0x8);
-	TempPlaneTopLeftComponent->SetupAttachment(GetRootComponent());
+	URectGizmoComponent* TempPlanTopLeftComponent = CreateDefaultSubobject<URectGizmoComponent>(TEXT("GizmoPlanTopLeft"));
+	TempPlanTopLeftComponent->Color = GizmoColor;
+	//PlanTopLeftComponent->OffsetX = 140.0f;
+	//PlanTopLeftComponent->OffsetY = -10.0f;
+	//PlanTopLeftComponent->LengthX = 7.0f;
+	//PlanTopLeftComponent->LengthY = 20.0f;
+	TempPlanTopLeftComponent->SetThickness(10.0f);
+	TempPlanTopLeftComponent->SetSegmentFlags(0x1 | 0x8);
+	TempPlanTopLeftComponent->SetupAttachment(GetRootComponent());
 
-	PlaneTopLeftComponent = TempPlaneTopLeftComponent;
+	PlanTopLeftComponent = TempPlanTopLeftComponent;
 
 	// Plane top right
-	URectGizmoComponent* TempPlaneTopRightComponent = CreateDefaultSubobject<URectGizmoComponent>(TEXT("GizmoPlaneTopRight"));
-	TempPlaneTopRightComponent->Color = GizmoColor;
-	TempPlaneTopRightComponent->SetThickness(10.0f);
-	TempPlaneTopRightComponent->SetSegmentFlags(0x1 | 0x2);
-	TempPlaneTopRightComponent->SetupAttachment(GetRootComponent());
+	URectGizmoComponent* TempPlanTopRightComponent = CreateDefaultSubobject<URectGizmoComponent>(TEXT("GizmoPlanTopRight"));
+	TempPlanTopRightComponent->Color = GizmoColor;
+	TempPlanTopRightComponent->SetThickness(10.0f);
+	TempPlanTopRightComponent->SetSegmentFlags(0x1 | 0x2);
+	TempPlanTopRightComponent->SetupAttachment(GetRootComponent());
 
-	PlaneTopRightComponent = TempPlaneTopRightComponent;
+	PlanTopRightComponent = TempPlanTopRightComponent;
 
 	// Plane bottom right
-	URectGizmoComponent* TempPlaneBottomRightComponent = CreateDefaultSubobject<URectGizmoComponent>(TEXT("GizmoPlaneBottomRight"));
-	TempPlaneBottomRightComponent->Color = GizmoColor;
-	TempPlaneBottomRightComponent->SetThickness(10.0f);
-	TempPlaneBottomRightComponent->SetSegmentFlags(0x2 | 0x4);
-	TempPlaneBottomRightComponent->SetupAttachment(GetRootComponent());
+	URectGizmoComponent* TempPlanBottomRightComponent = CreateDefaultSubobject<URectGizmoComponent>(TEXT("GizmoPlanBottomRight"));
+	TempPlanBottomRightComponent->Color = GizmoColor;
+	TempPlanBottomRightComponent->SetThickness(10.0f);
+	TempPlanBottomRightComponent->SetSegmentFlags(0x2 | 0x4);
+	TempPlanBottomRightComponent->SetupAttachment(GetRootComponent());
 
-	PlaneBottomRightComponent = TempPlaneBottomRightComponent;
+	PlanBottomRightComponent = TempPlanBottomRightComponent;
 
 	// Plane bottom left
-	URectGizmoComponent* TempPlaneBottomLeftComponent = CreateDefaultSubobject<URectGizmoComponent>(TEXT("GizmoPlaneBottomLeft"));
-	TempPlaneBottomLeftComponent->Color = GizmoColor;
-	TempPlaneBottomLeftComponent->SetThickness(10.0f);
-	TempPlaneBottomLeftComponent->SetSegmentFlags(0x4 | 0x8);
-	TempPlaneBottomLeftComponent->SetupAttachment(GetRootComponent());
+	URectGizmoComponent* TempPlanBottomLeftComponent = CreateDefaultSubobject<URectGizmoComponent>(TEXT("GizmoPlanBottomLeft"));
+	TempPlanBottomLeftComponent->Color = GizmoColor;
+	TempPlanBottomLeftComponent->SetThickness(10.0f);
+	TempPlanBottomLeftComponent->SetSegmentFlags(0x4 | 0x8);
+	TempPlanBottomLeftComponent->SetupAttachment(GetRootComponent());
 
-	PlaneBottomLeftComponent = TempPlaneBottomLeftComponent;
+	PlanBottomLeftComponent = TempPlanBottomLeftComponent;
+}
+
+TArray<UPrimitiveComponent*> ABoxGizmoActor::GetGizmoComponents()
+{
+	TArray<UPrimitiveComponent*> Result;
+	Result.Add(ElevationComponent);
+	Result.Add(PlanTopLeftComponent);
+	Result.Add(PlanTopRightComponent);
+	Result.Add(PlanBottomRightComponent);
+	Result.Add(PlanBottomLeftComponent);
+
+	return Result;
+}
+
+UPrimitiveComponent* ABoxGizmoActor::GetPlanCornerComponent(bool bPositiveX, bool bPositiveY)
+{
+	UPrimitiveComponent* CornerComponent = nullptr;
+	if (bPositiveX)
+	{
+		if (bPositiveY)
+		{
+			CornerComponent = PlanBottomRightComponent;
+		}
+		else
+		{
+			CornerComponent = PlanTopRightComponent;
+		}
+	}
+	else
+	{
+		if (bPositiveY)
+		{
+			CornerComponent = PlanBottomLeftComponent;
+		}
+		else
+		{
+			CornerComponent = PlanTopLeftComponent;
+		}
+	}
+
+	return CornerComponent;
 }

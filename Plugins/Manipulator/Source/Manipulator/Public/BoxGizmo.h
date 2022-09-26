@@ -59,11 +59,28 @@ protected:
 	UPROPERTY()
 	TArray<UInteractiveGizmo*> ActiveGizmos;
 
-	// List of current-active child components
-	UPROPERTY()
-	TArray<UPrimitiveComponent*> ActiveComponents;
+	void CreateSubGizmos(const FBoxSphereBounds& InputBounds);
+	void DestroySubGizmos();
+	void CreateElevationGizmo(const FBoxSphereBounds& InputBounds);
+	void CreateCornerGizmo(const FBoxSphereBounds& InputBounds, bool bPositiveX, bool bPositiveY);
 
-	void CreateSubGizmos();
-	void CreateElevationGizmo(const FBoxSphereBounds& Bounds);
-	void CreateCornerGizmo(const FBoxSphereBounds& Bounds, bool bPositiveX, bool bPositiveY);
+	//
+	// Bounds
+	//
+public:
+	FBoxSphereBounds GetBounds() const { return Bounds; }
+
+protected:
+	UPROPERTY(Transient, NonTransactional)
+	FBoxSphereBounds Bounds;
+
+	void RecreateBounds();
+	void RecreateBoundsFromCorner(bool bPositiveX, bool bPositiveY);
+	void SyncComponentsFromCorner(bool bPositiveX, bool bPositiveY);
+
+	//
+	// Helper Functions
+	//
+protected:
+	FVector GetPlanCornerLocation(const FBoxSphereBounds& InBounds, bool bPositiveX, bool bPositiveY) const;
 };

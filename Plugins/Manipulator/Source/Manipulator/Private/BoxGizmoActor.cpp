@@ -7,6 +7,8 @@
 #include "BaseGizmos/GizmoRectangleComponent.h"
 #include "BaseGizmos/GizmoCircleComponent.h"
 
+#include "RectGizmoComponent.h"
+
 ABoxGizmoActor::ABoxGizmoActor()
 {
 	// Center
@@ -32,49 +34,41 @@ ABoxGizmoActor::ABoxGizmoActor()
 	ElevationComponent = TempElevationComponent;
 
 	// Plane top left
-	UGizmoRectangleComponent* TempPlaneTopLeftComponent = CreateDefaultSubobject<UGizmoRectangleComponent>(TEXT("GizmoPlaneTopLeft"));
-	TempPlaneTopLeftComponent->DirectionX = FVector(1, 0, 0);
-	TempPlaneTopLeftComponent->DirectionY = FVector(0, 1, 0);
+	URectGizmoComponent* TempPlaneTopLeftComponent = CreateDefaultSubobject<URectGizmoComponent>(TEXT("GizmoPlaneTopLeft"));
 	TempPlaneTopLeftComponent->Color = GizmoColor;
 	//PlaneTopLeftComponent->OffsetX = 140.0f;
 	//PlaneTopLeftComponent->OffsetY = -10.0f;
 	//PlaneTopLeftComponent->LengthX = 7.0f;
 	//PlaneTopLeftComponent->LengthY = 20.0f;
-	TempPlaneTopLeftComponent->Thickness = 10.0f;
-	TempPlaneTopLeftComponent->SegmentFlags = 0x1 | 0x8;
+	TempPlaneTopLeftComponent->SetThickness(10.0f);
+	TempPlaneTopLeftComponent->SetSegmentFlags(0x1 | 0x8);
 	TempPlaneTopLeftComponent->SetupAttachment(GetRootComponent());
 
 	PlaneTopLeftComponent = TempPlaneTopLeftComponent;
 
 	// Plane top right
-	UGizmoRectangleComponent* TempPlaneTopRightComponent = CreateDefaultSubobject<UGizmoRectangleComponent>(TEXT("GizmoPlaneTopRight"));
-	TempPlaneTopRightComponent->DirectionX = FVector(1, 0, 0);
-	TempPlaneTopRightComponent->DirectionY = FVector(0, 1, 0);
+	URectGizmoComponent* TempPlaneTopRightComponent = CreateDefaultSubobject<URectGizmoComponent>(TEXT("GizmoPlaneTopRight"));
 	TempPlaneTopRightComponent->Color = GizmoColor;
-	TempPlaneTopRightComponent->Thickness = 10.0f;
-	TempPlaneTopRightComponent->SegmentFlags = 0x1 | 0x2;
+	TempPlaneTopRightComponent->SetThickness(10.0f);
+	TempPlaneTopRightComponent->SetSegmentFlags(0x1 | 0x2);
 	TempPlaneTopRightComponent->SetupAttachment(GetRootComponent());
 
 	PlaneTopRightComponent = TempPlaneTopRightComponent;
 
 	// Plane bottom right
-	UGizmoRectangleComponent* TempPlaneBottomRightComponent = CreateDefaultSubobject<UGizmoRectangleComponent>(TEXT("GizmoPlaneBottomRight"));
-	TempPlaneBottomRightComponent->DirectionX = FVector(1, 0, 0);
-	TempPlaneBottomRightComponent->DirectionY = FVector(0, 1, 0);
+	URectGizmoComponent* TempPlaneBottomRightComponent = CreateDefaultSubobject<URectGizmoComponent>(TEXT("GizmoPlaneBottomRight"));
 	TempPlaneBottomRightComponent->Color = GizmoColor;
-	TempPlaneBottomRightComponent->Thickness = 10.0f;
-	TempPlaneBottomRightComponent->SegmentFlags = 0x2 | 0x4;
+	TempPlaneBottomRightComponent->SetThickness(10.0f);
+	TempPlaneBottomRightComponent->SetSegmentFlags(0x2 | 0x4);
 	TempPlaneBottomRightComponent->SetupAttachment(GetRootComponent());
 
 	PlaneBottomRightComponent = TempPlaneBottomRightComponent;
 
 	// Plane bottom left
-	UGizmoRectangleComponent* TempPlaneBottomLeftComponent = CreateDefaultSubobject<UGizmoRectangleComponent>(TEXT("GizmoPlaneBottomLeft"));
-	TempPlaneBottomLeftComponent->DirectionX = FVector(1, 0, 0);
-	TempPlaneBottomLeftComponent->DirectionY = FVector(0, 1, 0);
+	URectGizmoComponent* TempPlaneBottomLeftComponent = CreateDefaultSubobject<URectGizmoComponent>(TEXT("GizmoPlaneBottomLeft"));
 	TempPlaneBottomLeftComponent->Color = GizmoColor;
-	TempPlaneBottomLeftComponent->Thickness = 10.0f;
-	TempPlaneBottomLeftComponent->SegmentFlags = 0x4 | 0x8;
+	TempPlaneBottomLeftComponent->SetThickness(10.0f);
+	TempPlaneBottomLeftComponent->SetSegmentFlags(0x4 | 0x8);
 	TempPlaneBottomLeftComponent->SetupAttachment(GetRootComponent());
 
 	PlaneBottomLeftComponent = TempPlaneBottomLeftComponent;

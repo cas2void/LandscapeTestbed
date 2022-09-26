@@ -94,7 +94,9 @@ void UManipulatorEdMode::SwitchGizmo()
 		}
 	}
 
-	if (Manipulables.Num() > 0)
+	// Currently, activate custom gizmo when only 1 IManipulable is selected. 
+	// Multiple selected IManipulables may be supported in the future.
+	if (Manipulables.Num() == 1)
 	{
 		RecreateCustomGizmo(Manipulables);
 	}

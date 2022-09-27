@@ -201,6 +201,11 @@ void UBoxGizmo::CreateCornerGizmo(const FBoxSphereBounds& InputBounds, bool bPos
             }
         );
 
+        ParamSource->PositionConstraintFunction = [this, bPositiveX, bPositiveY](const FVector& RawPosition, FVector& ConstrainedPosition)
+        {
+            return ConstrainCornerPosition(RawPosition, ConstrainedPosition, bPositiveX, bPositiveY);
+        };
+
         //
         // Sub-component provides hit target
         //
@@ -291,6 +296,57 @@ void UBoxGizmo::SyncComponentsFromCorner(bool bPositiveX, bool bPositiveY)
             ElevationComponent->SetWorldLocation(ElevationLocation);
         }
     }
+}
+
+bool UBoxGizmo::ConstrainCornerPosition(const FVector& RawPosition, FVector& ConstrainedPosition, bool bPositiveX, bool bPositiveY) const
+{
+    bool Result = false;
+
+    if (GizmoActor)
+    {
+        UPrimitiveComponent* DiagonalComponent = GizmoActor->GetPlanCornerComponent(!bPositiveX, !bPositiveY);
+        if (DiagonalComponent)
+        {
+            FVector DiagonalLocation = DiagonalComponent->GetComponentLocation();
+
+            ConstrainedPosition = RawPosition;
+            if (bPositiveX)
+            {
+                if (RawPosition.X < DiagonalLocation.X + PlanSizeMin)
+                {
+                    Result = true;
+                    ConstrainedPosition.X = DiagonalLocation.X + PlanSizeMin;
+                }
+            }
+            else
+            {
+                if (RawPosition.X > DiagonalLocation.X - PlanSizeMin)
+                {
+                    Result = true;
+                    ConstrainedPosition.X = DiagonalLocation.X - PlanSizeMin;
+                }
+            }
+
+            if (bPositiveY)
+            {
+                if (RawPosition.Y < DiagonalLocation.Y + PlanSizeMin)
+                {
+                    Result = true;
+                    ConstrainedPosition.Y = DiagonalLocation.Y + PlanSizeMin;
+                }
+            }
+            else
+            {
+                if (RawPosition.Y > DiagonalLocation.Y - PlanSizeMin)
+                {
+                    Result = true;
+                    ConstrainedPosition.Y = DiagonalLocation.Y - PlanSizeMin;
+                }
+            }
+        }
+    }
+
+    return Result;
 }
 
 FVector UBoxGizmo::GetPlanCornerLocation(const FBoxSphereBounds& InBounds, bool bPositiveX, bool bPositiveY) const

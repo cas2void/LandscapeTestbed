@@ -79,6 +79,18 @@ protected:
 	void SyncComponentsFromCorner(bool bPositiveX, bool bPositiveY);
 
 	//
+	// Bounds Constraint
+	//
+public:
+	void SetPlanSizeMin(float InPlanSizeMin) { PlanSizeMin = InPlanSizeMin; }
+
+protected:
+	bool ConstrainCornerPosition(const FVector& RawPosition, FVector& ConstrainedPosition, bool bPositiveX, bool bPositiveY) const;
+
+	UPROPERTY()
+	float PlanSizeMin = 20.0f;
+
+	//
 	// Helper Functions
 	//
 protected:

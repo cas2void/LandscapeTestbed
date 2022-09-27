@@ -52,8 +52,6 @@ void UManipulatorEdMode::Enter()
 
 	Super::Enter();
 
-	GetModeManager()->SetShowWidget(true);
-
 	ToolsContext->GizmoManager->RegisterGizmoType(UBoxGizmoBuilder::BuilderIdentifier, NewObject<UBoxGizmoBuilder>());
 
 	WidgetModeChangedHandle =
@@ -98,11 +96,13 @@ void UManipulatorEdMode::SwitchGizmo()
 	// Multiple selected IManipulables may be supported in the future.
 	if (Manipulables.Num() == 1)
 	{
+		GetModeManager()->SetShowWidget(false);
 		RecreateCustomGizmo(Manipulables);
 	}
 	else
 	{
 		DestroyCustomGizmo();
+		GetModeManager()->SetShowWidget(true);
 	}
 }
 

@@ -55,7 +55,7 @@ protected:
 	// Sub Gizmos
 	//
 protected:
-	// list of currently-active child gizmos
+	// Currently active sub gizmos
 	UPROPERTY()
 	TArray<UInteractiveGizmo*> ActiveGizmos;
 
@@ -74,9 +74,16 @@ protected:
 	UPROPERTY(Transient, NonTransactional)
 	FBoxSphereBounds Bounds;
 
-	void RecreateBounds();
-	void RecreateBoundsFromCorner(bool bPositiveX, bool bPositiveY);
-	void SyncComponentsFromCorner(bool bPositiveX, bool bPositiveY);
+	// Recreate bounds from elevation and all plan corners
+	void RecreateBoundsByElevation();
+
+	// Recreate bounds from elvation, the specified corner and its diagonal
+	void RecreateBoundsByCorner(bool bPositiveX, bool bPositiveY);
+
+	// Sync other sub gizmo components to maintain rectangle shape
+	void SyncComponentsByCorner(bool bPositiveX, bool bPositiveY);
+
+	void NotifyBoundsModified();
 
 	//
 	// Bounds Constraint

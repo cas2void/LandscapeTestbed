@@ -135,7 +135,7 @@ void UBoxGizmo::CreateElevationGizmo(const FBoxSphereBounds& InputBounds)
         ComponentTransformSource->OnTransformChanged.AddLambda(
             [this](IGizmoTransformSource* TransformSource)
             {
-                RecreateBounds();
+                RecreateBoundsByElevation();
             }
         );
 
@@ -196,8 +196,8 @@ void UBoxGizmo::CreateCornerGizmo(const FBoxSphereBounds& InputBounds, bool bPos
         ComponentTransformSource->OnTransformChanged.AddLambda(
             [this, bPositiveX, bPositiveY](IGizmoTransformSource* TransformSource)
             {
-                RecreateBoundsFromCorner(bPositiveX, bPositiveY);
-                SyncComponentsFromCorner(bPositiveX, bPositiveY);
+                RecreateBoundsByCorner(bPositiveX, bPositiveY);
+                SyncComponentsByCorner(bPositiveX, bPositiveY);
             }
         );
 
@@ -226,7 +226,7 @@ void UBoxGizmo::CreateCornerGizmo(const FBoxSphereBounds& InputBounds, bool bPos
     }
 }
 
-void UBoxGizmo::RecreateBounds()
+void UBoxGizmo::RecreateBoundsByElevation()
 {
     if (GizmoActor)
     {
@@ -240,10 +240,12 @@ void UBoxGizmo::RecreateBounds()
             }
         }
         Bounds = FBoxSphereBounds(Locations.GetData(), Locations.Num());
+
+        NotifyBoundsModified();
     }
 }
 
-void UBoxGizmo::RecreateBoundsFromCorner(bool bPositiveX, bool bPositiveY)
+void UBoxGizmo::RecreateBoundsByCorner(bool bPositiveX, bool bPositiveY)
 {
     if (GizmoActor)
     {
@@ -258,11 +260,13 @@ void UBoxGizmo::RecreateBoundsFromCorner(bool bPositiveX, bool bPositiveY)
             Locations.Add(ElevationComponent->GetComponentLocation());
 
             Bounds = FBoxSphereBounds(Locations.GetData(), Locations.Num());
+
+            NotifyBoundsModified();
         }
     }
 }
 
-void UBoxGizmo::SyncComponentsFromCorner(bool bPositiveX, bool bPositiveY)
+void UBoxGizmo::SyncComponentsByCorner(bool bPositiveX, bool bPositiveY)
 {
     if (GizmoActor)
     {
@@ -295,6 +299,14 @@ void UBoxGizmo::SyncComponentsFromCorner(bool bPositiveX, bool bPositiveY)
             FVector ElevationLocation(Bounds.Origin.X, Bounds.Origin.Y, ElevationComponent->GetComponentLocation().Z);
             ElevationComponent->SetWorldLocation(ElevationLocation);
         }
+    }
+}
+
+void UBoxGizmo::NotifyBoundsModified()
+{
+    if (ActiveTarget)
+    {
+        ActiveTarget->OnBoundsModified(Bounds);
     }
 }
 

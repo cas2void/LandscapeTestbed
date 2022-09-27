@@ -48,4 +48,6 @@ class MANIPULATOR_API IManipulable
 public:
 	virtual FManipulableTransform GetTransform() const;
 	virtual FManipulableBounds GetBounds() const;
+
+	virtual void OnBoundsModified(const FBoxSphereBounds& InBounds);
 };

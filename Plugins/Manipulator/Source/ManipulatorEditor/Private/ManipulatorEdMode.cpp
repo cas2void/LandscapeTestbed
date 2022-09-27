@@ -65,6 +65,8 @@ void UManipulatorEdMode::Exit()
 		return;
 	}
 
+	DestroyCustomGizmo();
+
 	GetModeManager()->OnWidgetModeChanged().Remove(WidgetModeChangedHandle);
 	WidgetModeChangedHandle.Reset();
 
@@ -122,6 +124,7 @@ void UManipulatorEdMode::DestroyCustomGizmo()
 	if (CustomGizmo)
 	{
 		ToolsContext->GizmoManager->DestroyGizmo(CustomGizmo);
+		CustomGizmo = nullptr;
 	}
 }
 

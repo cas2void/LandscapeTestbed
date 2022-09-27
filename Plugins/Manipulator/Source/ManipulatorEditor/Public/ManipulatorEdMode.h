@@ -41,7 +41,7 @@ public:
 	// Gizmo
 	//
 protected:
-	UPROPERTY(VisibleAnywhere)
+	UPROPERTY(VisibleAnywhere, Transient, NonTransactional)
 	class UInteractiveGizmo* CustomGizmo;
 
 	void SwitchGizmo();

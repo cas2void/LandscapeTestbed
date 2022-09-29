@@ -24,6 +24,7 @@ class MANIPULATOR_API UBoxGizmo : public UInteractiveGizmo
 public:
 	virtual void Setup() override;
 	virtual void Shutdown() override;
+	virtual void Render(IToolsContextRenderAPI* RenderAPI) override;
 
 	//
 	// Gizmo Actor
@@ -39,6 +40,19 @@ protected:
 	// GizmoActors will be spawned in this World
 	UPROPERTY(Transient, NonTransactional)
 	UWorld* World;
+
+	//
+	// Construction Plane
+	//
+public:
+	void SetConstructionPlane(const FVector& PlaneOrigin, const FVector& PlaneNormal);
+
+protected:
+	UPROPERTY()
+	FVector ConstructionPlaneOrigin = FVector::ZeroVector;
+	
+	UPROPERTY()
+	FVector ConstructionPlaneNormal = FVector::ZAxisVector;
 
 	//
 	// Manipulated Target
@@ -59,10 +73,10 @@ protected:
 	UPROPERTY()
 	TArray<UInteractiveGizmo*> ActiveGizmos;
 
-	void CreateSubGizmos(const FBoxSphereBounds& InputBounds);
+	void CreateSubGizmos();
 	void DestroySubGizmos();
-	void CreateElevationGizmo(const FBoxSphereBounds& InputBounds);
-	void CreateCornerGizmo(const FBoxSphereBounds& InputBounds, bool bPositiveX, bool bPositiveY);
+	void CreateElevationGizmo();
+	void CreateCornerGizmo(bool bPositiveX, bool bPositiveY);
 
 	//
 	// Bounds
@@ -73,6 +87,8 @@ public:
 protected:
 	UPROPERTY(Transient, NonTransactional)
 	FBoxSphereBounds Bounds;
+
+	void InitBounds();
 
 	// Recreate bounds from elevation and all plan corners
 	void RecreateBoundsByElevation();

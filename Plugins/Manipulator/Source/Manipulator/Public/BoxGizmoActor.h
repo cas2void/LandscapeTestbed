@@ -29,7 +29,6 @@ public:
 	UPrimitiveComponent* GetPlanCornerComponent(bool bPositiveX, bool bPositiveY);
 
 protected:
-	/** X Axis Translation Component */
 	UPROPERTY()
 	UPrimitiveComponent* ElevationComponent;
 
@@ -44,4 +43,13 @@ protected:
 
 	UPROPERTY()
 	UPrimitiveComponent* PlanBottomLeftComponent;
+
+	UPROPERTY()
+	UPrimitiveComponent* RotateXComponent;
+
+	UPROPERTY()
+	UPrimitiveComponent* RotateYComponent;
+
+	UPROPERTY()
+	UPrimitiveComponent* RotateZComponent;
 };

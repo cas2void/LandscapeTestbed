@@ -31,8 +31,12 @@ protected:
 public:
 	FVector GetDirectionX() const { return DirectionX; }
 	FVector GetDirectionY() const { return DirectionY; }
+
 	float GetOffsetX() const { return OffsetX; }
+	void SetOffsetX(float InOffsetX) { OffsetX = InOffsetX; }
+
 	float GetOffsetY() const { return OffsetY; }
+	void SetOffsetY(float InOffsetY) { OffsetY = InOffsetY; }
 
 	float GetLengthX() const { return LengthX; }
 	void SetLengthX(float InLengthX) { LengthX = InLengthX; }

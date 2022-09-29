@@ -230,7 +230,7 @@ bool URectGizmoComponent::LineTraceComponent(FHitResult& OutHit, const FVector S
 
 FBoxSphereBounds URectGizmoComponent::CalcBounds(const FTransform& LocalToWorld) const
 {
-	float MaxOffset = FMath::Max(OffsetX, OffsetY);
-	float MaxLength = FMath::Max(LengthX, LengthY);
-	return FBoxSphereBounds(FSphere(FVector::ZeroVector, 100 * MaxOffset + MaxLength).TransformBy(LocalToWorld));
+	float MaxOffset = FMath::Max(FMath::Abs(OffsetX), FMath::Abs(OffsetY));
+	float MaxLength = FMath::Max(FMath::Abs(LengthX), FMath::Abs(LengthY));
+	return FBoxSphereBounds(FSphere(FVector::ZeroVector, MaxOffset + MaxLength).TransformBy(LocalToWorld));
 }

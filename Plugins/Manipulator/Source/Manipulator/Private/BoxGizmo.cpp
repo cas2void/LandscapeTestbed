@@ -149,7 +149,10 @@ void UBoxGizmo::CreateSubGizmos()
     UGizmoConstantAxisSource* ConstructionAxisSource = NewObject<UGizmoConstantAxisSource>(this);
     if (ConstructionAxisSource)
     {
-        ConstructionAxisSource->Origin = ConstructionPlaneOrigin;
+        const FVector BottomCenterFramePosition = Bounds.Origin + FVector(0.0f, 0.0f, -Bounds.BoxExtent.Z);
+        const FVector BottomCenterWorldPosition = TransformConstructionFramePositionToWorld(BottomCenterFramePosition);
+
+        ConstructionAxisSource->Origin = BottomCenterWorldPosition;
         ConstructionAxisSource->Direction = ConstructionPlaneOrientation.GetUpVector();
     }
 

@@ -33,7 +33,7 @@ FManipulableBounds IManipulable::GetBounds() const
     const AActor* Actor = Cast<const AActor>(this);
     if (Actor)
     {
-        FBox BoundingBox = Actor->GetComponentsBoundingBox();
+        FBox BoundingBox = Actor->CalculateComponentsBoundingBoxInLocalSpace();
         Result.bValid = true;
         Result.Bounds = FBoxSphereBounds(BoundingBox);
     }

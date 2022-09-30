@@ -38,6 +38,8 @@ public class Manipulator : ModuleRules
 				"Engine",
 				// ... add private dependencies that you statically link with here ...	
 				"InteractiveToolsFramework",
+				"GeometricObjects",
+				"ModelingComponents",
 			}
 			);
 		

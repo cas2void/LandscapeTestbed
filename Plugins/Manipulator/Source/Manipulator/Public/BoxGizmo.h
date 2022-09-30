@@ -45,14 +45,19 @@ protected:
 	// Construction Plane
 	//
 public:
-	void SetConstructionPlane(const FVector& PlaneOrigin, const FVector& PlaneNormal);
+	void SetConstructionPlane(const FVector& PlaneOrigin, const FQuat& PlaneOrientation);
 
 protected:
 	UPROPERTY()
 	FVector ConstructionPlaneOrigin = FVector::ZeroVector;
 	
 	UPROPERTY()
-	FVector ConstructionPlaneNormal = FVector::ZAxisVector;
+	FQuat ConstructionPlaneOrientation = FQuat::Identity;
+
+	void RenderConstructionPlane(IToolsContextRenderAPI* RenderAPI) const;
+	FTransform GetConstructionFrame() const;
+	FVector TransformWorldPositionToConstructionFrame(const FVector& WorldPosition) const;
+	FVector TransformConstructionFramePositionToWorld(const FVector& FramePosition) const;
 
 	//
 	// Manipulated Target
@@ -75,8 +80,8 @@ protected:
 
 	void CreateSubGizmos();
 	void DestroySubGizmos();
-	void CreateElevationGizmo();
-	void CreateCornerGizmo(bool bPositiveX, bool bPositiveY);
+	void CreateElevationGizmo(class UGizmoConstantAxisSource* AxisSource);
+	void CreateCornerGizmo(class UGizmoConstantAxisSource* AxisSource, bool bPositiveX, bool bPositiveY);
 
 	//
 	// Bounds

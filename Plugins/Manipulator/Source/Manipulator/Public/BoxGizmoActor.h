@@ -18,24 +18,28 @@ class MANIPULATOR_API ABoxGizmoActor : public AGizmoActor
 public:
 	ABoxGizmoActor();
 
+	//
+	// Bounds Group
+	//
 public:
+	USceneComponent* GetBoundsGroupComponent() { return BoundsGroupComponent; }
 	UPrimitiveComponent* GetElevationComponent() { return ElevationComponent; }
 	UPrimitiveComponent* GetPlanTopLeftComponent() { return PlanTopLeftComponent; }
 	UPrimitiveComponent* GetPlanTopRightComponent() { return PlanTopRightComponent; }
 	UPrimitiveComponent* GetPlanBottomRightComponent() { return PlanBottomRightComponent; }
 	UPrimitiveComponent* GetPlanBottomLeftComponent() { return PlanBottomLeftComponent; }
-	UPrimitiveComponent* GetRotateXComponent() { return RotateXComponent; }
 
-	TArray<UPrimitiveComponent*> GetGizmoComponents();
+	TArray<UPrimitiveComponent*> GetBoundsSubComponents();
+
 	// 0: TL, 1: TR, 2: BR, 3: BL
 	UPrimitiveComponent* GetPlanCornerComponent(int32 CornerIndex);
-	// 0: X, 1: Y, 2: Z
-	UPrimitiveComponent* GetRotationComponent(int32 AxisIndex);
-
 	int32 GetPlanCornerDiagonalIndex(int32 CornerIndex) const;
 	TArray<int32> GetPlanCornerNeighborIndices(int32 CornerIndex) const;
 
 protected:
+	UPROPERTY()
+	USceneComponent* BoundsGroupComponent;
+
 	UPROPERTY()
 	UPrimitiveComponent* ElevationComponent;
 
@@ -50,6 +54,20 @@ protected:
 
 	UPROPERTY()
 	UPrimitiveComponent* PlanBottomLeftComponent;
+
+	//
+	// Rotation Group
+	//
+public:
+	USceneComponent* GetRotationGroupComponent() { return RotationGroupComponent; }
+	UPrimitiveComponent* GetRotateXComponent() { return RotateXComponent; }
+
+	// 0: X, 1: Y, 2: Z
+	UPrimitiveComponent* GetRotationComponent(int32 AxisIndex);
+
+protected:
+	UPROPERTY()
+	USceneComponent* RotationGroupComponent;
 
 	UPROPERTY()
 	UPrimitiveComponent* RotateXComponent;

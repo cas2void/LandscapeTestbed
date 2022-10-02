@@ -118,6 +118,7 @@ public:
 	void SetPlanSizeMin(float InPlanSizeMin) { PlanSizeMin = InPlanSizeMin; }
 
 protected:
+	bool ConstrainElevationPosition(const FVector& RawPosition, FVector& ConstrainedPosition);
 	bool ConstrainCornerPosition(const FVector& RawPosition, FVector& ConstrainedPosition, int32 CornerIndex) const;
 
 	UPROPERTY()

@@ -11,13 +11,18 @@
 
 ABoxGizmoActor::ABoxGizmoActor()
 {
-	// Center
+	// Root
 	USphereComponent* SphereComponent = CreateDefaultSubobject<USphereComponent>(TEXT("GizmoCenter"));
 	SphereComponent->InitSphereRadius(1.0f);
 	SphereComponent->SetVisibility(false);
 	SphereComponent->SetCollisionProfileName(UCollisionProfile::NoCollision_ProfileName);
-
 	SetRootComponent(SphereComponent);
+
+	//
+	// Bounds Group
+	//
+	BoundsGroupComponent = CreateDefaultSubobject<USceneComponent>(TEXT("GizmoBoundsGroup"));
+	BoundsGroupComponent->SetupAttachment(GetRootComponent());
 
 	const FLinearColor GizmoColor(0.0f, 0.2f, 0.2f);
 	float GizmoThickness = 10.0f;
@@ -30,8 +35,7 @@ ABoxGizmoActor::ABoxGizmoActor()
 	TempElevationComponent->NumSides = 16;
 	TempElevationComponent->bViewAligned = true;
 	TempElevationComponent->bOnlyAllowFrontFacingHits = false;
-	TempElevationComponent->SetupAttachment(GetRootComponent());
-
+	TempElevationComponent->SetupAttachment(BoundsGroupComponent);
 	ElevationComponent = TempElevationComponent;
 
 	// Plane top left
@@ -41,9 +45,7 @@ ABoxGizmoActor::ABoxGizmoActor()
 	TempPlanTopLeftComponent->SetOffsetY(TempPlanTopLeftComponent->GetLengthY() * -0.5f);
 	TempPlanTopLeftComponent->SetThickness(GizmoThickness);
 	TempPlanTopLeftComponent->SetSegmentFlags(0x1 | 0x8);
-	
-	TempPlanTopLeftComponent->SetupAttachment(GetRootComponent());
-
+	TempPlanTopLeftComponent->SetupAttachment(BoundsGroupComponent);
 	PlanTopLeftComponent = TempPlanTopLeftComponent;
 
 	// Plane top right
@@ -53,8 +55,7 @@ ABoxGizmoActor::ABoxGizmoActor()
 	TempPlanTopRightComponent->SetOffsetY(TempPlanTopRightComponent->GetLengthY() * -0.5f);
 	TempPlanTopRightComponent->SetThickness(GizmoThickness);
 	TempPlanTopRightComponent->SetSegmentFlags(0x1 | 0x2);
-	TempPlanTopRightComponent->SetupAttachment(GetRootComponent());
-
+	TempPlanTopRightComponent->SetupAttachment(BoundsGroupComponent);
 	PlanTopRightComponent = TempPlanTopRightComponent;
 
 	// Plane bottom right
@@ -64,8 +65,7 @@ ABoxGizmoActor::ABoxGizmoActor()
 	TempPlanBottomRightComponent->SetOffsetY(TempPlanBottomRightComponent->GetLengthY() * -0.5f);
 	TempPlanBottomRightComponent->SetThickness(GizmoThickness);
 	TempPlanBottomRightComponent->SetSegmentFlags(0x2 | 0x4);
-	TempPlanBottomRightComponent->SetupAttachment(GetRootComponent());
-
+	TempPlanBottomRightComponent->SetupAttachment(BoundsGroupComponent);
 	PlanBottomRightComponent = TempPlanBottomRightComponent;
 
 	// Plane bottom left
@@ -75,9 +75,13 @@ ABoxGizmoActor::ABoxGizmoActor()
 	TempPlanBottomLeftComponent->SetOffsetY(TempPlanBottomLeftComponent->GetLengthY() * -0.5f);
 	TempPlanBottomLeftComponent->SetThickness(GizmoThickness);
 	TempPlanBottomLeftComponent->SetSegmentFlags(0x4 | 0x8);
-	TempPlanBottomLeftComponent->SetupAttachment(GetRootComponent());
-
+	TempPlanBottomLeftComponent->SetupAttachment(BoundsGroupComponent);
 	PlanBottomLeftComponent = TempPlanBottomLeftComponent;
+
+	//
+	// Rotation Group
+	//
+	RotationGroupComponent = CreateDefaultSubobject<USceneComponent>(TEXT("GizmoRotationGroup"));
 
 	// Axis X Rotate
 	UGizmoCircleComponent* TempRotateXComponent = CreateDefaultSubobject<UGizmoCircleComponent>(TEXT("GizmoRotateX"));
@@ -85,12 +89,11 @@ ABoxGizmoActor::ABoxGizmoActor()
 	TempRotateXComponent->Normal = FVector(1.0f, 0.0f, 0.0f);
 	TempRotateXComponent->Radius = 120.0f;
 	TempRotateXComponent->Thickness = GizmoThickness;
-	TempRotateXComponent->SetupAttachment(GetRootComponent());
-
+	TempRotateXComponent->SetupAttachment(RotationGroupComponent);
 	RotateXComponent = TempRotateXComponent;
 }
 
-TArray<UPrimitiveComponent*> ABoxGizmoActor::GetGizmoComponents()
+TArray<UPrimitiveComponent*> ABoxGizmoActor::GetBoundsSubComponents()
 {
 	TArray<UPrimitiveComponent*> Result;
 	Result.Add(ElevationComponent);
@@ -128,6 +131,24 @@ UPrimitiveComponent* ABoxGizmoActor::GetPlanCornerComponent(int32 CornerIndex)
 	return CornerComponent;
 }
 
+int32 ABoxGizmoActor::GetPlanCornerDiagonalIndex(int32 CornerIndex) const
+{
+	check(CornerIndex >= 0 && CornerIndex < 4);
+
+	return ((CornerIndex + 1) % 4);
+}
+
+TArray<int32> ABoxGizmoActor::GetPlanCornerNeighborIndices(int32 CornerIndex) const
+{
+	check(CornerIndex >= 0 && CornerIndex < 4);
+
+	TArray<int32> Result;
+	Result.Add((CornerIndex + 1) % 4);
+	Result.Add((CornerIndex + 2) % 4);
+
+	return Result;
+}
+
 UPrimitiveComponent* ABoxGizmoActor::GetRotationComponent(int32 AxisIndex)
 {
 	UPrimitiveComponent* RotationComponent = nullptr;
@@ -147,22 +168,4 @@ UPrimitiveComponent* ABoxGizmoActor::GetRotationComponent(int32 AxisIndex)
 	}
 
 	return RotationComponent;
-}
-
-int32 ABoxGizmoActor::GetPlanCornerDiagonalIndex(int32 CornerIndex) const
-{
-	check(CornerIndex >= 0 && CornerIndex < 4);
-
-	return ((CornerIndex + 1) % 4);
-}
-
-TArray<int32> ABoxGizmoActor::GetPlanCornerNeighborIndices(int32 CornerIndex) const
-{
-	check(CornerIndex >= 0 && CornerIndex < 4);
-
-	TArray<int32> Result;
-	Result.Add((CornerIndex + 1) % 4);
-	Result.Add((CornerIndex + 2) % 4);
-
-	return Result;
 }

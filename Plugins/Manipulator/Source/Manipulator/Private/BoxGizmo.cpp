@@ -162,11 +162,11 @@ void UBoxGizmo::CreateSubGizmos()
         ConstructionAxisSource->Direction = ConstructionPlaneOrientation.GetUpVector();
     }
 
-    CreateElevationGizmo(GizmoAxisZSource);
-    for (int32 Index = 0; Index < 4; Index++)
-    {
-        CreateCornerGizmo(ConstructionAxisSource, Index);
-    }
+    //CreateElevationGizmo(GizmoAxisZSource);
+    //for (int32 Index = 0; Index < 4; Index++)
+    //{
+    //    CreateCornerGizmo(ConstructionAxisSource, Index);
+    //}
 
     //// Reset gizmo root location
     //if (GizmoActor)
@@ -245,6 +245,11 @@ void UBoxGizmo::CreateElevationGizmo(UGizmoComponentAxisSource* AxisSource)
                 SyncComponentsByElevation();
             }
         );
+
+        ParamSource->PositionConstraintFunction = [this](const FVector& RawPosition, FVector& ConstrainedPosition)
+        {
+            return ConstrainElevationPosition(RawPosition, ConstrainedPosition);
+        };
 
         //
         // Sub-component provides hit target
@@ -440,7 +445,7 @@ void UBoxGizmo::RecreateBoundsByElevation()
 {
     if (GizmoActor)
     {
-        TArray<UPrimitiveComponent*> GizmoComponents = GizmoActor->GetGizmoComponents();
+        TArray<UPrimitiveComponent*> GizmoComponents = GizmoActor->GetBoundsSubComponents();
         TArray<FVector> Locations;
         for (const auto& Component : GizmoComponents)
         {
@@ -481,11 +486,29 @@ void UBoxGizmo::SyncComponentsByElevation()
 {
     if (GizmoActor)
     {
-        FVector BoundsWorldCenter = TransformConstructionFramePositionToWorld(Bounds.Origin);
-        GizmoActor->SetActorLocation(BoundsWorldCenter);
 
-        //const FVector CornerLocation = GetPlanCornerLocation(Bounds, bPositiveX, bPositiveY);
-        //CornerComponent->SetRelativeLocation(CornerLocation);
+        //UPrimitiveComponent* ElevationComponent = GizmoActor->GetElevationComponent();
+        //if (ElevationComponent)
+        //{
+        //    FVector ElevationWorldLocation = ElevationComponent->GetComponentLocation();
+        //    FVector ElevationConstructionFrameLocation = TransformWorldPositionToConstructionFrame(ElevationWorldLocation);
+        //    bool bFlipped = ElevationConstructionFrameLocation.Z < Bounds.Origin.Z + Bounds.BoxExtent.Z - 1.0f;
+        //    UE_LOG(LogTemp, Warning, TEXT("bFlipped: %d"), bFlipped);
+        //    //GizmoActor->SetActorScale3D(GizmoScale3D);
+        //}
+
+        //FVector BoundsWorldCenter = TransformConstructionFramePositionToWorld(Bounds.Origin);
+        //GizmoActor->SetActorLocation(BoundsWorldCenter);
+
+        //for (int32 Index = 0; Index < 4; Index++)
+        //{
+        //    UPrimitiveComponent* CornerComponent = GizmoActor->GetPlanCornerComponent(Index);
+        //    if (CornerComponent)
+        //    {
+        //        const FVector CornerLocation = GetPlanCornerLocation(Bounds, Index);
+        //        CornerComponent->SetRelativeLocation(CornerLocation);
+        //    }
+        //}
     }
 }
 
@@ -521,6 +544,12 @@ void UBoxGizmo::NotifyBoundsModified()
     //{
     //    ActiveTarget->OnBoundsModified(Bounds);
     //}
+}
+
+bool UBoxGizmo::ConstrainElevationPosition(const FVector& RawPosition, FVector& ConstrainedPosition)
+{
+    bool Result = false;
+    return Result;
 }
 
 bool UBoxGizmo::ConstrainCornerPosition(const FVector& RawPosition, FVector& ConstrainedPosition, int32 CornerIndex) const

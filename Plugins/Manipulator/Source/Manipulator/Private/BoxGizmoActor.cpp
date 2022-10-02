@@ -80,13 +80,14 @@ ABoxGizmoActor::ABoxGizmoActor()
 	PlanBottomLeftComponent = TempPlanBottomLeftComponent;
 
 	// Axis X Rotate
-	//UGizmoCircleComponent* TempRotateXComponent = CreateDefaultSubobject<UGizmoCircleComponent>(TEXT("GizmoRotateX"));
-	//TempRotateXComponent->Color = FLinearColor::Red;
-	//TempRotateXComponent->Normal = FVector(1.0f, 0.0f, 0.0f);
-	//TempRotateXComponent->Radius = 120.0f;
-	//TempRotateXComponent->SetupAttachment(GetRootComponent());
+	UGizmoCircleComponent* TempRotateXComponent = CreateDefaultSubobject<UGizmoCircleComponent>(TEXT("GizmoRotateX"));
+	TempRotateXComponent->Color = FLinearColor::Red;
+	TempRotateXComponent->Normal = FVector(1.0f, 0.0f, 0.0f);
+	TempRotateXComponent->Radius = 120.0f;
+	TempRotateXComponent->Thickness = GizmoThickness;
+	TempRotateXComponent->SetupAttachment(GetRootComponent());
 
-	//RotateXComponent = TempRotateXComponent;
+	RotateXComponent = TempRotateXComponent;
 }
 
 TArray<UPrimitiveComponent*> ABoxGizmoActor::GetGizmoComponents()
@@ -101,31 +102,67 @@ TArray<UPrimitiveComponent*> ABoxGizmoActor::GetGizmoComponents()
 	return Result;
 }
 
-UPrimitiveComponent* ABoxGizmoActor::GetPlanCornerComponent(bool bPositiveX, bool bPositiveY)
+UPrimitiveComponent* ABoxGizmoActor::GetPlanCornerComponent(int32 CornerIndex)
 {
+	check(CornerIndex >= 0 && CornerIndex < 4);
+
 	UPrimitiveComponent* CornerComponent = nullptr;
-	if (bPositiveX)
+	switch (CornerIndex)
 	{
-		if (bPositiveY)
-		{
-			CornerComponent = PlanBottomRightComponent;
-		}
-		else
-		{
-			CornerComponent = PlanTopRightComponent;
-		}
-	}
-	else
-	{
-		if (bPositiveY)
-		{
-			CornerComponent = PlanBottomLeftComponent;
-		}
-		else
-		{
-			CornerComponent = PlanTopLeftComponent;
-		}
+	case 0:
+		CornerComponent = PlanTopLeftComponent;
+		break;
+	case 1:
+		CornerComponent = PlanTopRightComponent;
+		break;
+	case 2:
+		CornerComponent = PlanBottomRightComponent;
+		break;
+	case 3:
+		CornerComponent = PlanBottomLeftComponent;
+		break;
+	default:
+		break;
 	}
 
 	return CornerComponent;
+}
+
+UPrimitiveComponent* ABoxGizmoActor::GetRotationComponent(int32 AxisIndex)
+{
+	UPrimitiveComponent* RotationComponent = nullptr;
+	switch (AxisIndex)
+	{
+	case 0:
+		RotationComponent = RotateXComponent;
+		break;
+	case 1:
+		RotationComponent = RotateYComponent;
+		break;
+	case 2:
+		RotationComponent = RotateZComponent;
+		break;
+	default:
+		break;
+	}
+
+	return RotationComponent;
+}
+
+int32 ABoxGizmoActor::GetPlanCornerDiagonalIndex(int32 CornerIndex) const
+{
+	check(CornerIndex >= 0 && CornerIndex < 4);
+
+	return ((CornerIndex + 1) % 4);
+}
+
+TArray<int32> ABoxGizmoActor::GetPlanCornerNeighborIndices(int32 CornerIndex) const
+{
+	check(CornerIndex >= 0 && CornerIndex < 4);
+
+	TArray<int32> Result;
+	Result.Add((CornerIndex + 1) % 4);
+	Result.Add((CornerIndex + 2) % 4);
+
+	return Result;
 }

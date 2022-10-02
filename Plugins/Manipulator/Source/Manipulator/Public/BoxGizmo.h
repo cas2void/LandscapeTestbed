@@ -80,8 +80,9 @@ protected:
 
 	void CreateSubGizmos();
 	void DestroySubGizmos();
-	void CreateElevationGizmo(class UGizmoConstantAxisSource* AxisSource);
-	void CreateCornerGizmo(class UGizmoConstantAxisSource* AxisSource, bool bPositiveX, bool bPositiveY);
+	void CreateElevationGizmo(class UGizmoComponentAxisSource* AxisSource);
+	void CreateCornerGizmo(class UGizmoConstantAxisSource* AxisSource, int32 CornerIndex);
+	void CreateRotationGizmo(int32 AxisIndex);
 
 	//
 	// Bounds
@@ -90,6 +91,7 @@ public:
 	FBoxSphereBounds GetBounds() const { return Bounds; }
 
 protected:
+	// Bounds in construction frame
 	UPROPERTY(Transient, NonTransactional)
 	FBoxSphereBounds Bounds;
 
@@ -99,10 +101,13 @@ protected:
 	void RecreateBoundsByElevation();
 
 	// Recreate bounds from elvation, the specified corner and its diagonal
-	void RecreateBoundsByCorner(bool bPositiveX, bool bPositiveY);
+	void RecreateBoundsByCorner(int32 CornerIndex);
 
-	// Sync other sub gizmo components to maintain rectangle shape
-	void SyncComponentsByCorner(bool bPositiveX, bool bPositiveY);
+	// Slave components: rotation
+	void SyncComponentsByElevation();
+
+	// Slave components: other plan corners, elevation
+	void SyncComponentsByCorner(int32 CornerIndex);
 
 	void NotifyBoundsModified();
 
@@ -113,7 +118,7 @@ public:
 	void SetPlanSizeMin(float InPlanSizeMin) { PlanSizeMin = InPlanSizeMin; }
 
 protected:
-	bool ConstrainCornerPosition(const FVector& RawPosition, FVector& ConstrainedPosition, bool bPositiveX, bool bPositiveY) const;
+	bool ConstrainCornerPosition(const FVector& RawPosition, FVector& ConstrainedPosition, int32 CornerIndex) const;
 
 	UPROPERTY()
 	float PlanSizeMin = 20.0f;
@@ -122,5 +127,5 @@ protected:
 	// Helper Functions
 	//
 protected:
-	FVector GetPlanCornerLocation(const FBoxSphereBounds& InBounds, bool bPositiveX, bool bPositiveY) const;
+	FVector GetPlanCornerLocation(const FBoxSphereBounds& InBounds, int32 CornerIndex) const;
 };

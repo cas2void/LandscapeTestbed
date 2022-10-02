@@ -24,9 +24,16 @@ public:
 	UPrimitiveComponent* GetPlanTopRightComponent() { return PlanTopRightComponent; }
 	UPrimitiveComponent* GetPlanBottomRightComponent() { return PlanBottomRightComponent; }
 	UPrimitiveComponent* GetPlanBottomLeftComponent() { return PlanBottomLeftComponent; }
+	UPrimitiveComponent* GetRotateXComponent() { return RotateXComponent; }
 
 	TArray<UPrimitiveComponent*> GetGizmoComponents();
-	UPrimitiveComponent* GetPlanCornerComponent(bool bPositiveX, bool bPositiveY);
+	// 0: TL, 1: TR, 2: BR, 3: BL
+	UPrimitiveComponent* GetPlanCornerComponent(int32 CornerIndex);
+	// 0: X, 1: Y, 2: Z
+	UPrimitiveComponent* GetRotationComponent(int32 AxisIndex);
+
+	int32 GetPlanCornerDiagonalIndex(int32 CornerIndex) const;
+	TArray<int32> GetPlanCornerNeighborIndices(int32 CornerIndex) const;
 
 protected:
 	UPROPERTY()

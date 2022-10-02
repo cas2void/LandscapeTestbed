@@ -135,7 +135,7 @@ int32 ABoxGizmoActor::GetPlanCornerDiagonalIndex(int32 CornerIndex) const
 {
 	check(CornerIndex >= 0 && CornerIndex < 4);
 
-	return ((CornerIndex + 1) % 4);
+	return ((CornerIndex + 2) % 4);
 }
 
 TArray<int32> ABoxGizmoActor::GetPlanCornerNeighborIndices(int32 CornerIndex) const
@@ -144,7 +144,7 @@ TArray<int32> ABoxGizmoActor::GetPlanCornerNeighborIndices(int32 CornerIndex) co
 
 	TArray<int32> Result;
 	Result.Add((CornerIndex + 1) % 4);
-	Result.Add((CornerIndex + 2) % 4);
+	Result.Add((CornerIndex + 3) % 4);
 
 	return Result;
 }

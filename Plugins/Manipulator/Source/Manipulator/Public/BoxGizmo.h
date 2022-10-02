@@ -81,8 +81,13 @@ protected:
 	void CreateSubGizmos();
 	void DestroySubGizmos();
 	void CreateElevationGizmo(class UGizmoComponentAxisSource* AxisSource);
-	void CreateCornerGizmo(class UGizmoConstantAxisSource* AxisSource, int32 CornerIndex);
+	void CreatePlanCornerGizmo(class UGizmoComponentAxisSource* AxisSource, int32 CornerIndex);
 	void CreateRotationGizmo(int32 AxisIndex);
+
+	void ResetGizmoRootTransform();
+	void ResetBoundsGroupTransform();
+	void ResetElevationTransform();
+	void ResetPlanCornerTransform(int32 CornerIndex);
 
 	//
 	// Bounds
@@ -106,7 +111,7 @@ protected:
 	// Slave components: rotation
 	void SyncComponentsByElevation();
 
-	// Slave components: other plan corners, elevation
+	// Slave components: all plan corners, elevation
 	void SyncComponentsByCorner(int32 CornerIndex);
 
 	void NotifyBoundsModified();

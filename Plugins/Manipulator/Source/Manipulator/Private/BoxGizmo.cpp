@@ -236,6 +236,7 @@ void UBoxGizmo::CreateElevationGizmo(UGizmoComponentAxisSource* AxisSource)
             {
                 RecreateBoundsByElevation();
                 SyncComponentsByElevation();
+                NotifyBoundsModified();
             }
         );
 
@@ -301,6 +302,7 @@ void UBoxGizmo::CreatePlanCornerGizmo(UGizmoComponentAxisSource* AxisSource, int
             {
                 RecreateBoundsByCorner(CornerIndex);
                 SyncComponentsByCorner(CornerIndex);
+                NotifyBoundsModified();
             }
         );
 
@@ -416,7 +418,10 @@ void UBoxGizmo::CreateRotationAxisGizmo(int32 AxisIndex)
         ComponentTransformSource->OnTransformChanged.AddLambda(
             [this](IGizmoTransformSource* TransformSource)
             {
+                // Bounds needs to be recreated by active target's transform after rotation
                 NotifyRotationModified();
+                InitBounds();
+                SyncComponentsByRotation();
             }
         );
 
@@ -503,8 +508,6 @@ void UBoxGizmo::RecreateBoundsByElevation()
             }
         }
         Bounds = FBoxSphereBounds(Locations.GetData(), Locations.Num());
-
-        NotifyBoundsModified();
     }
 }
 
@@ -523,8 +526,6 @@ void UBoxGizmo::RecreateBoundsByCorner(int32 CornerIndex)
             Locations.Add(TransformPositionWorldToConstructionFrame(ElevationComponent->GetComponentLocation()));
 
             Bounds = FBoxSphereBounds(Locations.GetData(), Locations.Num());
-
-            NotifyBoundsModified();
         }
     }
 }
@@ -536,7 +537,7 @@ void UBoxGizmo::SyncComponentsByElevation()
 
 void UBoxGizmo::SyncComponentsByCorner(int32 CornerIndex)
 {
-    // Parent(bounds group) has been transformed, all corners need update
+    // Parent(bounds group) will be transformed, all corners need update
     (void)CornerIndex;
 
     RegulateBoundsGroupTransform();
@@ -550,6 +551,19 @@ void UBoxGizmo::SyncComponentsByCorner(int32 CornerIndex)
     RegulateElevationTransform();
 
     RegulateRotationGroupTransform();
+}
+
+void UBoxGizmo::SyncComponentsByRotation()
+{
+    RegulateBoundsGroupTransform();
+
+    for (int32 PlanCornerIndex = 0; PlanCornerIndex < 4; PlanCornerIndex++)
+    {
+        RegulatePlanCornerTransform(PlanCornerIndex);
+    }
+
+    // Sync elevation to make its projection locate at the center of plan
+    RegulateElevationTransform();
 }
 
 void UBoxGizmo::NotifyBoundsModified()

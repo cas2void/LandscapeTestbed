@@ -105,6 +105,7 @@ protected:
 	UPROPERTY(Transient, NonTransactional)
 	FBoxSphereBounds Bounds;
 
+	// Initialize bounds from target and construction frame
 	void InitBounds();
 
 	// Recreate bounds from elevation and all plan corners
@@ -118,6 +119,9 @@ protected:
 
 	// Slave components: all plan corners, elevation, rotation group
 	void SyncComponentsByCorner(int32 CornerIndex);
+
+	// Slave components: bounds group
+	void SyncComponentsByRotation();
 
 	void NotifyBoundsModified();
 

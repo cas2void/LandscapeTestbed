@@ -37,18 +37,19 @@ FManipulableBounds IManipulable::GetBounds() const
     return Result;
 }
 
-void IManipulable::OnBoundsModified(const FBoxSphereBounds& InBounds)
+void IManipulable::OnBoundsModified(const FBoxSphereBounds& InBounds, const FTransform& InBoundsTransform)
 {
     AActor* Actor = Cast<AActor>(this);
     if (Actor)
     {
-        Actor->SetActorLocation(InBounds.Origin);
+        const FVector BoundsWorldCenter = InBoundsTransform.TransformPosition(InBounds.Origin);
+        Actor->SetActorLocation(BoundsWorldCenter);
 
-        FBox BoundingBox = Actor->GetComponentsBoundingBox();
-        FBoxSphereBounds CurrentBounds(BoundingBox);
-        FVector BoxScale = InBounds.BoxExtent / CurrentBounds.BoxExtent;
-        FVector NewScale = Actor->GetActorScale() * BoxScale;
-        Actor->SetActorScale3D(NewScale);
+        //FBox BoundingBox = Actor->GetComponentsBoundingBox();
+        //FBoxSphereBounds CurrentBounds(BoundingBox);
+        //FVector BoxScale = InBounds.BoxExtent / CurrentBounds.BoxExtent;
+        //FVector NewScale = Actor->GetActorScale() * BoxScale;
+        //Actor->SetActorScale3D(NewScale);
     }
 }
 

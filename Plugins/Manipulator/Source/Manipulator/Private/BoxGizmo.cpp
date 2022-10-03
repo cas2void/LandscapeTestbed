@@ -568,10 +568,10 @@ void UBoxGizmo::SyncComponentsByRotation()
 
 void UBoxGizmo::NotifyBoundsModified()
 {
-    //if (ActiveTarget)
-    //{
-    //    ActiveTarget->OnBoundsModified(Bounds);
-    //}
+    if (ActiveTarget)
+    {
+        ActiveTarget->OnBoundsModified(Bounds, GetConstructionFrame());
+    }
 }
 
 void UBoxGizmo::NotifyRotationModified()

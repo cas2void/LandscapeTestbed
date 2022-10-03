@@ -49,6 +49,6 @@ public:
 	virtual FManipulableTransform GetTransform() const;
 	virtual FManipulableBounds GetBounds() const;
 
-	virtual void OnBoundsModified(const FBoxSphereBounds& InBounds);
+	virtual void OnBoundsModified(const FBoxSphereBounds& InBounds, const FTransform& InBoundsTransform);
 	virtual void OnRotationModified(const FQuat& InRotation);
 };

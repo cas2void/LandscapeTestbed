@@ -56,8 +56,8 @@ protected:
 
 	void RenderConstructionPlane(IToolsContextRenderAPI* RenderAPI) const;
 	FTransform GetConstructionFrame() const;
-	FVector TransformWorldPositionToConstructionFrame(const FVector& WorldPosition) const;
-	FVector TransformConstructionFramePositionToWorld(const FVector& FramePosition) const;
+	FVector TransformPositionWorldToConstructionFrame(const FVector& WorldPosition) const;
+	FVector TransformPositionConstructionFrameToWorld(const FVector& FramePosition) const;
 
 	//
 	// Manipulated Target
@@ -80,14 +80,20 @@ protected:
 
 	void CreateSubGizmos();
 	void DestroySubGizmos();
+
+	// Bounds Group
 	void CreateElevationGizmo(class UGizmoComponentAxisSource* AxisSource);
 	void CreatePlanCornerGizmo(class UGizmoComponentAxisSource* AxisSource, int32 CornerIndex);
-	void CreateRotationGizmo(int32 AxisIndex);
 
-	void ResetGizmoRootTransform();
-	void ResetBoundsGroupTransform();
-	void ResetElevationTransform();
-	void ResetPlanCornerTransform(int32 CornerIndex);
+	void RegulateGizmoRootTransform();
+	void RegulateBoundsGroupTransform();
+	void RegulateElevationTransform();
+	void RegulatePlanCornerTransform(int32 CornerIndex);
+
+	// Rotation Group
+	void CreateRotationAxisGizmo(int32 AxisIndex);
+
+	void RegulateRotationGroupTransform();
 
 	//
 	// Bounds
@@ -108,10 +114,10 @@ protected:
 	// Recreate bounds from elvation, the specified corner and its diagonal
 	void RecreateBoundsByCorner(int32 CornerIndex);
 
-	// Slave components: rotation
+	// Slave components: rotation group
 	void SyncComponentsByElevation();
 
-	// Slave components: all plan corners, elevation
+	// Slave components: all plan corners, elevation, rotation group
 	void SyncComponentsByCorner(int32 CornerIndex);
 
 	void NotifyBoundsModified();

@@ -63,7 +63,7 @@ public:
 	UPrimitiveComponent* GetRotateXComponent() { return RotateXComponent; }
 
 	// 0: X, 1: Y, 2: Z
-	UPrimitiveComponent* GetRotationComponent(int32 AxisIndex);
+	UPrimitiveComponent* GetRotationAxisComponent(int32 AxisIndex);
 
 protected:
 	UPROPERTY()
@@ -77,4 +77,7 @@ protected:
 
 	UPROPERTY()
 	UPrimitiveComponent* RotateZComponent;
+
+	UPROPERTY()
+	USceneComponent* TargetProxy;
 };

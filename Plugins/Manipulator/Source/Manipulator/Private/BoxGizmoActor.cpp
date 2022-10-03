@@ -82,15 +82,20 @@ ABoxGizmoActor::ABoxGizmoActor()
 	// Rotation Group
 	//
 	RotationGroupComponent = CreateDefaultSubobject<USceneComponent>(TEXT("GizmoRotationGroup"));
+	RotationGroupComponent->SetupAttachment(GetRootComponent());
 
 	// Axis X Rotate
 	UGizmoCircleComponent* TempRotateXComponent = CreateDefaultSubobject<UGizmoCircleComponent>(TEXT("GizmoRotateX"));
 	TempRotateXComponent->Color = FLinearColor::Red;
 	TempRotateXComponent->Normal = FVector(1.0f, 0.0f, 0.0f);
 	TempRotateXComponent->Radius = 120.0f;
-	TempRotateXComponent->Thickness = GizmoThickness;
+	TempRotateXComponent->Thickness = GizmoThickness * 0.5f;
 	TempRotateXComponent->SetupAttachment(RotationGroupComponent);
 	RotateXComponent = TempRotateXComponent;
+
+	// Target Proxy
+	TargetProxy = CreateDefaultSubobject<USceneComponent>(TEXT("GizmoTargetProxy"));
+	TargetProxy->SetupAttachment(RotationGroupComponent);
 }
 
 TArray<UPrimitiveComponent*> ABoxGizmoActor::GetBoundsSubComponents()
@@ -149,7 +154,7 @@ TArray<int32> ABoxGizmoActor::GetPlanCornerNeighborIndices(int32 CornerIndex) co
 	return Result;
 }
 
-UPrimitiveComponent* ABoxGizmoActor::GetRotationComponent(int32 AxisIndex)
+UPrimitiveComponent* ABoxGizmoActor::GetRotationAxisComponent(int32 AxisIndex)
 {
 	UPrimitiveComponent* RotationComponent = nullptr;
 	switch (AxisIndex)

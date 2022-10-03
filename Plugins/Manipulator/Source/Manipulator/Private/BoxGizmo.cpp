@@ -104,12 +104,12 @@ FTransform UBoxGizmo::GetConstructionFrame() const
     return Frame2World;
 }
 
-FVector UBoxGizmo::TransformWorldPositionToConstructionFrame(const FVector& WorldPosition) const
+FVector UBoxGizmo::TransformPositionWorldToConstructionFrame(const FVector& WorldPosition) const
 {
     return GetConstructionFrame().InverseTransformPosition(WorldPosition);
 }
 
-FVector UBoxGizmo::TransformConstructionFramePositionToWorld(const FVector& FramePosition) const
+FVector UBoxGizmo::TransformPositionConstructionFrameToWorld(const FVector& FramePosition) const
 {
     return GetConstructionFrame().TransformPosition(FramePosition);
 }
@@ -140,18 +140,18 @@ void UBoxGizmo::ClearActiveTarget()
 
 void UBoxGizmo::CreateSubGizmos()
 {
-    ResetGizmoRootTransform();
+    RegulateGizmoRootTransform();
 
     //
-    // Bounds
+    // Bounds Group
     //
-    ResetBoundsGroupTransform();
-
+    RegulateBoundsGroupTransform();
     if (GizmoActor)
     {
         USceneComponent* BoundsGroupComponent = GizmoActor->GetBoundsGroupComponent();
         if (BoundsGroupComponent)
         {
+            // Elevation and plan corner gizmos share the same axis source, which is the Z axis of BoundsGroupComponent
             UGizmoComponentAxisSource* BoundsAxisZSource = UGizmoComponentAxisSource::Construct(BoundsGroupComponent, 2, true, this);
 
             CreateElevationGizmo(BoundsAxisZSource);
@@ -161,53 +161,15 @@ void UBoxGizmo::CreateSubGizmos()
             }
         }
     }
-    
-    //UGizmoComponentAxisSource* GizmoAxisXSource = UGizmoComponentAxisSource::Construct(GizmoActor->GetRootComponent(), 0, true, this);
-    //UGizmoComponentAxisSource* GizmoAxisYSource = UGizmoComponentAxisSource::Construct(GizmoActor->GetRootComponent(), 1, true, this);
-    //UGizmoComponentAxisSource* GizmoAxisZSource = UGizmoComponentAxisSource::Construct(GizmoActor->GetRootComponent(), 2, true, this);
 
-    //UGizmoConstantAxisSource* ConstructionAxisSource = NewObject<UGizmoConstantAxisSource>(this);
-    //if (ConstructionAxisSource)
-    //{
-    //    const FVector BottomCenterFramePosition = Bounds.Origin + FVector(0.0f, 0.0f, -Bounds.BoxExtent.Z);
-    //    const FVector BottomCenterWorldPosition = TransformConstructionFramePositionToWorld(BottomCenterFramePosition);
-
-    //    ConstructionAxisSource->Origin = BottomCenterWorldPosition;
-    //    ConstructionAxisSource->Direction = ConstructionPlaneOrientation.GetUpVector();
-    //}
-
-    //CreateElevationGizmo(GizmoAxisZSource);
-    //for (int32 Index = 0; Index < 4; Index++)
-    //{
-    //    CreatePlanCornerGizmo(ConstructionAxisSource, Index);
-    //}
-
-    //// Reset gizmo root location
-    //if (GizmoActor)
-    //{
-    //    GizmoActor->SetActorLocation(ConstructionPlaneOrigin);
-    //    GizmoActor->SetActorRotation(ConstructionPlaneOrientation);
-    //}
-
-    //UGizmoConstantAxisSource* ConstructionAxisSource = NewObject<UGizmoConstantAxisSource>(this);
-    //if (ConstructionAxisSource)
-    //{
-    //    const FVector BottomCenterFramePosition = Bounds.Origin + FVector(0.0f, 0.0f, -Bounds.BoxExtent.Z);
-    //    const FVector BottomCenterWorldPosition = TransformConstructionFramePositionToWorld(BottomCenterFramePosition);
-
-    //    ConstructionAxisSource->Origin = BottomCenterWorldPosition;
-    //    ConstructionAxisSource->Direction = ConstructionPlaneOrientation.GetUpVector();
-    //}
-
-    //CreateElevationGizmo(ConstructionAxisSource);
-    //// Top Left
-    //CreatePlanCornerGizmo(ConstructionAxisSource, false, false);
-    //// Top Right
-    //CreatePlanCornerGizmo(ConstructionAxisSource, true, false);
-    //// Bottom Right
-    //CreatePlanCornerGizmo(ConstructionAxisSource, true, true);
-    //// Bottom Left
-    //CreatePlanCornerGizmo(ConstructionAxisSource, false, true);
+    //
+    // Rotation Group
+    //
+    RegulateRotationGroupTransform();
+    for (int32 Index = 0; Index < 3; Index++)
+    {
+        CreateRotationAxisGizmo(Index);
+    }
 }
 
 void UBoxGizmo::DestroySubGizmos()
@@ -227,7 +189,7 @@ void UBoxGizmo::CreateElevationGizmo(UGizmoComponentAxisSource* AxisSource)
         //
         // Move gizmo to target location, parent(bounds group) is the bounds bottom center
         //
-        ResetElevationTransform();
+        RegulateElevationTransform();
 
         //
         // Create axis-position gizmo, axis-position parameter will drive elevation position along elevation axis
@@ -292,7 +254,7 @@ void UBoxGizmo::CreatePlanCornerGizmo(UGizmoComponentAxisSource* AxisSource, int
         //
         // Move gizmo to target location, parent(bounds group) is the bounds bottom center
         //
-        ResetPlanCornerTransform(CornerIndex);
+        RegulatePlanCornerTransform(CornerIndex);
 
         //
         // Create plane-position gizmo
@@ -349,88 +311,21 @@ void UBoxGizmo::CreatePlanCornerGizmo(UGizmoComponentAxisSource* AxisSource, int
     }
 }
 
-void UBoxGizmo::CreateRotationGizmo(int32 AxisIndex)
-{
-    UPrimitiveComponent* RotationComponent = GizmoActor->GetRotationComponent(AxisIndex);
-    if (RotationComponent)
-    {
-        //
-        // Move gizmo to target location
-        //
-        const FVector RotationLocation = Bounds.Origin;
-        RotationComponent->SetRelativeLocation(RotationLocation);
-
-        //
-        // Create axis-angle gizmo
-        //
-        UAxisAngleGizmo* RotationGizmo = Cast<UAxisAngleGizmo>(GetGizmoManager()->CreateGizmo(UInteractiveGizmoManager::DefaultAxisAngleBuilderIdentifier));
-        check(RotationGizmo);
-
-        ////
-        //// Axis source provides the rotation axis
-        ////
-        //UGizmoConstantAxisSource* CornerAxisSource = AxisSource;
-        //CornerGizmo->AxisSource = CornerAxisSource;
-
-        ////
-        //// Plane-translation parameter will drive corner gizmo position along corner plane
-        ////
-        //UGizmoComponentWorldTransformSource* ComponentTransformSource = UGizmoComponentWorldTransformSource::Construct(RotationComponent, this);
-        //// Parameter source maps axis-parameter-change to translation of TransformSource's transform
-        //UGizmoPlaneTranslationParameterSource* ParamSource = UGizmoPlaneTranslationParameterSource::Construct(CornerAxisSource, ComponentTransformSource, this);
-        //CornerGizmo->ParameterSource = ParamSource;
-
-        ////
-        //// Bind delegates
-        ////
-        //ComponentTransformSource->OnTransformChanged.AddLambda(
-        //    [this, bPositiveX, bPositiveY](IGizmoTransformSource* TransformSource)
-        //    {
-        //        RecreateBoundsByCorner(bPositiveX, bPositiveY);
-        //        SyncComponentsByCorner(bPositiveX, bPositiveY);
-        //    }
-        //);
-
-        //ParamSource->PositionConstraintFunction = [this, bPositiveX, bPositiveY](const FVector& RawPosition, FVector& ConstrainedPosition)
-        //{
-        //    return ConstrainCornerPosition(RawPosition, ConstrainedPosition, bPositiveX, bPositiveY);
-        //};
-
-        ////
-        //// Sub-component provides hit target
-        ////
-        //UGizmoComponentHitTarget* HitTarget = UGizmoComponentHitTarget::Construct(RotationComponent, this);
-        //HitTarget->UpdateHoverFunction = [RotationComponent, this](bool bHovering)
-        //{
-        //    if (Cast<UGizmoBaseComponent>(RotationComponent) != nullptr)
-        //    {
-        //        Cast<UGizmoBaseComponent>(RotationComponent)->UpdateHoverState(bHovering);
-        //    }
-        //};
-        //CornerGizmo->HitTarget = HitTarget;
-
-        ////
-        //// Reference the created gizmo
-        ////
-        //ActiveGizmos.Add(CornerGizmo);
-    }
-}
-
-void UBoxGizmo::ResetGizmoRootTransform()
+void UBoxGizmo::RegulateGizmoRootTransform()
 {
     if (GizmoActor)
     {
         FTransform GizmoActorTransform;
         GizmoActorTransform.SetScale3D(FVector::OneVector);
         GizmoActorTransform.SetRotation(ConstructionPlaneOrientation);
-        FVector BoundsWorldCenter = TransformConstructionFramePositionToWorld(Bounds.Origin);
+        FVector BoundsWorldCenter = TransformPositionConstructionFrameToWorld(Bounds.Origin);
         GizmoActorTransform.SetLocation(BoundsWorldCenter);
 
         GizmoActor->SetActorTransform(GizmoActorTransform);
     }
 }
 
-void UBoxGizmo::ResetBoundsGroupTransform()
+void UBoxGizmo::RegulateBoundsGroupTransform()
 {
     if (GizmoActor)
     {
@@ -438,29 +333,111 @@ void UBoxGizmo::ResetBoundsGroupTransform()
         if (BoundsGroupComponent)
         {
             FVector BoundsFrameBottomCenter = Bounds.Origin + FVector(0.0f, 0.0f, -Bounds.BoxExtent.Z);
-            FVector BoundsWorldBottomCenter = TransformConstructionFramePositionToWorld(BoundsFrameBottomCenter);
+            FVector BoundsWorldBottomCenter = TransformPositionConstructionFrameToWorld(BoundsFrameBottomCenter);
             BoundsGroupComponent->SetWorldLocation(BoundsWorldBottomCenter);
         }
     }
 }
 
-void UBoxGizmo::ResetElevationTransform()
+void UBoxGizmo::RegulateElevationTransform()
 {
-    UPrimitiveComponent* ElevationComponent = GizmoActor->GetElevationComponent();
-    if (ElevationComponent)
+    if (GizmoActor)
     {
-        const FVector ElevationLocation(0.0f, 0.0f, Bounds.BoxExtent.Z * 2.0f);
-        ElevationComponent->SetRelativeLocation(ElevationLocation);
+        UPrimitiveComponent* ElevationComponent = GizmoActor->GetElevationComponent();
+        if (ElevationComponent)
+        {
+            const FVector ElevationLocation(0.0f, 0.0f, Bounds.BoxExtent.Z * 2.0f);
+            ElevationComponent->SetRelativeLocation(ElevationLocation);
+        }
     }
 }
 
-void UBoxGizmo::ResetPlanCornerTransform(int32 CornerIndex)
+void UBoxGizmo::RegulatePlanCornerTransform(int32 CornerIndex)
 {
     UPrimitiveComponent* CornerComponent = GizmoActor->GetPlanCornerComponent(CornerIndex);
     if (CornerComponent)
     {
         const FVector CornerLocation = GetPlanCornerLocation(Bounds, CornerIndex);
         CornerComponent->SetRelativeLocation(CornerLocation);
+    }
+}
+
+void UBoxGizmo::CreateRotationAxisGizmo(int32 AxisIndex)
+{
+    USceneComponent* RotationGroupComponent = GizmoActor->GetRotationGroupComponent();
+    UPrimitiveComponent* RotationAxisComponent = GizmoActor->GetRotationAxisComponent(AxisIndex);
+    if (RotationGroupComponent && RotationAxisComponent)
+    {
+        //
+        // No Need to move gizmo, it always locates at the origin of parent's frame
+        //
+
+        //
+        // Create axis-angle gizmo
+        //
+        UAxisAngleGizmo* RotationGizmo = Cast<UAxisAngleGizmo>(GetGizmoManager()->CreateGizmo(UInteractiveGizmoManager::DefaultAxisAngleBuilderIdentifier));
+        check(RotationGizmo);
+
+        //
+        // Axis source provides the rotation axis
+        //
+        UGizmoComponentAxisSource* RotationAxisSource = UGizmoComponentAxisSource::Construct(RotationGroupComponent, AxisIndex, true, this);
+        RotationGizmo->AxisSource = RotationAxisSource;
+
+        //
+        // Plane-translation parameter will drive corner gizmo position along corner plane
+        //
+        UGizmoComponentWorldTransformSource* ComponentTransformSource = UGizmoComponentWorldTransformSource::Construct(RotationGroupComponent, this);
+        // Parameter source maps angle-parameter-change to rotation of TransformSource's transform
+        UGizmoAxisRotationParameterSource* ParamSource = UGizmoAxisRotationParameterSource::Construct(RotationAxisSource, ComponentTransformSource, this);
+        RotationGizmo->AngleSource = ParamSource;
+
+        //
+        // Bind delegates
+        //
+        ComponentTransformSource->OnTransformChanged.AddLambda(
+            [this](IGizmoTransformSource* TransformSource)
+            {
+                //RecreateBoundsByCorner();
+                //SyncComponentsByCorner();
+                if (TransformSource)
+                {
+                    UE_LOG(LogTemp, Warning, TEXT("Rotation Changed: %s"), *TransformSource->GetTransform().GetRotation().Rotator().ToString());
+                }
+            }
+        );
+
+        //
+        // Sub-component provides hit target
+        //
+        UGizmoComponentHitTarget* HitTarget = UGizmoComponentHitTarget::Construct(RotationAxisComponent, this);
+        HitTarget->UpdateHoverFunction = [RotationAxisComponent, this](bool bHovering)
+        {
+            if (Cast<UGizmoBaseComponent>(RotationAxisComponent) != nullptr)
+            {
+                Cast<UGizmoBaseComponent>(RotationAxisComponent)->UpdateHoverState(bHovering);
+            }
+        };
+        RotationGizmo->HitTarget = HitTarget;
+
+        //
+        // Reference the created gizmo
+        //
+        ActiveGizmos.Add(RotationGizmo);
+    }
+}
+
+void UBoxGizmo::RegulateRotationGroupTransform()
+{
+    if (GizmoActor)
+    {
+        USceneComponent* RotationGroupComponent = GizmoActor->GetRotationGroupComponent();
+        if (RotationGroupComponent)
+        {
+            FVector BoundsFrameCenter = Bounds.Origin;
+            FVector BoundsWorldCenter = TransformPositionConstructionFrameToWorld(BoundsFrameCenter);
+            RotationGroupComponent->SetWorldLocation(BoundsWorldCenter);
+        }
     }
 }
 
@@ -508,7 +485,7 @@ void UBoxGizmo::RecreateBoundsByElevation()
         {
             if (Component)
             {
-                const FVector ComponentFrameLocation = TransformWorldPositionToConstructionFrame(Component->GetComponentLocation());
+                const FVector ComponentFrameLocation = TransformPositionWorldToConstructionFrame(Component->GetComponentLocation());
                 Locations.Add(ComponentFrameLocation);
             }
         }
@@ -528,9 +505,9 @@ void UBoxGizmo::RecreateBoundsByCorner(int32 CornerIndex)
         if (SourceComponent && DiagonalComponent && ElevationComponent)
         {
             TArray<FVector> Locations;
-            Locations.Add(TransformWorldPositionToConstructionFrame(SourceComponent->GetComponentLocation()));
-            Locations.Add(TransformWorldPositionToConstructionFrame(DiagonalComponent->GetComponentLocation()));
-            Locations.Add(TransformWorldPositionToConstructionFrame(ElevationComponent->GetComponentLocation()));
+            Locations.Add(TransformPositionWorldToConstructionFrame(SourceComponent->GetComponentLocation()));
+            Locations.Add(TransformPositionWorldToConstructionFrame(DiagonalComponent->GetComponentLocation()));
+            Locations.Add(TransformPositionWorldToConstructionFrame(ElevationComponent->GetComponentLocation()));
 
             Bounds = FBoxSphereBounds(Locations.GetData(), Locations.Num());
 
@@ -541,6 +518,7 @@ void UBoxGizmo::RecreateBoundsByCorner(int32 CornerIndex)
 
 void UBoxGizmo::SyncComponentsByElevation()
 {
+    RegulateRotationGroupTransform();
 }
 
 void UBoxGizmo::SyncComponentsByCorner(int32 CornerIndex)
@@ -548,15 +526,17 @@ void UBoxGizmo::SyncComponentsByCorner(int32 CornerIndex)
     // Parent(bounds group) has been transformed, all corners need update
     (void)CornerIndex;
 
-    ResetBoundsGroupTransform();
+    RegulateBoundsGroupTransform();
 
     for (int32 PlanCornerIndex = 0; PlanCornerIndex < 4; PlanCornerIndex++)
     {
-        ResetPlanCornerTransform(PlanCornerIndex);
+        RegulatePlanCornerTransform(PlanCornerIndex);
     }
 
     // Sync elevation to make its projection locate at the center of plan
-    ResetElevationTransform();
+    RegulateElevationTransform();
+
+    RegulateRotationGroupTransform();
 }
 
 void UBoxGizmo::NotifyBoundsModified()
@@ -582,8 +562,8 @@ bool UBoxGizmo::ConstrainCornerPosition(const FVector& RawPosition, FVector& Con
         UPrimitiveComponent* DiagonalComponent = GizmoActor->GetPlanCornerComponent(GizmoActor->GetPlanCornerDiagonalIndex(CornerIndex));
         if (DiagonalComponent)
         {
-            const FVector RawFramePosition = TransformWorldPositionToConstructionFrame(RawPosition);
-            const FVector DiagonalFrameLocation = TransformWorldPositionToConstructionFrame(DiagonalComponent->GetComponentLocation());
+            const FVector RawFramePosition = TransformPositionWorldToConstructionFrame(RawPosition);
+            const FVector DiagonalFrameLocation = TransformPositionWorldToConstructionFrame(DiagonalComponent->GetComponentLocation());
 
             check(CornerIndex >= 0 && CornerIndex < 4);
             const bool bPositiveX = CornerIndex == 1 || CornerIndex == 2;
@@ -626,7 +606,7 @@ bool UBoxGizmo::ConstrainCornerPosition(const FVector& RawPosition, FVector& Con
 
             if (Result)
             {
-                ConstrainedPosition = TransformConstructionFramePositionToWorld(ConstrainedFramePosition);
+                ConstrainedPosition = TransformPositionConstructionFrameToWorld(ConstrainedFramePosition);
             }
         }
     }

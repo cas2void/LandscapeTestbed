@@ -15,12 +15,8 @@ FManipulableTransform IManipulable::GetTransform() const
     const AActor* Actor = Cast<const AActor>(this);
     if (Actor)
     {
-        USceneComponent* RootComp = Actor->GetRootComponent();
-        if (RootComp)
-        {
-            Result.bValid = true;
-            Result.Transform = RootComp->GetComponentTransform();
-        }
+        Result.bValid = true;
+        Result.Transform = Actor->GetActorTransform();
     }
 
     return Result;
@@ -53,5 +49,14 @@ void IManipulable::OnBoundsModified(const FBoxSphereBounds& InBounds)
         FVector BoxScale = InBounds.BoxExtent / CurrentBounds.BoxExtent;
         FVector NewScale = Actor->GetActorScale() * BoxScale;
         Actor->SetActorScale3D(NewScale);
+    }
+}
+
+void IManipulable::OnRotationModified(const FQuat& InRotation)
+{
+    AActor* Actor = Cast<AActor>(this);
+    if (Actor)
+    {
+        Actor->SetActorRotation(InRotation);
     }
 }

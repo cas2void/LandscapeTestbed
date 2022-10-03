@@ -94,8 +94,8 @@ ABoxGizmoActor::ABoxGizmoActor()
 	RotateXComponent = TempRotateXComponent;
 
 	// Target Proxy
-	TargetProxy = CreateDefaultSubobject<USceneComponent>(TEXT("GizmoTargetProxy"));
-	TargetProxy->SetupAttachment(RotationGroupComponent);
+	TargetProxyComponent = CreateDefaultSubobject<USceneComponent>(TEXT("GizmoTargetProxy"));
+	TargetProxyComponent->SetupAttachment(RotationGroupComponent);
 }
 
 TArray<UPrimitiveComponent*> ABoxGizmoActor::GetBoundsSubComponents()

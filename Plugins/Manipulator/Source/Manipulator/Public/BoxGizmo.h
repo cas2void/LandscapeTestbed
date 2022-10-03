@@ -7,7 +7,6 @@
 #include "InteractiveToolChange.h"
 #include "Engine/World.h"
 #include "Manipulable.h"
-#include "Components/PrimitiveComponent.h"
 #include "BoxGizmo.generated.h"
 
 /**
@@ -121,6 +120,12 @@ protected:
 	void SyncComponentsByCorner(int32 CornerIndex);
 
 	void NotifyBoundsModified();
+
+	//
+	// Rotation
+	//
+protected:
+	void NotifyRotationModified();
 
 	//
 	// Bounds Constraint

@@ -50,4 +50,5 @@ public:
 	virtual FManipulableBounds GetBounds() const;
 
 	virtual void OnBoundsModified(const FBoxSphereBounds& InBounds);
+	virtual void OnRotationModified(const FQuat& InRotation);
 };

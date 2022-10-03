@@ -127,6 +127,24 @@ void UBoxGizmo::SetActiveTarget(const TScriptInterface<IManipulable>& Target, IT
 
     // Sub gizmos have been destroyed in ClearActiveTarget(), just recreate them
     CreateSubGizmos();
+
+    // Init TargetProxy rotation
+    if (GizmoActor)
+    {
+        USceneComponent* TargetProxyComponent = GizmoActor->GetTargetProxyComponent();
+        if (TargetProxyComponent)
+        {
+            if (ActiveTarget)
+            {
+                FManipulableTransform ManipulableTransform = ActiveTarget->GetTransform();
+                if (ManipulableTransform.bValid)
+                {
+                    FQuat Rotation = ManipulableTransform.Transform.GetRotation();
+                    TargetProxyComponent->SetWorldRotation(Rotation);
+                }
+            }
+        }
+    }
 }
 
 void UBoxGizmo::ClearActiveTarget()
@@ -398,12 +416,7 @@ void UBoxGizmo::CreateRotationAxisGizmo(int32 AxisIndex)
         ComponentTransformSource->OnTransformChanged.AddLambda(
             [this](IGizmoTransformSource* TransformSource)
             {
-                //RecreateBoundsByCorner();
-                //SyncComponentsByCorner();
-                if (TransformSource)
-                {
-                    UE_LOG(LogTemp, Warning, TEXT("Rotation Changed: %s"), *TransformSource->GetTransform().GetRotation().Rotator().ToString());
-                }
+                NotifyRotationModified();
             }
         );
 
@@ -545,6 +558,22 @@ void UBoxGizmo::NotifyBoundsModified()
     //{
     //    ActiveTarget->OnBoundsModified(Bounds);
     //}
+}
+
+void UBoxGizmo::NotifyRotationModified()
+{
+    if (GizmoActor)
+    {
+        USceneComponent* TargetProxyComponent = GizmoActor->GetTargetProxyComponent();
+        if (TargetProxyComponent)
+        {
+            const FQuat Rotation = TargetProxyComponent->GetComponentQuat();
+            if (ActiveTarget)
+            {
+                ActiveTarget->OnRotationModified(Rotation);
+            }
+        }
+    }
 }
 
 bool UBoxGizmo::ConstrainElevationPosition(const FVector& RawPosition, FVector& ConstrainedPosition)

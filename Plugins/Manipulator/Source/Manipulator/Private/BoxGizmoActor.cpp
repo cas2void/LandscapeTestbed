@@ -89,9 +89,27 @@ ABoxGizmoActor::ABoxGizmoActor()
 	TempRotateXComponent->Color = FLinearColor::Red;
 	TempRotateXComponent->Normal = FVector(1.0f, 0.0f, 0.0f);
 	TempRotateXComponent->Radius = 120.0f;
-	TempRotateXComponent->Thickness = GizmoThickness * 0.5f;
+	TempRotateXComponent->Thickness = GizmoThickness * 0.2f;
 	TempRotateXComponent->SetupAttachment(RotationGroupComponent);
 	RotateXComponent = TempRotateXComponent;
+
+	// Axis Y Rotate
+	UGizmoCircleComponent* TempRotateYComponent = CreateDefaultSubobject<UGizmoCircleComponent>(TEXT("GizmoRotateY"));
+	TempRotateYComponent->Color = FLinearColor::Green;
+	TempRotateYComponent->Normal = FVector(0.0f, 1.0f, 0.0f);
+	TempRotateYComponent->Radius = 120.0f;
+	TempRotateYComponent->Thickness = GizmoThickness * 0.2f;
+	TempRotateYComponent->SetupAttachment(RotationGroupComponent);
+	RotateYComponent = TempRotateYComponent;
+
+	// Axis Z Rotate
+	UGizmoCircleComponent* TempRotateZComponent = CreateDefaultSubobject<UGizmoCircleComponent>(TEXT("GizmoRotateZ"));
+	TempRotateZComponent->Color = FLinearColor::Blue;
+	TempRotateZComponent->Normal = FVector(0.0f, 0.0f, 1.0f);
+	TempRotateZComponent->Radius = 120.0f;
+	TempRotateZComponent->Thickness = GizmoThickness * 0.2f;
+	TempRotateZComponent->SetupAttachment(RotationGroupComponent);
+	RotateZComponent = TempRotateZComponent;
 
 	// Target Proxy
 	TargetProxyComponent = CreateDefaultSubobject<USceneComponent>(TEXT("GizmoTargetProxy"));

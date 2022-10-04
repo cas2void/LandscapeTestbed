@@ -61,6 +61,8 @@ protected:
 public:
 	USceneComponent* GetRotationGroupComponent() { return RotationGroupComponent; }
 	UPrimitiveComponent* GetRotateXComponent() { return RotateXComponent; }
+	UPrimitiveComponent* GetRotateYComponent() { return RotateYComponent; }
+	UPrimitiveComponent* GetRotateZComponent() { return RotateZComponent; }
 	USceneComponent* GetTargetProxyComponent() { return TargetProxyComponent; }
 
 	// 0: X, 1: Y, 2: Z

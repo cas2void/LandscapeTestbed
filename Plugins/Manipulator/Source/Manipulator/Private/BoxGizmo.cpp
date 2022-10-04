@@ -208,133 +208,139 @@ void UBoxGizmo::DestroySubGizmos()
 
 void UBoxGizmo::CreateElevationGizmo(UGizmoComponentAxisSource* AxisSource)
 {
-    UPrimitiveComponent* ElevationComponent = GizmoActor->GetElevationComponent();
-    if (ElevationComponent)
+    if (GizmoActor)
     {
-        //
-        // Move gizmo to target location, parent(bounds group) is the bounds bottom center
-        //
-        RegulateElevationTransform();
-
-        //
-        // Create axis-position gizmo, axis-position parameter will drive elevation position along elevation axis
-        //
-        UAxisPositionGizmo* ElevationGizmo = Cast<UAxisPositionGizmo>(GetGizmoManager()->CreateGizmo(UInteractiveGizmoManager::DefaultAxisPositionBuilderIdentifier));
-        check(ElevationGizmo);
-
-        //
-        // Axis source provides the translation axis for elevation
-        //
-        ElevationGizmo->AxisSource = AxisSource;
-
-        //
-        // Axis-translation parameter will drive elevation position along elevation axis
-        //
-        UGizmoComponentWorldTransformSource* ComponentTransformSource = UGizmoComponentWorldTransformSource::Construct(ElevationComponent, this);
-        // Parameter source maps axis-parameter-change to translation of TransformSource's transform
-        UGizmoAxisTranslationParameterSource* ParamSource = UGizmoAxisTranslationParameterSource::Construct(AxisSource, ComponentTransformSource, this);
-        ElevationGizmo->ParameterSource = ParamSource;
-
-        //
-        // Bind delegates
-        //
-        ComponentTransformSource->OnTransformChanged.AddLambda(
-            [this](IGizmoTransformSource* TransformSource)
-            {
-                RecreateBoundsByElevation();
-                SyncComponentsByElevation();
-                NotifyBoundsModified();
-            }
-        );
-
-        ParamSource->PositionConstraintFunction = [this](const FVector& RawPosition, FVector& ConstrainedPosition)
+        UPrimitiveComponent* ElevationComponent = GizmoActor->GetElevationComponent();
+        if (ElevationComponent)
         {
-            return ConstrainElevationPosition(RawPosition, ConstrainedPosition);
-        };
+            //
+            // Move gizmo to target location, parent(bounds group) is the bounds bottom center
+            //
+            RegulateElevationTransform();
 
-        //
-        // Sub-component provides hit target
-        //
-        UGizmoComponentHitTarget* HitTarget = UGizmoComponentHitTarget::Construct(ElevationComponent, this);
-        HitTarget->UpdateHoverFunction = [ElevationComponent, this](bool bHovering)
-        {
-            if (Cast<UGizmoBaseComponent>(ElevationComponent) != nullptr)
+            //
+            // Create axis-position gizmo, axis-position parameter will drive elevation position along elevation axis
+            //
+            UAxisPositionGizmo* ElevationGizmo = Cast<UAxisPositionGizmo>(GetGizmoManager()->CreateGizmo(UInteractiveGizmoManager::DefaultAxisPositionBuilderIdentifier));
+            check(ElevationGizmo);
+
+            //
+            // Axis source provides the translation axis for elevation
+            //
+            ElevationGizmo->AxisSource = AxisSource;
+
+            //
+            // Axis-translation parameter will drive elevation position along elevation axis
+            //
+            UGizmoComponentWorldTransformSource* ComponentTransformSource = UGizmoComponentWorldTransformSource::Construct(ElevationComponent, this);
+            // Parameter source maps axis-parameter-change to translation of TransformSource's transform
+            UGizmoAxisTranslationParameterSource* ParamSource = UGizmoAxisTranslationParameterSource::Construct(AxisSource, ComponentTransformSource, this);
+            ElevationGizmo->ParameterSource = ParamSource;
+
+            //
+            // Bind delegates
+            //
+            ComponentTransformSource->OnTransformChanged.AddLambda(
+                [this](IGizmoTransformSource* TransformSource)
+                {
+                    RecreateBoundsByElevation();
+                    SyncComponentsByElevation();
+                    NotifyBoundsModified();
+                }
+            );
+
+            ParamSource->PositionConstraintFunction = [this](const FVector& RawPosition, FVector& ConstrainedPosition)
             {
-                Cast<UGizmoBaseComponent>(ElevationComponent)->UpdateHoverState(bHovering);
-            }
-        };
-        ElevationGizmo->HitTarget = HitTarget;
+                return ConstrainElevationPosition(RawPosition, ConstrainedPosition);
+            };
 
-        //
-        // Reference the created gizmo
-        //
-        ActiveGizmos.Add(ElevationGizmo);
+            //
+            // Sub-component provides hit target
+            //
+            UGizmoComponentHitTarget* HitTarget = UGizmoComponentHitTarget::Construct(ElevationComponent, this);
+            HitTarget->UpdateHoverFunction = [ElevationComponent, this](bool bHovering)
+            {
+                if (Cast<UGizmoBaseComponent>(ElevationComponent) != nullptr)
+                {
+                    Cast<UGizmoBaseComponent>(ElevationComponent)->UpdateHoverState(bHovering);
+                }
+            };
+            ElevationGizmo->HitTarget = HitTarget;
+
+            //
+            // Reference the created gizmo
+            //
+            ActiveGizmos.Add(ElevationGizmo);
+        }
     }
 }
 
 void UBoxGizmo::CreatePlanCornerGizmo(UGizmoComponentAxisSource* AxisSource, int32 CornerIndex)
 {
-    UPrimitiveComponent* CornerComponent = GizmoActor->GetPlanCornerComponent(CornerIndex);
-    if (CornerComponent)
+    if (GizmoActor)
     {
-        //
-        // Move gizmo to target location, parent(bounds group) is the bounds bottom center
-        //
-        RegulatePlanCornerTransform(CornerIndex);
-
-        //
-        // Create plane-position gizmo
-        //
-        UPlanePositionGizmo* CornerGizmo = Cast<UPlanePositionGizmo>(GetGizmoManager()->CreateGizmo(UInteractiveGizmoManager::DefaultPlanePositionBuilderIdentifier));
-        check(CornerGizmo);
-
-        //
-        // Axis source provides the translation plane for corner
-        //
-        CornerGizmo->AxisSource = AxisSource;
-
-        //
-        // Plane-translation parameter will drive corner gizmo position along corner plane
-        //
-        UGizmoComponentWorldTransformSource* ComponentTransformSource = UGizmoComponentWorldTransformSource::Construct(CornerComponent, this);
-        // Parameter source maps axis-parameter-change to translation of TransformSource's transform
-        UGizmoPlaneTranslationParameterSource* ParamSource = UGizmoPlaneTranslationParameterSource::Construct(AxisSource, ComponentTransformSource, this);
-        CornerGizmo->ParameterSource = ParamSource;
-
-        //
-        // Bind delegates
-        //
-        ComponentTransformSource->OnTransformChanged.AddLambda(
-            [this, CornerIndex](IGizmoTransformSource* TransformSource)
-            {
-                RecreateBoundsByCorner(CornerIndex);
-                SyncComponentsByCorner(CornerIndex);
-                NotifyBoundsModified();
-            }
-        );
-
-        ParamSource->PositionConstraintFunction = [this, CornerIndex](const FVector& RawPosition, FVector& ConstrainedPosition)
+        UPrimitiveComponent* CornerComponent = GizmoActor->GetPlanCornerComponent(CornerIndex);
+        if (CornerComponent)
         {
-            return ConstrainCornerPosition(RawPosition, ConstrainedPosition, CornerIndex);
-        };
+            //
+            // Move gizmo to target location, parent(bounds group) is the bounds bottom center
+            //
+            RegulatePlanCornerTransform(CornerIndex);
 
-        //
-        // Sub-component provides hit target
-        //
-        UGizmoComponentHitTarget* HitTarget = UGizmoComponentHitTarget::Construct(CornerComponent, this);
-        HitTarget->UpdateHoverFunction = [CornerComponent, this](bool bHovering)
-        {
-            if (Cast<UGizmoBaseComponent>(CornerComponent) != nullptr)
+            //
+            // Create plane-position gizmo
+            //
+            UPlanePositionGizmo* CornerGizmo = Cast<UPlanePositionGizmo>(GetGizmoManager()->CreateGizmo(UInteractiveGizmoManager::DefaultPlanePositionBuilderIdentifier));
+            check(CornerGizmo);
+
+            //
+            // Axis source provides the translation plane for corner
+            //
+            CornerGizmo->AxisSource = AxisSource;
+
+            //
+            // Plane-translation parameter will drive corner gizmo position along corner plane
+            //
+            UGizmoComponentWorldTransformSource* ComponentTransformSource = UGizmoComponentWorldTransformSource::Construct(CornerComponent, this);
+            // Parameter source maps axis-parameter-change to translation of TransformSource's transform
+            UGizmoPlaneTranslationParameterSource* ParamSource = UGizmoPlaneTranslationParameterSource::Construct(AxisSource, ComponentTransformSource, this);
+            CornerGizmo->ParameterSource = ParamSource;
+
+            //
+            // Bind delegates
+            //
+            ComponentTransformSource->OnTransformChanged.AddLambda(
+                [this, CornerIndex](IGizmoTransformSource* TransformSource)
+                {
+                    RecreateBoundsByCorner(CornerIndex);
+                    SyncComponentsByCorner(CornerIndex);
+                    NotifyBoundsModified();
+                }
+            );
+
+            ParamSource->PositionConstraintFunction = [this, CornerIndex](const FVector& RawPosition, FVector& ConstrainedPosition)
             {
-                Cast<UGizmoBaseComponent>(CornerComponent)->UpdateHoverState(bHovering);
-            }
-        };
-        CornerGizmo->HitTarget = HitTarget;
+                return ConstrainCornerPosition(RawPosition, ConstrainedPosition, CornerIndex);
+            };
 
-        //
-        // Reference the created gizmo
-        //
-        ActiveGizmos.Add(CornerGizmo);
+            //
+            // Sub-component provides hit target
+            //
+            UGizmoComponentHitTarget* HitTarget = UGizmoComponentHitTarget::Construct(CornerComponent, this);
+            HitTarget->UpdateHoverFunction = [CornerComponent, this](bool bHovering)
+            {
+                if (Cast<UGizmoBaseComponent>(CornerComponent) != nullptr)
+                {
+                    Cast<UGizmoBaseComponent>(CornerComponent)->UpdateHoverState(bHovering);
+                }
+            };
+            CornerGizmo->HitTarget = HitTarget;
+
+            //
+            // Reference the created gizmo
+            //
+            ActiveGizmos.Add(CornerGizmo);
+        }
     }
 }
 
@@ -391,64 +397,68 @@ void UBoxGizmo::RegulatePlanCornerTransform(int32 CornerIndex)
 
 void UBoxGizmo::CreateRotationAxisGizmo(int32 AxisIndex)
 {
-    USceneComponent* RotationGroupComponent = GizmoActor->GetRotationGroupComponent();
-    UPrimitiveComponent* RotationAxisComponent = GizmoActor->GetRotationAxisComponent(AxisIndex);
-    if (RotationGroupComponent && RotationAxisComponent)
+    if (GizmoActor)
     {
-        //
-        // No Need to move gizmo, it always locates at the origin of parent's frame
-        //
-
-        //
-        // Create axis-angle gizmo
-        //
-        UAxisAngleGizmo* RotationGizmo = Cast<UAxisAngleGizmo>(GetGizmoManager()->CreateGizmo(UInteractiveGizmoManager::DefaultAxisAngleBuilderIdentifier));
-        check(RotationGizmo);
-
-        //
-        // Axis source provides the rotation axis
-        //
-        UGizmoComponentAxisSource* RotationAxisSource = UGizmoComponentAxisSource::Construct(RotationGroupComponent, AxisIndex, true, this);
-        RotationGizmo->AxisSource = RotationAxisSource;
-
-        //
-        // Plane-translation parameter will drive corner gizmo position along corner plane
-        //
-        UGizmoComponentWorldTransformSource* ComponentTransformSource = UGizmoComponentWorldTransformSource::Construct(RotationGroupComponent, this);
-        // Parameter source maps angle-parameter-change to rotation of TransformSource's transform
-        UGizmoAxisRotationParameterSource* ParamSource = UGizmoAxisRotationParameterSource::Construct(RotationAxisSource, ComponentTransformSource, this);
-        RotationGizmo->AngleSource = ParamSource;
-
-        //
-        // Bind delegates
-        //
-        ComponentTransformSource->OnTransformChanged.AddLambda(
-            [this](IGizmoTransformSource* TransformSource)
-            {
-                // Bounds needs to be recreated by active target's transform after rotation
-                NotifyRotationModified();
-                InitBounds();
-                SyncComponentsByRotation();
-            }
-        );
-
-        //
-        // Sub-component provides hit target
-        //
-        UGizmoComponentHitTarget* HitTarget = UGizmoComponentHitTarget::Construct(RotationAxisComponent, this);
-        HitTarget->UpdateHoverFunction = [RotationAxisComponent, this](bool bHovering)
+        USceneComponent* RotationGroupComponent = GizmoActor->GetRotationGroupComponent();
+        UPrimitiveComponent* RotationAxisComponent = GizmoActor->GetRotationAxisComponent(AxisIndex);
+        USceneComponent* TargetProxyComponent = GizmoActor->GetTargetProxyComponent();
+        if (RotationGroupComponent && RotationAxisComponent && TargetProxyComponent)
         {
-            if (Cast<UGizmoBaseComponent>(RotationAxisComponent) != nullptr)
-            {
-                Cast<UGizmoBaseComponent>(RotationAxisComponent)->UpdateHoverState(bHovering);
-            }
-        };
-        RotationGizmo->HitTarget = HitTarget;
+            //
+            // No Need to move gizmo, it always locates at the origin of parent's frame
+            //
 
-        //
-        // Reference the created gizmo
-        //
-        ActiveGizmos.Add(RotationGizmo);
+            //
+            // Create axis-angle gizmo
+            //
+            UAxisAngleGizmo* RotationGizmo = Cast<UAxisAngleGizmo>(GetGizmoManager()->CreateGizmo(UInteractiveGizmoManager::DefaultAxisAngleBuilderIdentifier));
+            check(RotationGizmo);
+
+            //
+            // Axis source provides the rotation axis
+            //
+            UGizmoComponentAxisSource* RotationAxisSource = UGizmoComponentAxisSource::Construct(RotationGroupComponent, AxisIndex, true, this);
+            RotationGizmo->AxisSource = RotationAxisSource;
+
+            //
+            // Plane-translation parameter will drive corner gizmo position along corner plane
+            //
+            UGizmoComponentWorldTransformSource* ComponentTransformSource = UGizmoComponentWorldTransformSource::Construct(TargetProxyComponent, this);
+            // Parameter source maps angle-parameter-change to rotation of TransformSource's transform
+            UGizmoAxisRotationParameterSource* ParamSource = UGizmoAxisRotationParameterSource::Construct(RotationAxisSource, ComponentTransformSource, this);
+            RotationGizmo->AngleSource = ParamSource;
+
+            //
+            // Bind delegates
+            //
+            ComponentTransformSource->OnTransformChanged.AddLambda(
+                [this](IGizmoTransformSource* TransformSource)
+                {
+                    // Bounds needs to be recreated by active target's transform after rotation
+                    NotifyRotationModified();
+                    InitBounds();
+                    SyncComponentsByRotation();
+                }
+            );
+
+            //
+            // Sub-component provides hit target
+            //
+            UGizmoComponentHitTarget* HitTarget = UGizmoComponentHitTarget::Construct(RotationAxisComponent, this);
+            HitTarget->UpdateHoverFunction = [RotationAxisComponent, this](bool bHovering)
+            {
+                if (Cast<UGizmoBaseComponent>(RotationAxisComponent) != nullptr)
+                {
+                    Cast<UGizmoBaseComponent>(RotationAxisComponent)->UpdateHoverState(bHovering);
+                }
+            };
+            RotationGizmo->HitTarget = HitTarget;
+
+            //
+            // Reference the created gizmo
+            //
+            ActiveGizmos.Add(RotationGizmo);
+        }
     }
 }
 

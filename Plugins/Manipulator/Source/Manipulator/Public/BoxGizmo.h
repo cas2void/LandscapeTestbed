@@ -83,7 +83,6 @@ protected:
 	// Bounds Group
 	void CreateElevationGizmo(class UGizmoComponentAxisSource* AxisSource);
 	void CreatePlanCornerGizmo(class UGizmoComponentAxisSource* AxisSource, int32 CornerIndex);
-
 	void RegulateGizmoRootTransform();
 	void RegulateBoundsGroupTransform();
 	void RegulateElevationTransform();
@@ -91,8 +90,11 @@ protected:
 
 	// Rotation Group
 	void CreateRotationAxisGizmo(int32 AxisIndex);
-
 	void RegulateRotationGroupTransform();
+
+	// Translation Group
+	void CreateTranslateZGizmo(class UGizmoComponentAxisSource* AxisSource);
+	void RegulateTranslationGroupTransform();
 
 	//
 	// Bounds
@@ -114,17 +116,21 @@ protected:
 	// Recreate bounds from elvation, the specified corner and its diagonal
 	void RecreateBoundsByCorner(int32 CornerIndex);
 
-	// Slave components: rotation group
+	// Slave components: rotation group, translation group
 	void SyncComponentsByElevation();
 
-	// Slave components: all plan corners, elevation, rotation group
+	// Slave components: all plan corners, elevation, rotation group, translation group
 	void SyncComponentsByCorner(int32 CornerIndex);
 
-	// Slave components: bounds group
+	// Slave components: bounds group, translation group
 	void SyncComponentsByRotation();
+
+	// Slave Components: bounds group, rotation group
+	void SyncComponentsByTranslation();
 
 	void NotifyBoundsModified();
 	void NotifyRotationModified();
+	void NotifyTranslationModified();
 
 	//
 	// Bounds Constraint

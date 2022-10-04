@@ -51,4 +51,5 @@ public:
 
 	virtual void OnBoundsModified(const FBoxSphereBounds& InBounds, const FTransform& InBoundsTransform, const FBoxSphereBounds& AlignedBounds);
 	virtual void OnRotationModified(const FQuat& InRotation);
+	virtual void OnLocationModified(const FVector& InLocation);
 };

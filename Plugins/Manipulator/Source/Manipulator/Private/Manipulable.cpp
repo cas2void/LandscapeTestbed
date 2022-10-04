@@ -60,3 +60,12 @@ void IManipulable::OnRotationModified(const FQuat& InRotation)
         Actor->SetActorRotation(InRotation);
     }
 }
+
+void IManipulable::OnLocationModified(const FVector& InLocation)
+{
+    AActor* Actor = Cast<AActor>(this);
+    if (Actor)
+    {
+        Actor->SetActorLocation(InLocation);
+    }
+}

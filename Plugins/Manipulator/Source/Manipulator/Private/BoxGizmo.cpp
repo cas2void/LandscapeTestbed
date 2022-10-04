@@ -135,19 +135,28 @@ void UBoxGizmo::SetActiveTarget(const TScriptInterface<IManipulable>& Target, IT
     // Sub gizmos have been destroyed in ClearActiveTarget(), just recreate them
     CreateSubGizmos();
 
-    // Init TargetProxy rotation
-    if (GizmoActor)
+    // Init transform proxy
+    if (ActiveTarget)
     {
-        USceneComponent* TargetProxyComponent = GizmoActor->GetTargetProxyComponent();
-        if (TargetProxyComponent)
+        FManipulableTransform ManipulableTransform = ActiveTarget->GetTransform();
+        if (ManipulableTransform.bValid)
         {
-            if (ActiveTarget)
+            if (GizmoActor)
             {
-                FManipulableTransform ManipulableTransform = ActiveTarget->GetTransform();
-                if (ManipulableTransform.bValid)
+                // Rotation proxy
+                USceneComponent* RotationProxyComponent = GizmoActor->GetRotationProxyComponent();
+                if (RotationProxyComponent)
                 {
                     FQuat Rotation = ManipulableTransform.Transform.GetRotation();
-                    TargetProxyComponent->SetWorldRotation(Rotation);
+                    RotationProxyComponent->SetWorldRotation(Rotation);
+                }
+
+                // Translation proxy
+                USceneComponent* TranslationProxyComponent = GizmoActor->GetTranslationProxyComponent();
+                if (TranslationProxyComponent)
+                {
+                    FVector Location = ManipulableTransform.Transform.GetLocation();
+                    TranslationProxyComponent->SetWorldLocation(Location);
                 }
             }
         }
@@ -165,26 +174,43 @@ void UBoxGizmo::ClearActiveTarget()
 
 void UBoxGizmo::CreateSubGizmos()
 {
-    RegulateGizmoRootTransform();
-
     //
-    // Bounds Group
+    // BoundsGroupComponent:
+    // - Origin: bounds bottom center
+    // - Direction: construction plane Z
+    // 
+    // BoundsAxisZSource will be shared by:
+    // - Elevation
+    // - Plan corners
+    // - Translate Z
     //
-    RegulateBoundsGroupTransform();
+    UGizmoComponentAxisSource* BoundsAxisZSource = nullptr;
     if (GizmoActor)
     {
         USceneComponent* BoundsGroupComponent = GizmoActor->GetBoundsGroupComponent();
         if (BoundsGroupComponent)
         {
             // Elevation and plan corner gizmos share the same axis source, which is the Z axis of BoundsGroupComponent
-            UGizmoComponentAxisSource* BoundsAxisZSource = UGizmoComponentAxisSource::Construct(BoundsGroupComponent, 2, true, this);
-
-            CreateElevationGizmo(BoundsAxisZSource);
-            for (int32 Index = 0; Index < 4; Index++)
-            {
-                CreatePlanCornerGizmo(BoundsAxisZSource, Index);
-            }
+            BoundsAxisZSource = UGizmoComponentAxisSource::Construct(BoundsGroupComponent, 2, true, this);
         }
+    }
+
+    if (!BoundsAxisZSource)
+    {
+        return;
+    }
+    
+    RegulateGizmoRootTransform();
+
+    //
+    // Bounds Group
+    //
+    RegulateBoundsGroupTransform();
+
+    CreateElevationGizmo(BoundsAxisZSource);
+    for (int32 Index = 0; Index < 4; Index++)
+    {
+        CreatePlanCornerGizmo(BoundsAxisZSource, Index);
     }
 
     //
@@ -195,6 +221,12 @@ void UBoxGizmo::CreateSubGizmos()
     {
         CreateRotationAxisGizmo(Index);
     }
+
+    //
+    // Translation Group
+    //
+    RegulateTranslationGroupTransform();
+    CreateTranslateZGizmo(BoundsAxisZSource);
 }
 
 void UBoxGizmo::DestroySubGizmos()
@@ -219,7 +251,7 @@ void UBoxGizmo::CreateElevationGizmo(UGizmoComponentAxisSource* AxisSource)
             RegulateElevationTransform();
 
             //
-            // Create axis-position gizmo, axis-position parameter will drive elevation position along elevation axis
+            // Create axis-position gizmo
             //
             UAxisPositionGizmo* ElevationGizmo = Cast<UAxisPositionGizmo>(GetGizmoManager()->CreateGizmo(UInteractiveGizmoManager::DefaultAxisPositionBuilderIdentifier));
             check(ElevationGizmo);
@@ -401,8 +433,8 @@ void UBoxGizmo::CreateRotationAxisGizmo(int32 AxisIndex)
     {
         USceneComponent* RotationGroupComponent = GizmoActor->GetRotationGroupComponent();
         UPrimitiveComponent* RotationAxisComponent = GizmoActor->GetRotationAxisComponent(AxisIndex);
-        USceneComponent* TargetProxyComponent = GizmoActor->GetTargetProxyComponent();
-        if (RotationGroupComponent && RotationAxisComponent && TargetProxyComponent)
+        USceneComponent* RotationProxyComponent = GizmoActor->GetRotationProxyComponent();
+        if (RotationGroupComponent && RotationAxisComponent && RotationProxyComponent)
         {
             //
             // No Need to move gizmo, it always locates at the origin of parent's frame
@@ -421,9 +453,9 @@ void UBoxGizmo::CreateRotationAxisGizmo(int32 AxisIndex)
             RotationGizmo->AxisSource = RotationAxisSource;
 
             //
-            // Plane-translation parameter will drive corner gizmo position along corner plane
+            // Axis-rotation parameter will drive rotate gizmo rotation along axis
             //
-            UGizmoComponentWorldTransformSource* ComponentTransformSource = UGizmoComponentWorldTransformSource::Construct(TargetProxyComponent, this);
+            UGizmoComponentWorldTransformSource* ComponentTransformSource = UGizmoComponentWorldTransformSource::Construct(RotationProxyComponent, this);
             // Parameter source maps angle-parameter-change to rotation of TransformSource's transform
             UGizmoAxisRotationParameterSource* ParamSource = UGizmoAxisRotationParameterSource::Construct(RotationAxisSource, ComponentTransformSource, this);
             RotationGizmo->AngleSource = ParamSource;
@@ -472,6 +504,85 @@ void UBoxGizmo::RegulateRotationGroupTransform()
             FVector BoundsFrameCenter = Bounds.Origin;
             FVector BoundsWorldCenter = TransformPositionConstructionFrameToWorld(BoundsFrameCenter);
             RotationGroupComponent->SetWorldLocation(BoundsWorldCenter);
+        }
+    }
+}
+
+void UBoxGizmo::CreateTranslateZGizmo(UGizmoComponentAxisSource* AxisSource)
+{
+    if (GizmoActor)
+    {
+        UPrimitiveComponent* TranslateZComponent = GizmoActor->GetTranslateZComponent();
+        USceneComponent* TranslationProxyComponent = GizmoActor->GetTranslationProxyComponent();
+        if (TranslateZComponent && TranslationProxyComponent)
+        {
+            //
+            // No Need to move gizmo, it always locates at the origin of parent's frame
+            //
+
+            //
+            // Create axis-position gizmo
+            //
+            UAxisPositionGizmo* TranslateZGizmo = Cast<UAxisPositionGizmo>(GetGizmoManager()->CreateGizmo(UInteractiveGizmoManager::DefaultAxisPositionBuilderIdentifier));
+            check(TranslateZGizmo);
+
+            //
+            // Axis source provides the translation axis
+            //
+            TranslateZGizmo->AxisSource = AxisSource;
+
+            //
+            // Axis-translation parameter will drive position along translate axis
+            //
+            UGizmoComponentWorldTransformSource* ComponentTransformSource = UGizmoComponentWorldTransformSource::Construct(TranslationProxyComponent, this);
+            // Parameter source maps axis-parameter-change to translation of TransformSource's transform
+            UGizmoAxisTranslationParameterSource* ParamSource = UGizmoAxisTranslationParameterSource::Construct(AxisSource, ComponentTransformSource, this);
+            TranslateZGizmo->ParameterSource = ParamSource;
+
+            //
+            // Bind delegates
+            //
+            ComponentTransformSource->OnTransformChanged.AddLambda(
+                [this](IGizmoTransformSource* TransformSource)
+                {
+                    // Bounds needs to be recreated by active target's transform after translation
+                    NotifyTranslationModified();
+                    InitBounds();
+                    SyncComponentsByTranslation();
+                }
+            );
+
+            //
+            // Sub-component provides hit target
+            //
+            UGizmoComponentHitTarget* HitTarget = UGizmoComponentHitTarget::Construct(TranslateZComponent, this);
+            HitTarget->UpdateHoverFunction = [TranslateZComponent, this](bool bHovering)
+            {
+                if (Cast<UGizmoBaseComponent>(TranslateZComponent) != nullptr)
+                {
+                    Cast<UGizmoBaseComponent>(TranslateZComponent)->UpdateHoverState(bHovering);
+                }
+            };
+            TranslateZGizmo->HitTarget = HitTarget;
+
+            //
+            // Reference the created gizmo
+            //
+            ActiveGizmos.Add(TranslateZGizmo);
+        }
+    }
+}
+
+void UBoxGizmo::RegulateTranslationGroupTransform()
+{
+    if (GizmoActor)
+    {
+        USceneComponent* TranslationGroupComponent = GizmoActor->GetTranslationGroupComponent();
+        if (TranslationGroupComponent)
+        {
+            FVector BoundsFrameTopCenter = Bounds.Origin + FVector(0.0f, 0.0f, Bounds.BoxExtent.Z);
+            FVector BoundsFrameWorldCenter = TransformPositionConstructionFrameToWorld(BoundsFrameTopCenter);
+            TranslationGroupComponent->SetWorldLocation(BoundsFrameWorldCenter);
         }
     }
 }
@@ -529,6 +640,7 @@ void UBoxGizmo::RecreateBoundsByCorner(int32 CornerIndex)
 void UBoxGizmo::SyncComponentsByElevation()
 {
     RegulateRotationGroupTransform();
+    RegulateTranslationGroupTransform();
 }
 
 void UBoxGizmo::SyncComponentsByCorner(int32 CornerIndex)
@@ -547,6 +659,7 @@ void UBoxGizmo::SyncComponentsByCorner(int32 CornerIndex)
     RegulateElevationTransform();
 
     RegulateRotationGroupTransform();
+    RegulateTranslationGroupTransform();
 }
 
 void UBoxGizmo::SyncComponentsByRotation()
@@ -560,6 +673,25 @@ void UBoxGizmo::SyncComponentsByRotation()
 
     // Sync elevation to make its projection locate at the center of plan
     RegulateElevationTransform();
+
+    RegulateTranslationGroupTransform();
+}
+
+void UBoxGizmo::SyncComponentsByTranslation()
+{
+    RegulateBoundsGroupTransform();
+
+    for (int32 PlanCornerIndex = 0; PlanCornerIndex < 4; PlanCornerIndex++)
+    {
+        RegulatePlanCornerTransform(PlanCornerIndex);
+    }
+
+    // Sync elevation to make its projection locate at the center of plan
+    RegulateElevationTransform();
+
+    RegulateRotationGroupTransform();
+
+    RegulateTranslationGroupTransform();
 }
 
 void UBoxGizmo::NotifyBoundsModified()
@@ -593,13 +725,29 @@ void UBoxGizmo::NotifyRotationModified()
 {
     if (GizmoActor)
     {
-        USceneComponent* TargetProxyComponent = GizmoActor->GetTargetProxyComponent();
-        if (TargetProxyComponent)
+        USceneComponent* RotationProxyComponent = GizmoActor->GetRotationProxyComponent();
+        if (RotationProxyComponent)
         {
-            const FQuat Rotation = TargetProxyComponent->GetComponentQuat();
+            const FQuat Rotation = RotationProxyComponent->GetComponentQuat();
             if (ActiveTarget)
             {
                 ActiveTarget->OnRotationModified(Rotation);
+            }
+        }
+    }
+}
+
+void UBoxGizmo::NotifyTranslationModified()
+{
+    if (GizmoActor)
+    {
+        USceneComponent* TranslationProxyComponent = GizmoActor->GetTranslationProxyComponent();
+        if (TranslationProxyComponent)
+        {
+            const FVector Location = TranslationProxyComponent->GetComponentLocation();
+            if (ActiveTarget)
+            {
+                ActiveTarget->OnLocationModified(Location);
             }
         }
     }

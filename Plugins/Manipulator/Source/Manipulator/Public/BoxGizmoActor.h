@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "BaseGizmos/GizmoActor.h"
+#include "Components/SceneComponent.h"
 #include "Components/PrimitiveComponent.h"
 #include "BoxGizmoActor.generated.h"
 
@@ -63,7 +64,7 @@ public:
 	UPrimitiveComponent* GetRotateXComponent() { return RotateXComponent; }
 	UPrimitiveComponent* GetRotateYComponent() { return RotateYComponent; }
 	UPrimitiveComponent* GetRotateZComponent() { return RotateZComponent; }
-	USceneComponent* GetTargetProxyComponent() { return TargetProxyComponent; }
+	USceneComponent* GetRotationProxyComponent() { return RotationProxyComponent; }
 
 	// 0: X, 1: Y, 2: Z
 	UPrimitiveComponent* GetRotationAxisComponent(int32 AxisIndex);
@@ -82,5 +83,23 @@ protected:
 	UPrimitiveComponent* RotateZComponent;
 
 	UPROPERTY()
-	USceneComponent* TargetProxyComponent;
+	USceneComponent* RotationProxyComponent;
+
+	//
+	// Translation Group
+	//
+public:
+	USceneComponent* GetTranslationGroupComponent() { return TranslationGroupComponent; }
+	UPrimitiveComponent* GetTranslateZComponent() { return TranslateZComponent; }
+	USceneComponent* GetTranslationProxyComponent() { return TranslationProxyComponent; }
+
+protected:
+	UPROPERTY()
+	USceneComponent* TranslationGroupComponent;
+
+	UPROPERTY()
+	UPrimitiveComponent* TranslateZComponent;
+
+	UPROPERTY()
+	USceneComponent* TranslationProxyComponent;
 };

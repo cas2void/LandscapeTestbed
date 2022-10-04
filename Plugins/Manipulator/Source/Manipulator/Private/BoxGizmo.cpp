@@ -57,9 +57,16 @@ void UBoxGizmo::Render(IToolsContextRenderAPI* RenderAPI)
 
         Draw.LineThickness = 3.0f;
 
-        const FTransform Frame2World = GetConstructionFrame();
-        Draw.SetTransform(Frame2World);
+        const FTransform FrameTransform = GetConstructionFrame();
+        Draw.SetTransform(FrameTransform);
         Draw.DrawWireBox(Bounds.GetBox());
+
+        if (bDebug)
+        {
+            Draw.LineThickness = 1.0f;
+            Draw.SetTransform(FrameTransform);
+            Draw.DrawWireBox(DebugAlignedBounds.GetBox());
+        }
 
         Draw.EndFrame();
     }
@@ -463,32 +470,11 @@ void UBoxGizmo::InitBounds()
 {
     if (ActiveTarget)
     {
-        FManipulableBounds TargetBounds = ActiveTarget->GetBounds();
-        FManipulableTransform TargetTransform = ActiveTarget->GetTransform();
-        if (TargetBounds.bValid && TargetTransform.bValid)
+        FManipulableBounds ManipulableBounds = ActiveTarget->GetBounds();
+        FManipulableTransform ManipulableTransform = ActiveTarget->GetTransform();
+        if (ManipulableBounds.bValid && ManipulableTransform.bValid)
         {
-            const FTransform Local2World = TargetTransform.Transform;
-            const FTransform Frame2World = GetConstructionFrame();
-            const FTransform Local2Frame = Local2World * Frame2World.Inverse();
-
-            const FBox LocalBoundingBox = TargetBounds.Bounds.GetBox();
-            const TArray<FVector> BoxCornerMapping{ 
-                FVector(-1, -1, 1), FVector(1, -1, 1), FVector(1, 1, 1), FVector(-1, 1, 1), 
-                FVector(-1, -1, -1), FVector(1, -1, -1), FVector(1, 1, -1), FVector(-1, 1, -1) 
-            };
-
-            const FVector BoxCenter = LocalBoundingBox.GetCenter();
-            const FVector BoxExtent = LocalBoundingBox.GetExtent();
-            TArray<FVector> CornerPoints;
-            for (const auto& Corner : BoxCornerMapping)
-            {
-                const FVector CornerLocalLocation = BoxCenter + Corner * BoxExtent;
-                const FVector CornerFrameLocation = Local2Frame.TransformPosition(CornerLocalLocation);
-
-                CornerPoints.Add(CornerFrameLocation);
-            }
-
-            Bounds = FBoxSphereBounds(CornerPoints.GetData(), CornerPoints.Num());
+            Bounds = ConvertOBBToAABB(ManipulableBounds.Bounds, ManipulableTransform.Transform, GetConstructionFrame());
         }
     }
 }
@@ -570,7 +556,26 @@ void UBoxGizmo::NotifyBoundsModified()
 {
     if (ActiveTarget)
     {
-        ActiveTarget->OnBoundsModified(Bounds, GetConstructionFrame());
+        FManipulableBounds ManipulableBounds = ActiveTarget->GetBounds();
+        FManipulableTransform ManipulableTransform = ActiveTarget->GetTransform();
+        if (ManipulableBounds.bValid && ManipulableTransform.bValid)
+        {
+            //
+            // Original OBB needs to be concentric with current Bounds, set its transform's location before the conversion
+            //
+            const FTransform FrameTransform = GetConstructionFrame();
+            const FVector BoundsWorldCenter = FrameTransform.TransformPosition(Bounds.Origin);
+            FTransform ModifiedTransform = ManipulableTransform.Transform;
+            ModifiedTransform.SetLocation(BoundsWorldCenter);
+            FBoxSphereBounds AlignedBounds = ConvertOBBToAABB(ManipulableBounds.Bounds, ModifiedTransform, FrameTransform);
+
+            ActiveTarget->OnBoundsModified(Bounds, FrameTransform, AlignedBounds);
+
+            if (bDebug)
+            {
+                DebugAlignedBounds = AlignedBounds;
+            }
+        }
     }
 }
 
@@ -666,4 +671,32 @@ FVector UBoxGizmo::GetPlanCornerLocation(const FBoxSphereBounds& InBounds, int32
     FVector CornerLocation = FVector(InBounds.BoxExtent.X * SignX, InBounds.BoxExtent.Y * SignY, 0.0f);
 
     return CornerLocation;
+}
+
+FBoxSphereBounds UBoxGizmo::ConvertOBBToAABB(const FBoxSphereBounds& InBounds, const FTransform& InBoundsTransform, const FTransform& FrameTransform)
+{
+    const FTransform Local2World = InBoundsTransform;
+    const FTransform Frame2World = FrameTransform;
+    const FTransform Local2Frame = Local2World * Frame2World.Inverse();
+
+    const FBox LocalBoundingBox = InBounds.GetBox();
+    const TArray<FVector> BoxCornerMapping{
+        FVector(-1, -1, 1), FVector(1, -1, 1), FVector(1, 1, 1), FVector(-1, 1, 1),
+        FVector(-1, -1, -1), FVector(1, -1, -1), FVector(1, 1, -1), FVector(-1, 1, -1)
+    };
+
+    const FVector BoxCenter = LocalBoundingBox.GetCenter();
+    const FVector BoxExtent = LocalBoundingBox.GetExtent();
+    TArray<FVector> CornerPoints;
+    for (const auto& Corner : BoxCornerMapping)
+    {
+        const FVector CornerLocalLocation = BoxCenter + Corner * BoxExtent;
+        const FVector CornerFrameLocation = Local2Frame.TransformPosition(CornerLocalLocation);
+
+        CornerPoints.Add(CornerFrameLocation);
+    }
+
+    FBoxSphereBounds Result = FBoxSphereBounds(CornerPoints.GetData(), CornerPoints.Num());
+
+    return Result;
 }

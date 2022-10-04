@@ -124,11 +124,6 @@ protected:
 	void SyncComponentsByRotation();
 
 	void NotifyBoundsModified();
-
-	//
-	// Rotation
-	//
-protected:
 	void NotifyRotationModified();
 
 	//
@@ -149,4 +144,14 @@ protected:
 	//
 protected:
 	FVector GetPlanCornerLocation(const FBoxSphereBounds& InBounds, int32 CornerIndex) const;
+	FBoxSphereBounds ConvertOBBToAABB(const FBoxSphereBounds& InBounds, const FTransform& InBoundsTransform, const FTransform& FrameTransform);
+
+	//
+	// Debug
+	//
+	UPROPERTY(Transient, NonTransactional)
+	bool bDebug;
+
+	UPROPERTY(Transient, NonTransactional)
+	FBoxSphereBounds DebugAlignedBounds;
 };

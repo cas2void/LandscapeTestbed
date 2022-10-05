@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "UObject/Interface.h"
+#include "Components/PrimitiveComponent.h"
 #include "Manipulable.generated.h"
 
 USTRUCT()
@@ -48,6 +49,7 @@ class MANIPULATOR_API IManipulable
 public:
 	virtual FManipulableTransform GetTransform() const;
 	virtual FManipulableBounds GetBounds() const;
+	virtual UPrimitiveComponent* GetPrimitiveComponent();
 
 	virtual void OnBoundsModified(const FBoxSphereBounds& InBounds, const FTransform& InBoundsTransform, const FBoxSphereBounds& AlignedBounds);
 	virtual void OnRotationModified(const FQuat& InRotation);

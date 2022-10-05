@@ -69,6 +69,9 @@ protected:
 	UPROPERTY()
 	TScriptInterface<IManipulable> ActiveTarget;
 
+	void SetActiveGizmoPrimitiveComponent();
+	void ClearActiveGizmoPrimitiveComponent();
+
 	//
 	// Bounds
 	//
@@ -107,6 +110,8 @@ protected:
 	void CreatePlanCornerGizmo(class UGizmoComponentAxisSource* AxisSource, int32 CornerIndex);
 	void CreateRotationAxisGizmo(int32 AxisIndex);
 	void CreateTranslateZGizmo(class UGizmoComponentAxisSource* AxisSource);
+	void CreateTranslateXYGizmo(class UGizmoComponentAxisSource* AxisSource);
+	void InitTransformProxy();
 
 	//
 	// One sub gizmo's editing need to be synced to others

@@ -218,3 +218,27 @@ UPrimitiveComponent* ABoxGizmoActor::GetRotationAxisComponent(int32 AxisIndex)
 
 	return RotationComponent;
 }
+
+UPrimitiveComponent* ABoxGizmoActor::GetTranslateXYComponent()
+{
+	UPrimitiveComponent* Result = nullptr;
+
+	if (TranslateXYComponent.IsValid())
+	{
+		Result = TranslateXYComponent.Get();
+	}
+
+	return Result;
+}
+
+void ABoxGizmoActor::SetTranslateXYComponent(UPrimitiveComponent* InComponent)
+{
+	if (InComponent)
+	{
+		TranslateXYComponent = InComponent;
+	}
+	else
+	{
+		TranslateXYComponent.Reset();
+	}
+}

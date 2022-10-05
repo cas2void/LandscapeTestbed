@@ -93,12 +93,18 @@ public:
 	UPrimitiveComponent* GetTranslateZComponent() { return TranslateZComponent; }
 	USceneComponent* GetTranslationProxyComponent() { return TranslationProxyComponent; }
 
+	UPrimitiveComponent* GetTranslateXYComponent();
+	void SetTranslateXYComponent(UPrimitiveComponent* InComponent);
+
 protected:
 	UPROPERTY()
 	USceneComponent* TranslationGroupComponent;
 
 	UPROPERTY()
 	UPrimitiveComponent* TranslateZComponent;
+
+	UPROPERTY()
+	TWeakObjectPtr<UPrimitiveComponent> TranslateXYComponent;
 
 	UPROPERTY()
 	USceneComponent* TranslationProxyComponent;

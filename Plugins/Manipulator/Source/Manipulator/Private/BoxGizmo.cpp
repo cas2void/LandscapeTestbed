@@ -129,38 +129,13 @@ void UBoxGizmo::SetActiveTarget(const TScriptInterface<IManipulable>& Target, IT
     }
     ActiveTarget = Target;
 
+    SetActiveGizmoPrimitiveComponent();
+
     // Init bounds by current active target and construction plane
     InitBounds();
 
     // Sub gizmos have been destroyed in ClearActiveTarget(), just recreate them
     CreateSubGizmos();
-
-    // Init transform proxy
-    if (ActiveTarget)
-    {
-        FManipulableTransform ManipulableTransform = ActiveTarget->GetTransform();
-        if (ManipulableTransform.bValid)
-        {
-            if (GizmoActor)
-            {
-                // Rotation proxy
-                USceneComponent* RotationProxyComponent = GizmoActor->GetRotationProxyComponent();
-                if (RotationProxyComponent)
-                {
-                    FQuat Rotation = ManipulableTransform.Transform.GetRotation();
-                    RotationProxyComponent->SetWorldRotation(Rotation);
-                }
-
-                // Translation proxy
-                USceneComponent* TranslationProxyComponent = GizmoActor->GetTranslationProxyComponent();
-                if (TranslationProxyComponent)
-                {
-                    FVector Location = ManipulableTransform.Transform.GetLocation();
-                    TranslationProxyComponent->SetWorldLocation(Location);
-                }
-            }
-        }
-    }
 }
 
 void UBoxGizmo::ClearActiveTarget()
@@ -169,7 +144,28 @@ void UBoxGizmo::ClearActiveTarget()
 
     Bounds = FBoxSphereBounds(ForceInit);
 
+    ClearActiveGizmoPrimitiveComponent();
     ActiveTarget = nullptr;
+}
+
+void UBoxGizmo::SetActiveGizmoPrimitiveComponent()
+{
+    if (ActiveTarget)
+    {
+        UPrimitiveComponent* ManipulableComponent = ActiveTarget->GetPrimitiveComponent();
+        if (GizmoActor)
+        {
+            GizmoActor->SetTranslateXYComponent(ManipulableComponent);
+        }
+    }
+}
+
+void UBoxGizmo::ClearActiveGizmoPrimitiveComponent()
+{
+    if (GizmoActor)
+    {
+        GizmoActor->SetTranslateXYComponent(nullptr);
+    }
 }
 
 void UBoxGizmo::InitBounds()
@@ -277,6 +273,12 @@ void UBoxGizmo::CreateSubGizmos()
     //
     RegulateTranslationGroupTransform();
     CreateTranslateZGizmo(BoundsAxisZSource);
+    CreateTranslateXYGizmo(BoundsAxisZSource);
+
+    //
+    // Transform proxy
+    //
+    InitTransformProxy();
 }
 
 void UBoxGizmo::DestroySubGizmos()
@@ -554,6 +556,100 @@ void UBoxGizmo::CreateTranslateZGizmo(UGizmoComponentAxisSource* AxisSource)
             // Reference the created gizmo
             //
             ActiveGizmos.Add(TranslateZGizmo);
+        }
+    }
+}
+
+void UBoxGizmo::CreateTranslateXYGizmo(UGizmoComponentAxisSource* AxisSource)
+{
+    if (GizmoActor)
+    {
+        UPrimitiveComponent* TranslateXYComponent = GizmoActor->GetTranslateXYComponent();
+        USceneComponent* TranslationProxyComponent = GizmoActor->GetTranslationProxyComponent();
+        if (TranslateXYComponent && TranslationProxyComponent)
+        {
+            //
+            // No Need to move gizmo, it always locates at the origin of parent's frame
+            //
+
+            //
+            // Create plane-position gizmo
+            //
+            UPlanePositionGizmo* TranslateXYGizmo = Cast<UPlanePositionGizmo>(GetGizmoManager()->CreateGizmo(UInteractiveGizmoManager::DefaultPlanePositionBuilderIdentifier));
+            check(TranslateXYGizmo);
+
+            //
+            // Axis source provides the translation axis
+            //
+            TranslateXYGizmo->AxisSource = AxisSource;
+
+            //
+            // Plane-translation parameter will drive gizmo position along plane
+            //
+            UGizmoComponentWorldTransformSource* ComponentTransformSource = UGizmoComponentWorldTransformSource::Construct(TranslationProxyComponent, this);
+            // Parameter source maps axis-parameter-change to translation of TransformSource's transform
+            UGizmoPlaneTranslationParameterSource* ParamSource = UGizmoPlaneTranslationParameterSource::Construct(AxisSource, ComponentTransformSource, this);
+            TranslateXYGizmo->ParameterSource = ParamSource;
+
+            //
+            // Bind delegates
+            //
+            ComponentTransformSource->OnTransformChanged.AddLambda(
+                [this](IGizmoTransformSource* TransformSource)
+                {
+                    // Bounds needs to be recreated by active target's transform after translation
+                    NotifyTranslationModified();
+                    InitBounds();
+                    SyncComponentsByTranslation();
+                }
+            );
+
+            //
+            // Sub-component provides hit target
+            //
+            UGizmoComponentHitTarget* HitTarget = UGizmoComponentHitTarget::Construct(TranslateXYComponent, this);
+            HitTarget->UpdateHoverFunction = [TranslateXYComponent, this](bool bHovering)
+            {
+                if (Cast<UGizmoBaseComponent>(TranslateXYComponent) != nullptr)
+                {
+                    Cast<UGizmoBaseComponent>(TranslateXYComponent)->UpdateHoverState(bHovering);
+                }
+            };
+            TranslateXYGizmo->HitTarget = HitTarget;
+
+            //
+            // Reference the created gizmo
+            //
+            ActiveGizmos.Add(TranslateXYGizmo);
+        }
+    }
+}
+
+void UBoxGizmo::InitTransformProxy()
+{
+    if (ActiveTarget)
+    {
+        FManipulableTransform ManipulableTransform = ActiveTarget->GetTransform();
+        if (ManipulableTransform.bValid)
+        {
+            if (GizmoActor)
+            {
+                // Rotation proxy
+                USceneComponent* RotationProxyComponent = GizmoActor->GetRotationProxyComponent();
+                if (RotationProxyComponent)
+                {
+                    FQuat Rotation = ManipulableTransform.Transform.GetRotation();
+                    RotationProxyComponent->SetWorldRotation(Rotation);
+                }
+
+                // Translation proxy
+                USceneComponent* TranslationProxyComponent = GizmoActor->GetTranslationProxyComponent();
+                if (TranslationProxyComponent)
+                {
+                    FVector Location = ManipulableTransform.Transform.GetLocation();
+                    TranslationProxyComponent->SetWorldLocation(Location);
+                }
+            }
         }
     }
 }

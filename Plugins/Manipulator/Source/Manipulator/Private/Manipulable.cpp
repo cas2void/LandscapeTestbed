@@ -5,6 +5,7 @@
 
 #include "GameFramework/Actor.h"
 #include "Components/SceneComponent.h"
+#include "Components/MeshComponent.h"
 
 // Add default functionality here for any IManipulable functions that are not pure virtual.
 
@@ -32,6 +33,19 @@ FManipulableBounds IManipulable::GetBounds() const
         FBox BoundingBox = Actor->CalculateComponentsBoundingBoxInLocalSpace();
         Result.bValid = true;
         Result.Bounds = FBoxSphereBounds(BoundingBox);
+    }
+
+    return Result;
+}
+
+UPrimitiveComponent* IManipulable::GetPrimitiveComponent()
+{
+    UPrimitiveComponent* Result = nullptr;
+
+    const AActor* Actor = Cast<const AActor>(this);
+    if (Actor)
+    {
+        Result = Cast<UPrimitiveComponent>(Actor->FindComponentByClass<UMeshComponent>());
     }
 
     return Result;

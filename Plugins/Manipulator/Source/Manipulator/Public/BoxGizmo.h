@@ -70,33 +70,6 @@ protected:
 	TScriptInterface<IManipulable> ActiveTarget;
 
 	//
-	// Sub Gizmos
-	//
-protected:
-	// Currently active sub gizmos
-	UPROPERTY()
-	TArray<UInteractiveGizmo*> ActiveGizmos;
-
-	void CreateSubGizmos();
-	void DestroySubGizmos();
-
-	// Bounds Group
-	void CreateElevationGizmo(class UGizmoComponentAxisSource* AxisSource);
-	void CreatePlanCornerGizmo(class UGizmoComponentAxisSource* AxisSource, int32 CornerIndex);
-	void RegulateGizmoRootTransform();
-	void RegulateBoundsGroupTransform();
-	void RegulateElevationTransform();
-	void RegulatePlanCornerTransform(int32 CornerIndex);
-
-	// Rotation Group
-	void CreateRotationAxisGizmo(int32 AxisIndex);
-	void RegulateRotationGroupTransform();
-
-	// Translation Group
-	void CreateTranslateZGizmo(class UGizmoComponentAxisSource* AxisSource);
-	void RegulateTranslationGroupTransform();
-
-	//
 	// Bounds
 	//
 public:
@@ -116,24 +89,57 @@ protected:
 	// Recreate bounds from elvation, the specified corner and its diagonal
 	void RecreateBoundsByCorner(int32 CornerIndex);
 
+	//
+	// Sub Gizmos
+	//
+protected:
+	// Currently active sub gizmos
+	UPROPERTY()
+	TArray<UInteractiveGizmo*> ActiveGizmos;
+
+	void CreateSubGizmos();
+	void DestroySubGizmos();
+
+	//
+	// Creation
+	//
+	void CreateElevationGizmo(class UGizmoComponentAxisSource* AxisSource);
+	void CreatePlanCornerGizmo(class UGizmoComponentAxisSource* AxisSource, int32 CornerIndex);
+	void CreateRotationAxisGizmo(int32 AxisIndex);
+	void CreateTranslateZGizmo(class UGizmoComponentAxisSource* AxisSource);
+
+	//
+	// One sub gizmo's editing need to be synced to others
+	//
 	// Slave components: rotation group, translation group
 	void SyncComponentsByElevation();
 
-	// Slave components: all plan corners, elevation, rotation group, translation group
+	// Slave components: bounds group and all subs, rotation group, translation group
 	void SyncComponentsByCorner(int32 CornerIndex);
 
-	// Slave components: bounds group, translation group
+	// Slave components: bounds group and all subs, translation group
 	void SyncComponentsByRotation();
 
-	// Slave Components: bounds group, rotation group
+	// Slave Components: bounds group and all subs, rotation group, translation group
 	void SyncComponentsByTranslation();
 
+	void RegulateGizmoRootTransform();
+	void RegulateBoundsGroupTransform();
+	void RegulateElevationTransform();
+	void RegulatePlanCornerTransform(int32 CornerIndex);
+	void RegulateBoundsAndSubTransform();
+	void RegulateRotationGroupTransform();
+	void RegulateTranslationGroupTransform();
+
+	//
+	// Events
+	//
 	void NotifyBoundsModified();
 	void NotifyRotationModified();
 	void NotifyTranslationModified();
 
 	//
-	// Bounds Constraint
+	// Editing Constraint
 	//
 public:
 	void SetPlanSizeMin(float InPlanSizeMin) { PlanSizeMin = InPlanSizeMin; }

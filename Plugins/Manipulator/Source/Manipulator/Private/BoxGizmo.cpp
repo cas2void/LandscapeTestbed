@@ -32,7 +32,7 @@ void UBoxGizmo::Setup()
         }
     }
 
-    SetConstructionPlane(FVector(0.0f, 0.0f, 20.0f), FQuat::MakeFromEuler(FVector(0.0f, 30.0f, 0.0f)));
+    //SetConstructionPlane(FVector(0.0f, 0.0f, 20.0f), FQuat::MakeFromEuler(FVector(0.0f, 30.0f, 0.0f)));
 }
 
 void UBoxGizmo::Shutdown()

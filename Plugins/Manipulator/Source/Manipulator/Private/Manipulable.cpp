@@ -59,9 +59,55 @@ void IManipulable::OnBoundsModified(const FBoxSphereBounds& InBounds, const FTra
         const FVector BoundsWorldCenter = InBoundsTransform.TransformPosition(InBounds.Origin);
         Actor->SetActorLocation(BoundsWorldCenter);
 
+        TArray<EAxis::Type> AlignedAxis;
+        for (int32 Index = 1; Index < 4; Index++)
+        {
+            EAxis::Type AxisType = static_cast<EAxis::Type>(Index);
+            const FVector ActorAxis = Actor->GetActorTransform().GetUnitAxis(AxisType);
+            const FVector BoundsAxis = InBoundsTransform.GetUnitAxis(AxisType);
+            const bool AxisAligned = FMath::Abs(FVector::DotProduct(ActorAxis, BoundsAxis)) > 0.999f;
+            if (AxisAligned)
+            {
+                AlignedAxis.Add(AxisType);
+            }
+        }
+
         FVector FillScaleRatio3D = InBounds.BoxExtent / AlignedBounds.BoxExtent;
-        float MinFillScaleChannel = FillScaleRatio3D.GetMin();
-        FVector NewScale = Actor->GetActorScale() * MinFillScaleChannel;
+        if (AlignedAxis.Num() < 1)
+        {
+            float MinFillScaleChannel3D = FillScaleRatio3D.GetMin();
+            FillScaleRatio3D = FVector(MinFillScaleChannel3D);
+        }
+        else if (AlignedAxis.Num() == 1)
+        {
+            switch (AlignedAxis[0])
+            {
+            case EAxis::X:
+            {
+                float MinFillScaleChanel2D = FMath::Min<float>(FillScaleRatio3D.Y, FillScaleRatio3D.Z);
+                FillScaleRatio3D.Y = MinFillScaleChanel2D;
+                FillScaleRatio3D.Z = MinFillScaleChanel2D;
+            }
+                break;
+            case EAxis::Y:
+            {
+                float MinFillScaleChanel2D = FMath::Min<float>(FillScaleRatio3D.Z, FillScaleRatio3D.X);
+                FillScaleRatio3D.Z = MinFillScaleChanel2D;
+                FillScaleRatio3D.X = MinFillScaleChanel2D;
+            }
+                break;
+            case EAxis::Z:
+            {
+                float MinFillScaleChanel2D = FMath::Min<float>(FillScaleRatio3D.X, FillScaleRatio3D.Y);
+                FillScaleRatio3D.X = MinFillScaleChanel2D;
+                FillScaleRatio3D.Y = MinFillScaleChanel2D;
+            }
+                break;
+            default:
+                break;
+            }
+        }
+        FVector NewScale = Actor->GetActorScale() * FillScaleRatio3D;
         Actor->SetActorScale3D(NewScale);
     }
 }

@@ -330,6 +330,7 @@ void UBoxGizmo::CreateElevationGizmo(UGizmoComponentAxisSource* AxisSource)
                     RecreateBoundsByElevation();
                     SyncComponentsByElevation();
                     NotifyBoundsModified();
+                    InitTransformProxy();
                 }
             );
 

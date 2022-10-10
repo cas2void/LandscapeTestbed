@@ -108,7 +108,7 @@ protected:
 	//
 	void CreateElevationGizmo(class UGizmoComponentAxisSource* AxisSource);
 	void CreatePlanCornerGizmo(class UGizmoComponentAxisSource* AxisSource, int32 CornerIndex);
-	void CreateRotationAxisGizmo(int32 AxisIndex);
+	void CreateRotateAxisGizmo(int32 AxisIndex);
 	void CreateTranslateZGizmo(class UGizmoComponentAxisSource* AxisSource);
 	void CreateTranslateXYGizmo(class UGizmoComponentAxisSource* AxisSource);
 	void InitTransformProxy();
@@ -123,7 +123,7 @@ protected:
 	void SyncComponentsByCorner(int32 CornerIndex);
 
 	// Slave components: bounds group and all subs, translation group
-	void SyncComponentsByRotation();
+	void SyncComponentsByRotation(int32 AxisIndex);
 
 	// Slave Components: bounds group and all subs, rotation group, translation group
 	void SyncComponentsByTranslation();
@@ -134,6 +134,8 @@ protected:
 	void RegulatePlanCornerTransform(int32 CornerIndex);
 	void RegulateBoundsAndSubTransform();
 	void RegulateRotationGroupTransform();
+	void RegulateRotateAxisTransform(int32 AxisIndex);
+	void RegulateRotationAndSubTransform();
 	void RegulateTranslationGroupTransform();
 
 	//

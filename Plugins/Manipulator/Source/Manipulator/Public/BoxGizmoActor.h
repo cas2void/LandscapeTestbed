@@ -67,7 +67,7 @@ public:
 	USceneComponent* GetRotationProxyComponent() { return RotationProxyComponent; }
 
 	// 0: X, 1: Y, 2: Z
-	UPrimitiveComponent* GetRotationAxisComponent(int32 AxisIndex);
+	UPrimitiveComponent* GetRotateAxisComponent(int32 AxisIndex);
 
 protected:
 	UPROPERTY()

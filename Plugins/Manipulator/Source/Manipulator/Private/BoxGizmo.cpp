@@ -265,7 +265,7 @@ void UBoxGizmo::CreateSubGizmos()
     RegulateRotationGroupTransform();
     for (int32 Index = 0; Index < 3; Index++)
     {
-        CreateRotationAxisGizmo(Index);
+        CreateRotateAxisGizmo(Index);
     }
 
     //
@@ -429,18 +429,19 @@ void UBoxGizmo::CreatePlanCornerGizmo(UGizmoComponentAxisSource* AxisSource, int
     }
 }
 
-void UBoxGizmo::CreateRotationAxisGizmo(int32 AxisIndex)
+void UBoxGizmo::CreateRotateAxisGizmo(int32 AxisIndex)
 {
     if (GizmoActor)
     {
         USceneComponent* RotationGroupComponent = GizmoActor->GetRotationGroupComponent();
-        UPrimitiveComponent* RotationAxisComponent = GizmoActor->GetRotationAxisComponent(AxisIndex);
+        UPrimitiveComponent* RotationAxisComponent = GizmoActor->GetRotateAxisComponent(AxisIndex);
         USceneComponent* RotationProxyComponent = GizmoActor->GetRotationProxyComponent();
         if (RotationGroupComponent && RotationAxisComponent && RotationProxyComponent)
         {
             //
-            // No Need to move gizmo, it always locates at the origin of parent's frame
+            // Move gizmo to target location, parent(rotation group) is the bounds center
             //
+            RegulateRotateAxisTransform(AxisIndex);
 
             //
             // Create axis-angle gizmo
@@ -466,12 +467,12 @@ void UBoxGizmo::CreateRotationAxisGizmo(int32 AxisIndex)
             // Bind delegates
             //
             ComponentTransformSource->OnTransformChanged.AddLambda(
-                [this](IGizmoTransformSource* TransformSource)
+                [this, AxisIndex](IGizmoTransformSource* TransformSource)
                 {
                     // Bounds needs to be recreated by active target's transform after rotation
                     NotifyRotationModified();
                     InitBounds();
-                    SyncComponentsByRotation();
+                    SyncComponentsByRotation(AxisIndex);
                 }
             );
 
@@ -657,7 +658,7 @@ void UBoxGizmo::InitTransformProxy()
 
 void UBoxGizmo::SyncComponentsByElevation()
 {
-    RegulateRotationGroupTransform();
+    RegulateRotationAndSubTransform();
     RegulateTranslationGroupTransform();
 }
 
@@ -667,11 +668,11 @@ void UBoxGizmo::SyncComponentsByCorner(int32 CornerIndex)
     (void)CornerIndex;
 
     RegulateBoundsAndSubTransform();
-    RegulateRotationGroupTransform();
+    RegulateRotationAndSubTransform();
     RegulateTranslationGroupTransform();
 }
 
-void UBoxGizmo::SyncComponentsByRotation()
+void UBoxGizmo::SyncComponentsByRotation(int32 AxisIndex)
 {
     RegulateBoundsAndSubTransform();
     RegulateTranslationGroupTransform();
@@ -680,7 +681,7 @@ void UBoxGizmo::SyncComponentsByRotation()
 void UBoxGizmo::SyncComponentsByTranslation()
 {
     RegulateBoundsAndSubTransform();
-    RegulateRotationGroupTransform();
+    RegulateRotationAndSubTransform();
     RegulateTranslationGroupTransform();
 }
 
@@ -727,11 +728,14 @@ void UBoxGizmo::RegulateElevationTransform()
 
 void UBoxGizmo::RegulatePlanCornerTransform(int32 CornerIndex)
 {
-    UPrimitiveComponent* CornerComponent = GizmoActor->GetPlanCornerComponent(CornerIndex);
-    if (CornerComponent)
+    if (GizmoActor)
     {
-        const FVector CornerLocation = GetPlanCornerLocation(Bounds, CornerIndex);
-        CornerComponent->SetRelativeLocation(CornerLocation);
+        UPrimitiveComponent* CornerComponent = GizmoActor->GetPlanCornerComponent(CornerIndex);
+        if (CornerComponent)
+        {
+            const FVector CornerLocation = GetPlanCornerLocation(Bounds, CornerIndex);
+            CornerComponent->SetRelativeLocation(CornerLocation);
+        }
     }
 }
 
@@ -759,6 +763,20 @@ void UBoxGizmo::RegulateRotationGroupTransform()
             FVector BoundsWorldCenter = TransformPositionConstructionFrameToWorld(BoundsFrameCenter);
             RotationGroupComponent->SetWorldLocation(BoundsWorldCenter);
         }
+    }
+}
+
+void UBoxGizmo::RegulateRotateAxisTransform(int32 AxisIndex)
+{
+}
+
+void UBoxGizmo::RegulateRotationAndSubTransform()
+{
+    RegulateRotationGroupTransform();
+
+    for (int32 AxisIndex = 0; AxisIndex < 3; AxisIndex++)
+    {
+        RegulateRotateAxisTransform(AxisIndex);
     }
 }
 

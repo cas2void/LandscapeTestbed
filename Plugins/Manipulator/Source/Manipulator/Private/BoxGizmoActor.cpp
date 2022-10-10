@@ -4,7 +4,6 @@
 #include "BoxGizmoActor.h"
 
 #include "Components/SphereComponent.h"
-#include "BaseGizmos/GizmoCircleComponent.h"
 
 #include "RectGizmoComponent.h"
 #include "CircleGizmoComponent.h"
@@ -29,13 +28,12 @@ ABoxGizmoActor::ABoxGizmoActor()
 	float GizmoBoundsThickness = 10.0f;
 
 	// Elevation
-	UGizmoCircleComponent* TempElevationComponent = CreateDefaultSubobject<UGizmoCircleComponent>(TEXT("GizmoElevation"));
+	UCircleGizmoComponent* TempElevationComponent = CreateDefaultSubobject<UCircleGizmoComponent>(TEXT("GizmoElevation"));
 	TempElevationComponent->Color = GizmoBoundsColor;
-	TempElevationComponent->Radius = 10.0f;
-	TempElevationComponent->Thickness = GizmoBoundsThickness;
-	TempElevationComponent->NumSides = 16;
-	TempElevationComponent->bViewAligned = true;
-	TempElevationComponent->bOnlyAllowFrontFacingHits = false;
+	TempElevationComponent->SetRadius(10.0f);
+	TempElevationComponent->SetThickness(GizmoBoundsThickness);
+	TempElevationComponent->SetNumSides(16);
+	TempElevationComponent->SetViewAligned(true);
 	TempElevationComponent->SetupAttachment(BoundsGroupComponent);
 	ElevationComponent = TempElevationComponent;
 
@@ -208,7 +206,7 @@ TArray<int32> ABoxGizmoActor::GetPlanCornerNeighborIndices(int32 CornerIndex) co
 	return Result;
 }
 
-UPrimitiveComponent* ABoxGizmoActor::GetRotationAxisComponent(int32 AxisIndex)
+UPrimitiveComponent* ABoxGizmoActor::GetRotateAxisComponent(int32 AxisIndex)
 {
 	UPrimitiveComponent* RotationComponent = nullptr;
 	switch (AxisIndex)

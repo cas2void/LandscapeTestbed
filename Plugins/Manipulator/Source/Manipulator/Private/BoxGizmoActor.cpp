@@ -7,6 +7,7 @@
 #include "BaseGizmos/GizmoCircleComponent.h"
 
 #include "RectGizmoComponent.h"
+#include "CircleGizmoComponent.h"
 #include "ArrowGizmoComponent.h"
 
 ABoxGizmoActor::ABoxGizmoActor()
@@ -88,58 +89,67 @@ ABoxGizmoActor::ABoxGizmoActor()
 	const float GizmoRotationRadius = 120.0f;
 
 	// Axis X Rotate
-	UGizmoCircleComponent* TempRotateXComponent = CreateDefaultSubobject<UGizmoCircleComponent>(TEXT("GizmoRotateX"));
+	UCircleGizmoComponent* TempRotateXComponent = CreateDefaultSubobject<UCircleGizmoComponent>(TEXT("GizmoRotateX"));
 	TempRotateXComponent->Color = FLinearColor::Red;
-	TempRotateXComponent->Normal = FVector(1.0f, 0.0f, 0.0f);
-	TempRotateXComponent->Radius = GizmoRotationRadius;
-	TempRotateXComponent->Thickness = GizmoRotationThickness;
+	TempRotateXComponent->SetNormal(FVector(1.0f, 0.0f, 0.0f));
+	TempRotateXComponent->SetRadius(GizmoRotationRadius);
+	TempRotateXComponent->SetThickness(GizmoRotationThickness);
 	TempRotateXComponent->SetupAttachment(RotationGroupComponent);
 	RotateXComponent = TempRotateXComponent;
 
-	// Axis Y Rotate
-	UGizmoCircleComponent* TempRotateYComponent = CreateDefaultSubobject<UGizmoCircleComponent>(TEXT("GizmoRotateY"));
-	TempRotateYComponent->Color = FLinearColor::Green;
-	TempRotateYComponent->Normal = FVector(0.0f, 1.0f, 0.0f);
-	TempRotateYComponent->Radius = GizmoRotationRadius;
-	TempRotateYComponent->Thickness = GizmoRotationThickness;
-	TempRotateYComponent->SetupAttachment(RotationGroupComponent);
-	RotateYComponent = TempRotateYComponent;
+	// Axis X Rotate
+	//UGizmoCircleComponent* TempRotateXComponent = CreateDefaultSubobject<UGizmoCircleComponent>(TEXT("GizmoRotateX"));
+	//TempRotateXComponent->Color = FLinearColor::Red;
+	//TempRotateXComponent->Normal = FVector(1.0f, 0.0f, 0.0f);
+	//TempRotateXComponent->Radius = GizmoRotationRadius;
+	//TempRotateXComponent->Thickness = GizmoRotationThickness;
+	//TempRotateXComponent->SetupAttachment(RotationGroupComponent);
+	//RotateXComponent = TempRotateXComponent;
 
-	// Axis Z Rotate
-	UGizmoCircleComponent* TempRotateZComponent = CreateDefaultSubobject<UGizmoCircleComponent>(TEXT("GizmoRotateZ"));
-	TempRotateZComponent->Color = FLinearColor::Blue;
-	TempRotateZComponent->Normal = FVector(0.0f, 0.0f, 1.0f);
-	TempRotateZComponent->Radius = GizmoRotationRadius;
-	TempRotateZComponent->Thickness = GizmoRotationThickness;
-	TempRotateZComponent->SetupAttachment(RotationGroupComponent);
-	RotateZComponent = TempRotateZComponent;
+	//// Axis Y Rotate
+	//UGizmoCircleComponent* TempRotateYComponent = CreateDefaultSubobject<UGizmoCircleComponent>(TEXT("GizmoRotateY"));
+	//TempRotateYComponent->Color = FLinearColor::Green;
+	//TempRotateYComponent->Normal = FVector(0.0f, 1.0f, 0.0f);
+	//TempRotateYComponent->Radius = GizmoRotationRadius;
+	//TempRotateYComponent->Thickness = GizmoRotationThickness;
+	//TempRotateYComponent->SetupAttachment(RotationGroupComponent);
+	//RotateYComponent = TempRotateYComponent;
+
+	//// Axis Z Rotate
+	//UGizmoCircleComponent* TempRotateZComponent = CreateDefaultSubobject<UGizmoCircleComponent>(TEXT("GizmoRotateZ"));
+	//TempRotateZComponent->Color = FLinearColor::Blue;
+	//TempRotateZComponent->Normal = FVector(0.0f, 0.0f, 1.0f);
+	//TempRotateZComponent->Radius = GizmoRotationRadius;
+	//TempRotateZComponent->Thickness = GizmoRotationThickness;
+	//TempRotateZComponent->SetupAttachment(RotationGroupComponent);
+	//RotateZComponent = TempRotateZComponent;
 
 	// Rotation Proxy
 	RotationProxyComponent = CreateDefaultSubobject<USceneComponent>(TEXT("GizmoRotationProxy"));
 	RotationProxyComponent->SetupAttachment(RotationGroupComponent);
 
-	//
-	// Translation Group
-	//
-	TranslationGroupComponent = CreateDefaultSubobject<USceneComponent>(TEXT("GizmoTranslationGroup"));
-	TranslationGroupComponent->SetupAttachment(GetRootComponent());
+	////
+	//// Translation Group
+	////
+	//TranslationGroupComponent = CreateDefaultSubobject<USceneComponent>(TEXT("GizmoTranslationGroup"));
+	//TranslationGroupComponent->SetupAttachment(GetRootComponent());
 
-	const FLinearColor GizmoTranslationColor = FLinearColor(0.0f, 0.2f, 0.2f);
-	const float GizmoTranslationThickness = 8.0f;
+	//const FLinearColor GizmoTranslationColor = FLinearColor(0.0f, 0.2f, 0.2f);
+	//const float GizmoTranslationThickness = 8.0f;
 
-	// Translate Z
-	UArrowGizmoComponent* TempTranslateZComponent = CreateDefaultSubobject<UArrowGizmoComponent>(TEXT("GizmoTranslateZ"));
-	TempTranslateZComponent->Color = GizmoTranslationColor;
-	TempTranslateZComponent->SetDirection(FVector(0.0f, 0.0f, 1.0f));
-	TempTranslateZComponent->SetGap(40.0f);
-	TempTranslateZComponent->SetLength(40.0f);
-	TempTranslateZComponent->SetThickness(GizmoTranslationThickness);
-	TempTranslateZComponent->SetupAttachment(TranslationGroupComponent);
-	TranslateZComponent = TempTranslateZComponent;
+	//// Translate Z
+	//UArrowGizmoComponent* TempTranslateZComponent = CreateDefaultSubobject<UArrowGizmoComponent>(TEXT("GizmoTranslateZ"));
+	//TempTranslateZComponent->Color = GizmoTranslationColor;
+	//TempTranslateZComponent->SetDirection(FVector(0.0f, 0.0f, 1.0f));
+	//TempTranslateZComponent->SetGap(40.0f);
+	//TempTranslateZComponent->SetLength(40.0f);
+	//TempTranslateZComponent->SetThickness(GizmoTranslationThickness);
+	//TempTranslateZComponent->SetupAttachment(TranslationGroupComponent);
+	//TranslateZComponent = TempTranslateZComponent;
 
-	// Translation Proxy
-	TranslationProxyComponent = CreateDefaultSubobject<USceneComponent>(TEXT("GizmoTranslationProxy"));
-	TranslationProxyComponent->SetupAttachment(TranslationGroupComponent);
+	//// Translation Proxy
+	//TranslationProxyComponent = CreateDefaultSubobject<USceneComponent>(TEXT("GizmoTranslationProxy"));
+	//TranslationProxyComponent->SetupAttachment(TranslationGroupComponent);
 }
 
 TArray<UPrimitiveComponent*> ABoxGizmoActor::GetBoundsSubComponents()

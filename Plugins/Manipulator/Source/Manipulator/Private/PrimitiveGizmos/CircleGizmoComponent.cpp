@@ -21,6 +21,7 @@ public:
 		HoverThicknessMultiplier(InComponent->HoverSizeMultiplier),
 		Normal(InComponent->GetNormal()),
 		Radius(InComponent->GetRadius()),
+		CenterOffset(InComponent->GetCenterOffset()),
 		NumSides(InComponent->GetNumSides()),
 		Thickness(InComponent->GetThickness()),
 		bViewAligned(InComponent->IsViewAligned())
@@ -71,10 +72,11 @@ public:
 				}
 
 				const float	AngleDelta = 2.0f * PI / NumSides;
+				const FVector UseCenterOffset = CenterOffset * LengthScale;
 
 				if (bViewAligned)
 				{
-					FVector WorldOrigin = LocalToWorldMatrix.TransformPosition(FVector::ZeroVector);
+					FVector WorldOrigin = LocalToWorldMatrix.TransformPosition(FVector::ZeroVector + UseCenterOffset);
 					WorldOrigin += 0.001 * ViewVector;
 					FVector WorldPlaneX, WorldPlaneY;
 					GizmoMath::MakeNormalPlaneBasis(ViewVector, WorldPlaneX, WorldPlaneY);
@@ -92,7 +94,7 @@ public:
 				}
 				else
 				{
-					FVector WorldOrigin = LocalToWorldMatrix.TransformPosition(FVector::ZeroVector);
+					FVector WorldOrigin = LocalToWorldMatrix.TransformPosition(FVector::ZeroVector + UseCenterOffset);
 					bool bWorldAxis = (bExternalWorldLocalState) ? (*bExternalWorldLocalState) : false;
 					FVector WorldPlaneX = (bWorldAxis) ? PlaneX : FVector{ LocalToWorldMatrix.TransformVector(PlaneX) };
 					FVector WorldPlaneY = (bWorldAxis) ? PlaneY : FVector{ LocalToWorldMatrix.TransformVector(PlaneY) };
@@ -195,6 +197,7 @@ private:
 	float HoverThicknessMultiplier;
 	FVector Normal;
 	float Radius;
+	FVector CenterOffset;
 	int32 NumSides;
 	float Thickness;
 	bool bViewAligned;
@@ -228,10 +231,11 @@ bool UCircleGizmoComponent::LineTraceComponent(FHitResult& OutHit, const FVector
 
 	float LengthScale = DynamicPixelToWorldScale;
 	double UseRadius = LengthScale * Radius;
+	const FVector UseCenterOffset = CenterOffset * LengthScale;
 
 	const FTransform& Transform = this->GetComponentToWorld();
 	FVector WorldNormal = (bWorld) ? Normal : Transform.TransformVector(Normal);
-	FVector WorldOrigin = Transform.TransformPosition(FVector::ZeroVector);
+	FVector WorldOrigin = Transform.TransformPosition(FVector::ZeroVector + UseCenterOffset);
 
 	FRay Ray(Start, End - Start, false);
 

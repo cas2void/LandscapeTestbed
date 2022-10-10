@@ -31,6 +31,7 @@ ABoxGizmoActor::ABoxGizmoActor()
 	UCircleGizmoComponent* TempElevationComponent = CreateDefaultSubobject<UCircleGizmoComponent>(TEXT("GizmoElevation"));
 	TempElevationComponent->Color = GizmoBoundsColor;
 	TempElevationComponent->SetRadius(10.0f);
+	TempElevationComponent->SetCenterOffset(FVector(0.0f, 0.0f, 30.0f));
 	TempElevationComponent->SetThickness(GizmoBoundsThickness);
 	TempElevationComponent->SetNumSides(16);
 	TempElevationComponent->SetViewAligned(true);
@@ -85,15 +86,6 @@ ABoxGizmoActor::ABoxGizmoActor()
 
 	const float GizmoRotationThickness = 2.0f;
 	const float GizmoRotationRadius = 120.0f;
-
-	// Axis X Rotate
-	UCircleGizmoComponent* TempRotateXComponent = CreateDefaultSubobject<UCircleGizmoComponent>(TEXT("GizmoRotateX"));
-	TempRotateXComponent->Color = FLinearColor::Red;
-	TempRotateXComponent->SetNormal(FVector(1.0f, 0.0f, 0.0f));
-	TempRotateXComponent->SetRadius(GizmoRotationRadius);
-	TempRotateXComponent->SetThickness(GizmoRotationThickness);
-	TempRotateXComponent->SetupAttachment(RotationGroupComponent);
-	RotateXComponent = TempRotateXComponent;
 
 	// Axis X Rotate
 	//UGizmoCircleComponent* TempRotateXComponent = CreateDefaultSubobject<UGizmoCircleComponent>(TEXT("GizmoRotateX"));

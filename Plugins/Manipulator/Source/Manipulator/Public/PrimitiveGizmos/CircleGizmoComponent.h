@@ -35,6 +35,9 @@ public:
 	float GetRadius() const { return Radius; }
 	void SetRadius(float InRadius) { Radius = InRadius; }
 
+	FVector GetCenterOffset() const { return CenterOffset; }
+	void SetCenterOffset(const FVector& InCenterOffset) { CenterOffset = InCenterOffset; }
+
 	int32 GetNumSides() const { return NumSides; }
 	void SetNumSides(int32 InNumSides) { NumSides = InNumSides; }
 	
@@ -50,6 +53,9 @@ protected:
 
 	UPROPERTY(EditAnywhere, Category = Options)
 	float Radius = 100.0f;
+
+	UPROPERTY(EditAnywhere, Category = Options)
+	FVector CenterOffset = FVector::ZeroVector;
 
 	UPROPERTY(EditAnywhere, Category = Options)
 	int32 NumSides = 64;

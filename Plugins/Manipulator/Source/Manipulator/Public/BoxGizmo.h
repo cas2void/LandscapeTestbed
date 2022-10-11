@@ -159,14 +159,12 @@ protected:
 
 	//
 	// Visibility
-	// 
-	// TODO: Ugly implementation by checking sub gizmo interaction in Render(), better customize sub gizmos which fire interaction events.
 	//
-	bool UpdateSubGizmosVisibility();
-	bool IsBoundsInteracting() const;
-	bool IsRotateAxisInteracting() const;
-	bool IsTranslateZInteracting() const;
-	bool IsTranslateXYInteracting() const;
+	bool IsInteracting() const;
+
+	void SetBoundsGizmoVisibility(bool bVisible);
+	void SetRotationGizmoVisibility(bool bVisible);
+	void SetTranslationGizmoVisibility(bool bVisible);
 
 	//
 	// Editing Constraint

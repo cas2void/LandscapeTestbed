@@ -11,6 +11,7 @@
 #include "BaseGizmos/ParameterToTransformAdapters.h"
 #include "BaseGizmos/TransformSources.h"
 #include "BaseGizmos/GizmoBaseComponent.h"
+#include "BaseGizmos/StateTargets.h"
 #include "InteractiveGizmoManager.h"
 #include "ToolDataVisualizer.h"
 #include "FrameTypes.h"
@@ -50,8 +51,7 @@ void UBoxGizmo::Shutdown()
 
 void UBoxGizmo::Render(IToolsContextRenderAPI* RenderAPI)
 {
-    const bool bSomethingInteracting = UpdateSubGizmosVisibility();
-    if (bSomethingInteracting)
+    if (IsInteracting())
     {
         FToolDataVisualizer Draw;
         Draw.BeginFrame(RenderAPI);
@@ -377,6 +377,19 @@ void UBoxGizmo::CreateElevationGizmo(UGizmoComponentAxisSource* AxisSource)
             };
             ElevationGizmo->HitTarget = HitTarget;
 
+            UGizmoLambdaStateTarget* StateTarget = NewObject<UGizmoLambdaStateTarget>(this);
+            StateTarget->BeginUpdateFunction = [this]()
+            {
+                SetRotationGizmoVisibility(false);
+                SetTranslationGizmoVisibility(false);
+            };
+            StateTarget->EndUpdateFunction = [this]()
+            {
+                SetRotationGizmoVisibility(true);
+                SetTranslationGizmoVisibility(true);
+            };
+            ElevationGizmo->StateTarget = StateTarget;
+
             //
             // Reference the created gizmo
             //
@@ -446,6 +459,19 @@ void UBoxGizmo::CreatePlanCornerGizmo(UGizmoComponentAxisSource* AxisSource, int
             };
             CornerGizmo->HitTarget = HitTarget;
 
+            UGizmoLambdaStateTarget* StateTarget = NewObject<UGizmoLambdaStateTarget>(this);
+            StateTarget->BeginUpdateFunction = [this]()
+            {
+                SetRotationGizmoVisibility(false);
+                SetTranslationGizmoVisibility(false);
+            };
+            StateTarget->EndUpdateFunction = [this]()
+            {
+                SetRotationGizmoVisibility(true);
+                SetTranslationGizmoVisibility(true);
+            };
+            CornerGizmo->StateTarget = StateTarget;
+
             //
             // Reference the created gizmo
             //
@@ -514,6 +540,19 @@ void UBoxGizmo::CreateRotateAxisGizmo(int32 AxisIndex)
             };
             RotationGizmo->HitTarget = HitTarget;
 
+            UGizmoLambdaStateTarget* StateTarget = NewObject<UGizmoLambdaStateTarget>(this);
+            StateTarget->BeginUpdateFunction = [this]()
+            {
+                SetBoundsGizmoVisibility(false);
+                SetTranslationGizmoVisibility(false);
+            };
+            StateTarget->EndUpdateFunction = [this]()
+            {
+                SetBoundsGizmoVisibility(true);
+                SetTranslationGizmoVisibility(true);
+            };
+            RotationGizmo->StateTarget = StateTarget;
+
             //
             // Reference the created gizmo
             //
@@ -579,6 +618,19 @@ void UBoxGizmo::CreateTranslateZGizmo(UGizmoComponentAxisSource* AxisSource)
             };
             TranslateZGizmo->HitTarget = HitTarget;
 
+            UGizmoLambdaStateTarget* StateTarget = NewObject<UGizmoLambdaStateTarget>(this);
+            StateTarget->BeginUpdateFunction = [this]()
+            {
+                SetBoundsGizmoVisibility(false);
+                SetRotationGizmoVisibility(false);
+            };
+            StateTarget->EndUpdateFunction = [this]()
+            {
+                SetBoundsGizmoVisibility(true);
+                SetRotationGizmoVisibility(true);
+            };
+            TranslateZGizmo->StateTarget = StateTarget;
+
             //
             // Reference the created gizmo
             //
@@ -643,6 +695,21 @@ void UBoxGizmo::CreateTranslateXYGizmo(UGizmoComponentAxisSource* AxisSource)
                 }
             };
             TranslateXYGizmo->HitTarget = HitTarget;
+
+            UGizmoLambdaStateTarget* StateTarget = NewObject<UGizmoLambdaStateTarget>(this);
+            StateTarget->BeginUpdateFunction = [this]()
+            {
+                SetBoundsGizmoVisibility(false);
+                SetRotationGizmoVisibility(false);
+                SetTranslationGizmoVisibility(false);
+            };
+            StateTarget->EndUpdateFunction = [this]()
+            {
+                SetBoundsGizmoVisibility(true);
+                SetRotationGizmoVisibility(true);
+                SetTranslationGizmoVisibility(true);
+            };
+            TranslateXYGizmo->StateTarget = StateTarget;
 
             //
             // Reference the created gizmo
@@ -878,150 +945,82 @@ void UBoxGizmo::NotifyTranslationModified()
     }
 }
 
-bool UBoxGizmo::UpdateSubGizmosVisibility()
+bool UBoxGizmo::IsInteracting() const
 {
-    bool SomethingInteracting = false;
-
-    bool bBoundsVisible = true;
-    bool bRotateAxisVisible = true;
-    bool bTranslateZVisible = true;
-
-    if (IsBoundsInteracting())
-    {
-        bRotateAxisVisible = false;
-        bTranslateZVisible = false;
-
-        SomethingInteracting = true;
-    }
-    else if (IsRotateAxisInteracting())
-    {
-        bBoundsVisible = false;
-        bTranslateZVisible = false;
-
-        SomethingInteracting = true;
-    }
-    else if (IsTranslateZInteracting())
-    {
-        bBoundsVisible = false;
-        bRotateAxisVisible = false;
-
-        SomethingInteracting = true;
-    }
-    else if (IsTranslateXYInteracting())
-    {
-        bBoundsVisible = false;
-        bRotateAxisVisible = false;
-        bTranslateZVisible = false;
-
-        SomethingInteracting = true;
-    }
-
     for (const auto& Elem : ActiveBoundsElevationGizmos)
     {
-        if (Elem.Value)
+        if (Elem.Value && !Elem.Value->IsVisible())
         {
-            Elem.Value->SetVisibility(bBoundsVisible);
+            return true;
         }
     }
 
     for (const auto& Elem : ActiveBoundsPlanCornerGizmos)
     {
-        if (Elem.Value)
+        if (Elem.Value && !Elem.Value->IsVisible())
         {
-            Elem.Value->SetVisibility(bBoundsVisible);
+            return true;
         }
     }
 
     for (const auto& Elem : ActiveRotateAxisGizmos)
     {
-        if (Elem.Value)
+        if (Elem.Value && !Elem.Value->IsVisible())
         {
-            Elem.Value->SetVisibility(bRotateAxisVisible);
+            return true;
         }
     }
 
     for (const auto& Elem : ActiveTranslateZGizmos)
     {
-        if (Elem.Value)
+        if (Elem.Value && !Elem.Value->IsVisible())
         {
-            Elem.Value->SetVisibility(bTranslateZVisible);
+            return true;
         }
     }
 
-    return SomethingInteracting;
+    return false;
 }
 
-bool UBoxGizmo::IsBoundsInteracting() const
+void UBoxGizmo::SetBoundsGizmoVisibility(bool bVisible)
 {
-    bool Result = false;
-
     for (const auto& Elem : ActiveBoundsElevationGizmos)
     {
-        if (Elem.Key && Elem.Key->bInInteraction)
+        if (Elem.Value && Elem.Value->IsVisible() != bVisible)
         {
-            Result = true;
-            break;
+            Elem.Value->SetVisibility(bVisible);
         }
     }
 
     for (const auto& Elem : ActiveBoundsPlanCornerGizmos)
     {
-        if (Elem.Key && Elem.Key->bInInteraction)
+        if (Elem.Value && Elem.Value->IsVisible() != bVisible)
         {
-            Result = true;
-            break;
+            Elem.Value->SetVisibility(bVisible);
         }
     }
-
-    return Result;
 }
 
-bool UBoxGizmo::IsRotateAxisInteracting() const
+void UBoxGizmo::SetRotationGizmoVisibility(bool bVisible)
 {
-    bool Result = false;
-
     for (const auto& Elem : ActiveRotateAxisGizmos)
     {
-        if (Elem.Key && Elem.Key->bInInteraction)
+        if (Elem.Value && Elem.Value->IsVisible() != bVisible)
         {
-            Result = true;
-            break;
+            Elem.Value->SetVisibility(bVisible);
         }
     }
-
-    return Result;
 }
 
-bool UBoxGizmo::IsTranslateZInteracting() const
+void UBoxGizmo::SetTranslationGizmoVisibility(bool bVisible)
 {
-    bool Result = false;
-
     for (const auto& Elem : ActiveTranslateZGizmos)
     {
-        if (Elem.Key && Elem.Key->bInInteraction)
+        if (Elem.Value && Elem.Value->IsVisible() != bVisible)
         {
-            Result = true;
-            break;
+            Elem.Value->SetVisibility(bVisible);
         }
     }
-
-    return Result;
-}
-
-bool UBoxGizmo::IsTranslateXYInteracting() const
-{
-    bool Result = false;
-
-    for (const auto& Elem : ActiveTranslateXYGizmos)
-    {
-        if (Elem.Key && Elem.Key->bInInteraction)
-        {
-            Result = true;
-            break;
-        }
-    }
-
-    return Result;
 }
 
 bool UBoxGizmo::ConstrainElevationPosition(const FVector& RawPosition, FVector& ConstrainedPosition)

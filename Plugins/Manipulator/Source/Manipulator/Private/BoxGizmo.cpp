@@ -50,7 +50,9 @@ void UBoxGizmo::Shutdown()
 
 void UBoxGizmo::Render(IToolsContextRenderAPI* RenderAPI)
 {
-    if (ActiveTarget)
+    const bool bSomethingInteracting = UpdateSubGizmosVisibility();
+
+    if (bSomethingInteracting)
     {
         FToolDataVisualizer Draw;
         Draw.BeginFrame(RenderAPI);
@@ -71,7 +73,7 @@ void UBoxGizmo::Render(IToolsContextRenderAPI* RenderAPI)
         Draw.EndFrame();
     }
 
-    RenderConstructionPlane(RenderAPI);
+    //RenderConstructionPlane(RenderAPI);
 }
 
 void UBoxGizmo::SetConstructionPlane(const FVector& PlaneOrigin, const FQuat& PlaneOrientation)
@@ -283,11 +285,35 @@ void UBoxGizmo::CreateSubGizmos()
 
 void UBoxGizmo::DestroySubGizmos()
 {
-    for (UInteractiveGizmo* Gizmo : ActiveGizmos)
+    for (auto& Elem : ActiveBoundsElevationGizmos)
     {
-        GetGizmoManager()->DestroyGizmo(Gizmo);
+        GetGizmoManager()->DestroyGizmo(Elem.Key);
     }
-    ActiveGizmos.Empty();
+    ActiveBoundsElevationGizmos.Empty();
+
+    for (auto& Elem : ActiveBoundsPlanGizmos)
+    {
+        GetGizmoManager()->DestroyGizmo(Elem.Key);
+    }
+    ActiveBoundsPlanGizmos.Empty();
+
+    for (auto& Elem : ActiveRotateAxisGizmos)
+    {
+        GetGizmoManager()->DestroyGizmo(Elem.Key);
+    }
+    ActiveRotateAxisGizmos.Empty();
+
+    for (auto& Elem : ActiveTranslateZGizmos)
+    {
+        GetGizmoManager()->DestroyGizmo(Elem.Key);
+    }
+    ActiveTranslateZGizmos.Empty();
+
+    for (auto& Elem : ActiveTranslateXYGizmos)
+    {
+        GetGizmoManager()->DestroyGizmo(Elem.Key);
+    }
+    ActiveTranslateXYGizmos.Empty();
 }
 
 void UBoxGizmo::CreateElevationGizmo(UGizmoComponentAxisSource* AxisSource)
@@ -355,7 +381,7 @@ void UBoxGizmo::CreateElevationGizmo(UGizmoComponentAxisSource* AxisSource)
             //
             // Reference the created gizmo
             //
-            ActiveGizmos.Add(ElevationGizmo);
+            ActiveBoundsElevationGizmos.Add(ElevationGizmo, ElevationComponent);
         }
     }
 }
@@ -424,7 +450,7 @@ void UBoxGizmo::CreatePlanCornerGizmo(UGizmoComponentAxisSource* AxisSource, int
             //
             // Reference the created gizmo
             //
-            ActiveGizmos.Add(CornerGizmo);
+            ActiveBoundsPlanGizmos.Add(CornerGizmo, CornerComponent);
         }
     }
 }
@@ -492,7 +518,7 @@ void UBoxGizmo::CreateRotateAxisGizmo(int32 AxisIndex)
             //
             // Reference the created gizmo
             //
-            ActiveGizmos.Add(RotationGizmo);
+            ActiveRotateAxisGizmos.Add(RotationGizmo, RotationAxisComponent);
         }
     }
 }
@@ -557,7 +583,7 @@ void UBoxGizmo::CreateTranslateZGizmo(UGizmoComponentAxisSource* AxisSource)
             //
             // Reference the created gizmo
             //
-            ActiveGizmos.Add(TranslateZGizmo);
+            ActiveTranslateZGizmos.Add(TranslateZGizmo, TranslateZComponent);
         }
     }
 }
@@ -622,7 +648,7 @@ void UBoxGizmo::CreateTranslateXYGizmo(UGizmoComponentAxisSource* AxisSource)
             //
             // Reference the created gizmo
             //
-            ActiveGizmos.Add(TranslateXYGizmo);
+            ActiveTranslateXYGizmos.Add(TranslateXYGizmo, TranslateXYComponent);
         }
     }
 }
@@ -851,6 +877,152 @@ void UBoxGizmo::NotifyTranslationModified()
             }
         }
     }
+}
+
+bool UBoxGizmo::UpdateSubGizmosVisibility()
+{
+    bool SomethingInteracting = false;
+
+    bool bBoundsVisible = true;
+    bool bRotateAxisVisible = true;
+    bool bTranslateZVisible = true;
+
+    if (IsBoundsInteracting())
+    {
+        bRotateAxisVisible = false;
+        bTranslateZVisible = false;
+
+        SomethingInteracting = true;
+    }
+    else if (IsRotateAxisInteracting())
+    {
+        bBoundsVisible = false;
+        bTranslateZVisible = false;
+
+        SomethingInteracting = true;
+    }
+    else if (IsTranslateZInteracting())
+    {
+        bBoundsVisible = false;
+        bRotateAxisVisible = false;
+
+        SomethingInteracting = true;
+    }
+    else if (IsTranslateXYInteracting())
+    {
+        bBoundsVisible = false;
+        bRotateAxisVisible = false;
+        bTranslateZVisible = false;
+
+        SomethingInteracting = true;
+    }
+
+    for (const auto& Elem : ActiveBoundsElevationGizmos)
+    {
+        if (Elem.Value)
+        {
+            Elem.Value->SetVisibility(bBoundsVisible);
+        }
+    }
+
+    for (const auto& Elem : ActiveBoundsPlanGizmos)
+    {
+        if (Elem.Value)
+        {
+            Elem.Value->SetVisibility(bBoundsVisible);
+        }
+    }
+
+    for (const auto& Elem : ActiveRotateAxisGizmos)
+    {
+        if (Elem.Value)
+        {
+            Elem.Value->SetVisibility(bRotateAxisVisible);
+        }
+    }
+
+    for (const auto& Elem : ActiveTranslateZGizmos)
+    {
+        if (Elem.Value)
+        {
+            Elem.Value->SetVisibility(bTranslateZVisible);
+        }
+    }
+
+    return SomethingInteracting;
+}
+
+bool UBoxGizmo::IsBoundsInteracting() const
+{
+    bool Result = false;
+
+    for (const auto& Elem : ActiveBoundsElevationGizmos)
+    {
+        if (Elem.Key && Elem.Key->bInInteraction)
+        {
+            Result = true;
+            break;
+        }
+    }
+
+    for (const auto& Elem : ActiveBoundsPlanGizmos)
+    {
+        if (Elem.Key && Elem.Key->bInInteraction)
+        {
+            Result = true;
+            break;
+        }
+    }
+
+    return Result;
+}
+
+bool UBoxGizmo::IsRotateAxisInteracting() const
+{
+    bool Result = false;
+
+    for (const auto& Elem : ActiveRotateAxisGizmos)
+    {
+        if (Elem.Key && Elem.Key->bInInteraction)
+        {
+            Result = true;
+            break;
+        }
+    }
+
+    return Result;
+}
+
+bool UBoxGizmo::IsTranslateZInteracting() const
+{
+    bool Result = false;
+
+    for (const auto& Elem : ActiveTranslateZGizmos)
+    {
+        if (Elem.Key && Elem.Key->bInInteraction)
+        {
+            Result = true;
+            break;
+        }
+    }
+
+    return Result;
+}
+
+bool UBoxGizmo::IsTranslateXYInteracting() const
+{
+    bool Result = false;
+
+    for (const auto& Elem : ActiveTranslateXYGizmos)
+    {
+        if (Elem.Key && Elem.Key->bInInteraction)
+        {
+            Result = true;
+            break;
+        }
+    }
+
+    return Result;
 }
 
 bool UBoxGizmo::ConstrainElevationPosition(const FVector& RawPosition, FVector& ConstrainedPosition)

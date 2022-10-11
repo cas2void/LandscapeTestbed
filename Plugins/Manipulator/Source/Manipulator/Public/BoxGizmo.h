@@ -96,9 +96,21 @@ protected:
 	// Sub Gizmos
 	//
 protected:
-	// Currently active sub gizmos
+	// Currently active sub gizmos and their visual counterparts
 	UPROPERTY()
-	TArray<UInteractiveGizmo*> ActiveGizmos;
+	TMap<class UAxisPositionGizmo*, class UPrimitiveComponent*> ActiveBoundsElevationGizmos;
+
+	UPROPERTY()
+	TMap<class UPlanePositionGizmo*, class UPrimitiveComponent*> ActiveBoundsPlanGizmos;
+
+	UPROPERTY()
+	TMap<class UAxisAngleGizmo*, class UPrimitiveComponent*> ActiveRotateAxisGizmos;
+
+	UPROPERTY()
+	TMap<class UAxisPositionGizmo*, class UPrimitiveComponent*> ActiveTranslateZGizmos;
+
+	UPROPERTY()
+	TMap<class UPlanePositionGizmo*, class UPrimitiveComponent*> ActiveTranslateXYGizmos;
 
 	void CreateSubGizmos();
 	void DestroySubGizmos();
@@ -144,6 +156,17 @@ protected:
 	void NotifyBoundsModified();
 	void NotifyRotationModified();
 	void NotifyTranslationModified();
+
+	//
+	// Visibility
+	// 
+	// TODO: Ugly implementation by checking sub gizmo interaction in Render(), better customize sub gizmos which fire interaction events.
+	//
+	bool UpdateSubGizmosVisibility();
+	bool IsBoundsInteracting() const;
+	bool IsRotateAxisInteracting() const;
+	bool IsTranslateZInteracting() const;
+	bool IsTranslateXYInteracting() const;
 
 	//
 	// Editing Constraint

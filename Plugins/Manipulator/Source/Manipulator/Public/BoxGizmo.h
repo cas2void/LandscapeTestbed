@@ -101,7 +101,7 @@ protected:
 	TMap<class UAxisPositionGizmo*, class UPrimitiveComponent*> ActiveBoundsElevationGizmos;
 
 	UPROPERTY()
-	TMap<class UPlanePositionGizmo*, class UPrimitiveComponent*> ActiveBoundsPlanGizmos;
+	TMap<class UPlanePositionGizmo*, class UPrimitiveComponent*> ActiveBoundsPlanCornerGizmos;
 
 	UPROPERTY()
 	TMap<class UAxisAngleGizmo*, class UPrimitiveComponent*> ActiveRotateAxisGizmos;

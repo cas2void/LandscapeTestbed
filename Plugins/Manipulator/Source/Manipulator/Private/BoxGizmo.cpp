@@ -51,7 +51,6 @@ void UBoxGizmo::Shutdown()
 void UBoxGizmo::Render(IToolsContextRenderAPI* RenderAPI)
 {
     const bool bSomethingInteracting = UpdateSubGizmosVisibility();
-
     if (bSomethingInteracting)
     {
         FToolDataVisualizer Draw;
@@ -291,11 +290,11 @@ void UBoxGizmo::DestroySubGizmos()
     }
     ActiveBoundsElevationGizmos.Empty();
 
-    for (auto& Elem : ActiveBoundsPlanGizmos)
+    for (auto& Elem : ActiveBoundsPlanCornerGizmos)
     {
         GetGizmoManager()->DestroyGizmo(Elem.Key);
     }
-    ActiveBoundsPlanGizmos.Empty();
+    ActiveBoundsPlanCornerGizmos.Empty();
 
     for (auto& Elem : ActiveRotateAxisGizmos)
     {
@@ -450,7 +449,7 @@ void UBoxGizmo::CreatePlanCornerGizmo(UGizmoComponentAxisSource* AxisSource, int
             //
             // Reference the created gizmo
             //
-            ActiveBoundsPlanGizmos.Add(CornerGizmo, CornerComponent);
+            ActiveBoundsPlanCornerGizmos.Add(CornerGizmo, CornerComponent);
         }
     }
 }
@@ -925,7 +924,7 @@ bool UBoxGizmo::UpdateSubGizmosVisibility()
         }
     }
 
-    for (const auto& Elem : ActiveBoundsPlanGizmos)
+    for (const auto& Elem : ActiveBoundsPlanCornerGizmos)
     {
         if (Elem.Value)
         {
@@ -965,7 +964,7 @@ bool UBoxGizmo::IsBoundsInteracting() const
         }
     }
 
-    for (const auto& Elem : ActiveBoundsPlanGizmos)
+    for (const auto& Elem : ActiveBoundsPlanCornerGizmos)
     {
         if (Elem.Key && Elem.Key->bInInteraction)
         {

@@ -25,7 +25,7 @@ ABoxGizmoActor::ABoxGizmoActor()
 	BoundsGroupComponent = CreateDefaultSubobject<USceneComponent>(TEXT("GizmoBoundsGroup"));
 	BoundsGroupComponent->SetupAttachment(GetRootComponent());
 
-	const FLinearColor GizmoBoundsColor(0.0f, 0.4f, 0.4f);
+	const FLinearColor GizmoBoundsColor(0.0f, 0.2f, 0.2f);
 	float GizmoBoundsThickness = 10.0f;
 
 	// Elevation
@@ -85,7 +85,7 @@ ABoxGizmoActor::ABoxGizmoActor()
 	RotationGroupComponent = CreateDefaultSubobject<USceneComponent>(TEXT("GizmoRotationGroup"));
 	RotationGroupComponent->SetupAttachment(GetRootComponent());
 
-	const float GizmoRotationThickness = GizmoBoundsThickness * 0.6f;
+	const float GizmoRotationThickness = GizmoBoundsThickness * 0.8f;
 	const float GizmoRotationRadius = 60.0f;
 
 	UPrimitiveGizmoRotateComponent* TempRotateXComponent = CreateDefaultSubobject<UPrimitiveGizmoRotateComponent>(TEXT("GizmoRotateX"));

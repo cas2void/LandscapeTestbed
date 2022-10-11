@@ -563,12 +563,16 @@ void UBoxGizmo::CreateRotateAxisGizmo(int32 AxisIndex)
 			RotationGizmo->HitTarget = HitTarget;
 
 			UGizmoLambdaStateTarget* StateTarget = NewObject<UGizmoLambdaStateTarget>(this);
-			StateTarget->BeginUpdateFunction = [RotationGizmo, this]()
+			StateTarget->BeginUpdateFunction = [RotationGizmo, AxisIndex, this]()
 			{
 				if (Cast<UPrimitiveGizmoBaseComponent>(RotationGizmo) != nullptr)
 				{
 					Cast<UPrimitiveGizmoBaseComponent>(RotationGizmo)->UpdateInteractionState(true);
 				}
+
+				NotifyRotationModified();
+				InitBounds();
+				RegulateRotationAndSubTransform();
 
 				SetBoundsGizmoVisibility(false);
 				SetTranslationGizmoVisibility(false);

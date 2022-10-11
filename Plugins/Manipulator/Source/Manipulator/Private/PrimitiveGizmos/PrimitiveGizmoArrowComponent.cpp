@@ -1,11 +1,11 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
-#include "ArrowGizmoComponent.h"
+#include "PrimitiveGizmoArrowComponent.h"
 
 #include "PrimitiveSceneProxy.h"
 #include "BaseGizmos/GizmoRenderingUtil.h"
 
-class FArrowGizmoComponentSceneProxy final : public FPrimitiveSceneProxy
+class FPrimitiveGizmoArrowComponentSceneProxy final : public FPrimitiveSceneProxy
 {
 public:
 	SIZE_T GetTypeHash() const override
@@ -14,7 +14,7 @@ public:
 		return reinterpret_cast<size_t>(&UniquePointer);
 	}
 
-	FArrowGizmoComponentSceneProxy(const UArrowGizmoComponent* InComponent)
+	FPrimitiveGizmoArrowComponentSceneProxy(const UPrimitiveGizmoArrowComponent* InComponent)
 		: FPrimitiveSceneProxy(InComponent),
 		Color(InComponent->Color),
 		HoverThicknessMultiplier(InComponent->HoverSizeMultiplier),
@@ -144,9 +144,9 @@ private:
 };
 
 
-FPrimitiveSceneProxy* UArrowGizmoComponent::CreateSceneProxy()
+FPrimitiveSceneProxy* UPrimitiveGizmoArrowComponent::CreateSceneProxy()
 {
-	FArrowGizmoComponentSceneProxy* NewProxy = new FArrowGizmoComponentSceneProxy(this);
+	FPrimitiveGizmoArrowComponentSceneProxy* NewProxy = new FPrimitiveGizmoArrowComponentSceneProxy(this);
 	NewProxy->SetExternalHoverState(&bHovering);
 	NewProxy->SetExternalWorldLocalState(&bWorld);
 	NewProxy->SetExternalDynamicPixelToWorldScale(&DynamicPixelToWorldScale);
@@ -154,7 +154,7 @@ FPrimitiveSceneProxy* UArrowGizmoComponent::CreateSceneProxy()
 	return NewProxy;
 }
 
-bool UArrowGizmoComponent::LineTraceComponent(FHitResult& OutHit, const FVector Start, const FVector End, const FCollisionQueryParams& Params)
+bool UPrimitiveGizmoArrowComponent::LineTraceComponent(FHitResult& OutHit, const FVector Start, const FVector End, const FCollisionQueryParams& Params)
 {
 	if (bRenderVisibility == false)
 	{
@@ -187,7 +187,7 @@ bool UArrowGizmoComponent::LineTraceComponent(FHitResult& OutHit, const FVector 
 	return true;
 }
 
-FBoxSphereBounds UArrowGizmoComponent::CalcBounds(const FTransform& LocalToWorld) const
+FBoxSphereBounds UPrimitiveGizmoArrowComponent::CalcBounds(const FTransform& LocalToWorld) const
 {
 	return FBoxSphereBounds(FSphere(FVector::ZeroVector, Gap + Length).TransformBy(LocalToWorld));
 }

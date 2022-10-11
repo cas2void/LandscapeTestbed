@@ -3,14 +3,16 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "BaseGizmos/GizmoBaseComponent.h"
-#include "CircleGizmoComponent.generated.h"
+
+#include "PrimitiveGizmoBaseComponent.h"
+
+#include "PrimitiveGizmoCircleComponent.generated.h"
 
 /**
  * 
  */
 UCLASS()
-class MANIPULATOR_API UCircleGizmoComponent : public UGizmoBaseComponent
+class MANIPULATOR_API UPrimitiveGizmoCircleComponent : public UPrimitiveGizmoBaseComponent
 {
 	GENERATED_BODY()
 

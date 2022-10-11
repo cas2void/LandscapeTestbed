@@ -1,6 +1,6 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
-#include "CircleGizmoComponent.h"
+#include "PrimitiveGizmoCircleComponent.h"
 
 #include "PrimitiveSceneProxy.h"
 #include "BaseGizmos/GizmoRenderingUtil.h"
@@ -15,7 +15,7 @@ public:
 		return reinterpret_cast<size_t>(&UniquePointer);
 	}
 
-	FCircleGizmoComponentSceneProxy(const UCircleGizmoComponent* InComponent)
+	FCircleGizmoComponentSceneProxy(const UPrimitiveGizmoCircleComponent* InComponent)
 		: FPrimitiveSceneProxy(InComponent),
 		Color(InComponent->Color),
 		HoverThicknessMultiplier(InComponent->HoverSizeMultiplier),
@@ -212,7 +212,7 @@ private:
 };
 
 
-FPrimitiveSceneProxy* UCircleGizmoComponent::CreateSceneProxy()
+FPrimitiveSceneProxy* UPrimitiveGizmoCircleComponent::CreateSceneProxy()
 {
 	FCircleGizmoComponentSceneProxy* NewProxy = new FCircleGizmoComponentSceneProxy(this);
 	NewProxy->SetExternalHoverState(&bHovering);
@@ -222,7 +222,7 @@ FPrimitiveSceneProxy* UCircleGizmoComponent::CreateSceneProxy()
 	return NewProxy;
 }
 
-bool UCircleGizmoComponent::LineTraceComponent(FHitResult& OutHit, const FVector Start, const FVector End, const FCollisionQueryParams& Params)
+bool UPrimitiveGizmoCircleComponent::LineTraceComponent(FHitResult& OutHit, const FVector Start, const FVector End, const FCollisionQueryParams& Params)
 {
 	if (bRenderVisibility == false)
 	{
@@ -266,7 +266,7 @@ bool UCircleGizmoComponent::LineTraceComponent(FHitResult& OutHit, const FVector
 	return true;
 }
 
-FBoxSphereBounds UCircleGizmoComponent::CalcBounds(const FTransform& LocalToWorld) const
+FBoxSphereBounds UPrimitiveGizmoCircleComponent::CalcBounds(const FTransform& LocalToWorld) const
 {
 	return FBoxSphereBounds(FSphere(FVector::ZeroVector, Radius).TransformBy(LocalToWorld));
 }

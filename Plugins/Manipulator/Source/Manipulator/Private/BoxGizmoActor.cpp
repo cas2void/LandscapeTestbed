@@ -5,9 +5,9 @@
 
 #include "Components/SphereComponent.h"
 
-#include "RectGizmoComponent.h"
-#include "CircleGizmoComponent.h"
-#include "ArrowGizmoComponent.h"
+#include "PrimitiveGizmoRectComponent.h"
+#include "PrimitiveGizmoCircleComponent.h"
+#include "PrimitiveGizmoArrowComponent.h"
 
 ABoxGizmoActor::ABoxGizmoActor()
 {
@@ -28,7 +28,7 @@ ABoxGizmoActor::ABoxGizmoActor()
 	float GizmoBoundsThickness = 10.0f;
 
 	// Elevation
-	UCircleGizmoComponent* TempElevationComponent = CreateDefaultSubobject<UCircleGizmoComponent>(TEXT("GizmoElevation"));
+	UPrimitiveGizmoCircleComponent* TempElevationComponent = CreateDefaultSubobject<UPrimitiveGizmoCircleComponent>(TEXT("GizmoElevation"));
 	TempElevationComponent->Color = GizmoBoundsColor;
 	TempElevationComponent->SetRadius(10.0f);
 	TempElevationComponent->SetCenterOffset(FVector(0.0f, 0.0f, 30.0f));
@@ -39,7 +39,7 @@ ABoxGizmoActor::ABoxGizmoActor()
 	ElevationComponent = TempElevationComponent;
 
 	// Plane top left
-	URectGizmoComponent* TempPlanTopLeftComponent = CreateDefaultSubobject<URectGizmoComponent>(TEXT("GizmoPlanTopLeft"));
+	UPrimitiveGizmoRectComponent* TempPlanTopLeftComponent = CreateDefaultSubobject<UPrimitiveGizmoRectComponent>(TEXT("GizmoPlanTopLeft"));
 	TempPlanTopLeftComponent->Color = GizmoBoundsColor;
 	TempPlanTopLeftComponent->SetOffsetX(TempPlanTopLeftComponent->GetLengthX() * -0.5f);
 	TempPlanTopLeftComponent->SetOffsetY(TempPlanTopLeftComponent->GetLengthY() * -0.5f);
@@ -49,7 +49,7 @@ ABoxGizmoActor::ABoxGizmoActor()
 	PlanTopLeftComponent = TempPlanTopLeftComponent;
 
 	// Plane top right
-	URectGizmoComponent* TempPlanTopRightComponent = CreateDefaultSubobject<URectGizmoComponent>(TEXT("GizmoPlanTopRight"));
+	UPrimitiveGizmoRectComponent* TempPlanTopRightComponent = CreateDefaultSubobject<UPrimitiveGizmoRectComponent>(TEXT("GizmoPlanTopRight"));
 	TempPlanTopRightComponent->Color = GizmoBoundsColor;
 	TempPlanTopRightComponent->SetOffsetX(TempPlanTopRightComponent->GetLengthX() * -0.5f);
 	TempPlanTopRightComponent->SetOffsetY(TempPlanTopRightComponent->GetLengthY() * -0.5f);
@@ -59,7 +59,7 @@ ABoxGizmoActor::ABoxGizmoActor()
 	PlanTopRightComponent = TempPlanTopRightComponent;
 
 	// Plane bottom right
-	URectGizmoComponent* TempPlanBottomRightComponent = CreateDefaultSubobject<URectGizmoComponent>(TEXT("GizmoPlanBottomRight"));
+	UPrimitiveGizmoRectComponent* TempPlanBottomRightComponent = CreateDefaultSubobject<UPrimitiveGizmoRectComponent>(TEXT("GizmoPlanBottomRight"));
 	TempPlanBottomRightComponent->Color = GizmoBoundsColor;
 	TempPlanBottomRightComponent->SetOffsetX(TempPlanBottomRightComponent->GetLengthX() * -0.5f);
 	TempPlanBottomRightComponent->SetOffsetY(TempPlanBottomRightComponent->GetLengthY() * -0.5f);
@@ -69,7 +69,7 @@ ABoxGizmoActor::ABoxGizmoActor()
 	PlanBottomRightComponent = TempPlanBottomRightComponent;
 
 	// Plane bottom left
-	URectGizmoComponent* TempPlanBottomLeftComponent = CreateDefaultSubobject<URectGizmoComponent>(TEXT("GizmoPlanBottomLeft"));
+	UPrimitiveGizmoRectComponent* TempPlanBottomLeftComponent = CreateDefaultSubobject<UPrimitiveGizmoRectComponent>(TEXT("GizmoPlanBottomLeft"));
 	TempPlanBottomLeftComponent->Color = GizmoBoundsColor;
 	TempPlanBottomLeftComponent->SetOffsetX(TempPlanBottomLeftComponent->GetLengthX() * -0.5f);
 	TempPlanBottomLeftComponent->SetOffsetY(TempPlanBottomLeftComponent->GetLengthY() * -0.5f);
@@ -87,7 +87,7 @@ ABoxGizmoActor::ABoxGizmoActor()
 	const float GizmoRotationThickness = 2.0f;
 	const float GizmoRotationRadius = 120.0f;
 
-	UCircleGizmoComponent* TempRotateXComponent = CreateDefaultSubobject<UCircleGizmoComponent>(TEXT("GizmoRotateX"));
+	UPrimitiveGizmoCircleComponent* TempRotateXComponent = CreateDefaultSubobject<UPrimitiveGizmoCircleComponent>(TEXT("GizmoRotateX"));
 	TempRotateXComponent->Color = FLinearColor::Red;
 	TempRotateXComponent->SetNormal(FVector(1.0f, 0.0f, 0.0f));
 	TempRotateXComponent->SetRadius(GizmoRotationRadius);
@@ -96,7 +96,7 @@ ABoxGizmoActor::ABoxGizmoActor()
 	RotateXComponent = TempRotateXComponent;
 
 	//// Axis X Rotate
-	//UGizmoCircleComponent* TempRotateXComponent = CreateDefaultSubobject<UGizmoCircleComponent>(TEXT("GizmoRotateX"));
+	//UPrimitiveGizmoCircleComponent* TempRotateXComponent = CreateDefaultSubobject<UPrimitiveGizmoCircleComponent>(TEXT("GizmoRotateX"));
 	//TempRotateXComponent->Color = FLinearColor::Red;
 	//TempRotateXComponent->Normal = FVector(1.0f, 0.0f, 0.0f);
 	//TempRotateXComponent->Radius = GizmoRotationRadius;
@@ -105,7 +105,7 @@ ABoxGizmoActor::ABoxGizmoActor()
 	//RotateXComponent = TempRotateXComponent;
 
 	//// Axis Y Rotate
-	//UGizmoCircleComponent* TempRotateYComponent = CreateDefaultSubobject<UGizmoCircleComponent>(TEXT("GizmoRotateY"));
+	//UPrimitiveGizmoCircleComponent* TempRotateYComponent = CreateDefaultSubobject<UPrimitiveGizmoCircleComponent>(TEXT("GizmoRotateY"));
 	//TempRotateYComponent->Color = FLinearColor::Green;
 	//TempRotateYComponent->Normal = FVector(0.0f, 1.0f, 0.0f);
 	//TempRotateYComponent->Radius = GizmoRotationRadius;
@@ -114,7 +114,7 @@ ABoxGizmoActor::ABoxGizmoActor()
 	//RotateYComponent = TempRotateYComponent;
 
 	//// Axis Z Rotate
-	//UGizmoCircleComponent* TempRotateZComponent = CreateDefaultSubobject<UGizmoCircleComponent>(TEXT("GizmoRotateZ"));
+	//UPrimitiveGizmoCircleComponent* TempRotateZComponent = CreateDefaultSubobject<UPrimitiveGizmoCircleComponent>(TEXT("GizmoRotateZ"));
 	//TempRotateZComponent->Color = FLinearColor::Blue;
 	//TempRotateZComponent->Normal = FVector(0.0f, 0.0f, 1.0f);
 	//TempRotateZComponent->Radius = GizmoRotationRadius;
@@ -136,7 +136,7 @@ ABoxGizmoActor::ABoxGizmoActor()
 	//const float GizmoTranslationThickness = 8.0f;
 
 	//// Translate Z
-	//UArrowGizmoComponent* TempTranslateZComponent = CreateDefaultSubobject<UArrowGizmoComponent>(TEXT("GizmoTranslateZ"));
+	//UPrimitiveGizmoArrowComponent* TempTranslateZComponent = CreateDefaultSubobject<UPrimitiveGizmoArrowComponent>(TEXT("GizmoTranslateZ"));
 	//TempTranslateZComponent->Color = GizmoTranslationColor;
 	//TempTranslateZComponent->SetDirection(FVector(0.0f, 0.0f, 1.0f));
 	//TempTranslateZComponent->SetGap(40.0f);

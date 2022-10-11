@@ -1,11 +1,11 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
-#include "RectGizmoComponent.h"
+#include "PrimitiveGizmoRectComponent.h"
 
 #include "PrimitiveSceneProxy.h"
 #include "BaseGizmos/GizmoRenderingUtil.h"
 
-class FRectGizmoComponentSceneProxy final : public FPrimitiveSceneProxy
+class FPrimitiveGizmoRectComponentSceneProxy final : public FPrimitiveSceneProxy
 {
 public:
 	SIZE_T GetTypeHash() const override
@@ -14,7 +14,7 @@ public:
 		return reinterpret_cast<size_t>(&UniquePointer);
 	}
 
-	FRectGizmoComponentSceneProxy(const URectGizmoComponent* InComponent)
+	FPrimitiveGizmoRectComponentSceneProxy(const UPrimitiveGizmoRectComponent* InComponent)
 		: FPrimitiveSceneProxy(InComponent),
 		Color(InComponent->Color),
 		HoverThicknessMultiplier(InComponent->HoverSizeMultiplier),
@@ -169,9 +169,9 @@ private:
 };
 
 
-FPrimitiveSceneProxy* URectGizmoComponent::CreateSceneProxy()
+FPrimitiveSceneProxy* UPrimitiveGizmoRectComponent::CreateSceneProxy()
 {
-	FRectGizmoComponentSceneProxy* NewProxy = new FRectGizmoComponentSceneProxy(this);
+	FPrimitiveGizmoRectComponentSceneProxy* NewProxy = new FPrimitiveGizmoRectComponentSceneProxy(this);
 	NewProxy->SetExternalHoverState(&bHovering);
 	NewProxy->SetExternalWorldLocalState(&bWorld);
 	NewProxy->SetExternalDynamicPixelToWorldScale(&DynamicPixelToWorldScale);
@@ -179,7 +179,7 @@ FPrimitiveSceneProxy* URectGizmoComponent::CreateSceneProxy()
 	return NewProxy;
 }
 
-bool URectGizmoComponent::LineTraceComponent(FHitResult& OutHit, const FVector Start, const FVector End, const FCollisionQueryParams& Params)
+bool UPrimitiveGizmoRectComponent::LineTraceComponent(FHitResult& OutHit, const FVector Start, const FVector End, const FCollisionQueryParams& Params)
 {
 	if (bRenderVisibility == false)
 	{
@@ -227,7 +227,7 @@ bool URectGizmoComponent::LineTraceComponent(FHitResult& OutHit, const FVector S
 	return false;
 }
 
-FBoxSphereBounds URectGizmoComponent::CalcBounds(const FTransform& LocalToWorld) const
+FBoxSphereBounds UPrimitiveGizmoRectComponent::CalcBounds(const FTransform& LocalToWorld) const
 {
 	float MaxOffset = FMath::Max(FMath::Abs(OffsetX), FMath::Abs(OffsetY));
 	float MaxLength = FMath::Max(FMath::Abs(LengthX), FMath::Abs(LengthY));

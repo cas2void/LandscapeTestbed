@@ -13,4 +13,17 @@ UCLASS()
 class MANIPULATOR_API UPrimitiveGizmoBaseComponent : public UGizmoBaseComponent
 {
 	GENERATED_BODY()
+
+public:
+	void UpdateInteractionState(bool bValue)
+	{
+		if (bValue != bInteracting)
+		{
+			bInteracting = bValue;
+		}
+	}
+
+protected:
+	// Interaction state (dragging)
+	bool bInteracting = false;
 };

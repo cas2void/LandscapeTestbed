@@ -116,6 +116,11 @@ public:
 		bExternalWorldLocalState = bWorldLocalState;
 	}
 
+	void SetExternalInteractionState(bool* InteractionState)
+	{
+		bExternalInteractionState = InteractionState;
+	}
+
 	void SetExternalDynamicPixelToWorldScale(float* DynamicPixelToWorldScale)
 	{
 		ExternalDynamicPixelToWorldScale = DynamicPixelToWorldScale;
@@ -137,6 +142,7 @@ private:
 	// set on Component for use in ::GetDynamicMeshElements()
 	bool* bExternalHoverState = nullptr;
 	bool* bExternalWorldLocalState = nullptr;
+	bool* bExternalInteractionState = nullptr;
 
 	// set in ::GetDynamicMeshElements() for use by Component hit testing
 	float* ExternalDynamicPixelToWorldScale = nullptr;
@@ -149,6 +155,7 @@ FPrimitiveSceneProxy* UPrimitiveGizmoArrowComponent::CreateSceneProxy()
 	FPrimitiveGizmoArrowComponentSceneProxy* NewProxy = new FPrimitiveGizmoArrowComponentSceneProxy(this);
 	NewProxy->SetExternalHoverState(&bHovering);
 	NewProxy->SetExternalWorldLocalState(&bWorld);
+	NewProxy->SetExternalInteractionState(&bInteracting);
 	NewProxy->SetExternalDynamicPixelToWorldScale(&DynamicPixelToWorldScale);
 	NewProxy->SetExternalRenderVisibility(&bRenderVisibility);
 	return NewProxy;

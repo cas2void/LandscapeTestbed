@@ -6,7 +6,7 @@
 #include "BaseGizmos/GizmoRenderingUtil.h"
 #include "BaseGizmos/GizmoMath.h"
 
-class FCircleGizmoComponentSceneProxy final : public FPrimitiveSceneProxy
+class FPrimitiveGizmoCircleComponentSceneProxy final : public FPrimitiveSceneProxy
 {
 public:
 	SIZE_T GetTypeHash() const override
@@ -15,7 +15,7 @@ public:
 		return reinterpret_cast<size_t>(&UniquePointer);
 	}
 
-	FCircleGizmoComponentSceneProxy(const UPrimitiveGizmoCircleComponent* InComponent)
+	FPrimitiveGizmoCircleComponentSceneProxy(const UPrimitiveGizmoCircleComponent* InComponent)
 		: FPrimitiveSceneProxy(InComponent),
 		Color(InComponent->Color),
 		HoverThicknessMultiplier(InComponent->HoverSizeMultiplier),
@@ -220,7 +220,7 @@ private:
 
 FPrimitiveSceneProxy* UPrimitiveGizmoCircleComponent::CreateSceneProxy()
 {
-	FCircleGizmoComponentSceneProxy* NewProxy = new FCircleGizmoComponentSceneProxy(this);
+	FPrimitiveGizmoCircleComponentSceneProxy* NewProxy = new FPrimitiveGizmoCircleComponentSceneProxy(this);
 	NewProxy->SetExternalHoverState(&bHovering);
 	NewProxy->SetExternalWorldLocalState(&bWorld);
 	NewProxy->SetExternalInteractionState(&bInteracting);

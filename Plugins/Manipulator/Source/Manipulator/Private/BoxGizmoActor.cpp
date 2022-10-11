@@ -8,6 +8,7 @@
 #include "PrimitiveGizmoRectComponent.h"
 #include "PrimitiveGizmoCircleComponent.h"
 #include "PrimitiveGizmoArrowComponent.h"
+#include "PrimitiveGizmoRotateComponent.h"
 
 ABoxGizmoActor::ABoxGizmoActor()
 {
@@ -84,12 +85,12 @@ ABoxGizmoActor::ABoxGizmoActor()
 	RotationGroupComponent = CreateDefaultSubobject<USceneComponent>(TEXT("GizmoRotationGroup"));
 	RotationGroupComponent->SetupAttachment(GetRootComponent());
 
-	const float GizmoRotationThickness = 2.0f;
-	const float GizmoRotationRadius = 120.0f;
+	const float GizmoRotationThickness = GizmoBoundsThickness * 0.6f;
+	const float GizmoRotationRadius = 60.0f;
 
-	UPrimitiveGizmoCircleComponent* TempRotateXComponent = CreateDefaultSubobject<UPrimitiveGizmoCircleComponent>(TEXT("GizmoRotateX"));
-	TempRotateXComponent->Color = FLinearColor::Red;
-	TempRotateXComponent->SetNormal(FVector(1.0f, 0.0f, 0.0f));
+	UPrimitiveGizmoRotateComponent* TempRotateXComponent = CreateDefaultSubobject<UPrimitiveGizmoRotateComponent>(TEXT("GizmoRotateX"));
+	TempRotateXComponent->Color = FLinearColor(1.0f, 0.1, 0.1f);
+	TempRotateXComponent->SetAxisIndex(0);
 	TempRotateXComponent->SetRadius(GizmoRotationRadius);
 	TempRotateXComponent->SetThickness(GizmoRotationThickness);
 	TempRotateXComponent->SetupAttachment(RotationGroupComponent);

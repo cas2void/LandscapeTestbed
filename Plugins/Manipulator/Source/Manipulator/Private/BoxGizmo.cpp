@@ -19,6 +19,7 @@
 
 #include "BoxGizmoActor.h"
 #include "PrimitiveGizmoBaseComponent.h"
+#include "PrimitiveGizmoRotateComponent.h"
 
 void UBoxGizmo::Setup()
 {
@@ -901,6 +902,14 @@ void UBoxGizmo::RegulateRotationGroupTransform()
 
 void UBoxGizmo::RegulateRotateAxisTransform(int32 AxisIndex)
 {
+	if (GizmoActor)
+	{
+		UPrimitiveGizmoRotateComponent* GizmoRotateComponent = Cast<UPrimitiveGizmoRotateComponent>(GizmoActor->GetRotateAxisComponent(AxisIndex));
+		if (GizmoRotateComponent)
+		{
+			GizmoRotateComponent->SetExtent(Bounds.BoxExtent);
+		}
+	}
 }
 
 void UBoxGizmo::RegulateRotationAndSubTransform()

@@ -12,8 +12,12 @@
 #include "BaseGizmos/TransformSources.h"
 #include "BaseGizmos/GizmoBaseComponent.h"
 #include "BaseGizmos/StateTargets.h"
+#include "BaseBehaviors/ClickDragBehavior.h"
+#include "BaseBehaviors/MouseHoverBehavior.h"
 #include "InteractiveGizmoManager.h"
+#include "InteractiveToolsContext.h"
 #include "ToolDataVisualizer.h"
+#include "InputRouter.h"
 #include "FrameTypes.h"
 #include "Drawing/MeshDebugDrawing.h"
 
@@ -702,6 +706,34 @@ void UBoxGizmo::CreateTranslateXYGizmo(UGizmoComponentAxisSource* AxisSource)
 			//
 			UPlanePositionGizmo* TranslateXYGizmo = Cast<UPlanePositionGizmo>(GetGizmoManager()->CreateGizmo(UInteractiveGizmoManager::DefaultPlanePositionBuilderIdentifier));
 			check(TranslateXYGizmo);
+
+			// Set InputBehavior priority
+			UInteractiveToolsContext* Context = Cast<UInteractiveToolsContext>(GetGizmoManager()->GetOuter());
+			if (Context)
+			{
+				UInputRouter* InputRouter = Context->InputRouter;
+				if (InputRouter)
+				{
+					InputRouter->DeregisterSource(TranslateXYGizmo);
+
+					UInputBehaviorSet* TransaleXYInputBehaviors = const_cast<UInputBehaviorSet*>(TranslateXYGizmo->GetInputBehaviors());
+					if (TransaleXYInputBehaviors)
+					{
+						TransaleXYInputBehaviors->RemoveAll();
+					}
+
+					UClickDragInputBehavior* MouseBehavior = NewObject<UClickDragInputBehavior>();
+					MouseBehavior->Initialize(TranslateXYGizmo);
+					MouseBehavior->SetDefaultPriority(FInputCapturePriority(FInputCapturePriority::DEFAULT_GIZMO_PRIORITY).MakeLower());
+					TranslateXYGizmo->AddInputBehavior(MouseBehavior);
+					UMouseHoverBehavior* HoverBehavior = NewObject<UMouseHoverBehavior>();
+					HoverBehavior->Initialize(TranslateXYGizmo);
+					HoverBehavior->SetDefaultPriority(FInputCapturePriority(FInputCapturePriority::DEFAULT_GIZMO_PRIORITY).MakeLower());
+					TranslateXYGizmo->AddInputBehavior(HoverBehavior);
+
+					InputRouter->RegisterSource(TranslateXYGizmo);
+				}
+			}
 
 			//
 			// Axis source provides the translation axis

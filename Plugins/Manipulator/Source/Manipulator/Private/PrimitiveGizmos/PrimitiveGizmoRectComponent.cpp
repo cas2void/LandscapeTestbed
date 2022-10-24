@@ -91,21 +91,22 @@ public:
 				FVector Point11 = Origin + UseOffsetLengthX * UseDirectionX + UseOffsetLengthY * UseDirectionY;
 				FVector Point01 = Origin + UseOffsetX * UseDirectionX + UseOffsetLengthY * UseDirectionY;
 
+				float DepthBias = 0.0f;
 				if (SegmentFlags & 0x1)
 				{
-					PDI->DrawLine(Point00, Point10, Color, SDPG_Foreground, UseThickness, 0.0f, true);
+					PDI->DrawLine(Point00, Point10, Color, SDPG_Foreground, UseThickness, DepthBias, true);
 				}
 				if (SegmentFlags & 0x2)
 				{
-					PDI->DrawLine(Point10, Point11, Color, SDPG_Foreground, UseThickness, 0.0f, true);
+					PDI->DrawLine(Point10, Point11, Color, SDPG_Foreground, UseThickness, DepthBias, true);
 				}
 				if (SegmentFlags & 0x4)
 				{
-					PDI->DrawLine(Point11, Point01, Color, SDPG_Foreground, UseThickness, 0.0f, true);
+					PDI->DrawLine(Point11, Point01, Color, SDPG_Foreground, UseThickness, DepthBias, true);
 				}
 				if (SegmentFlags & 0x8)
 				{
-					PDI->DrawLine(Point01, Point00, Color, SDPG_Foreground, UseThickness, 0.0f, true);
+					PDI->DrawLine(Point01, Point00, Color, SDPG_Foreground, UseThickness, DepthBias, true);
 				}
 			}
 		}

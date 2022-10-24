@@ -127,28 +127,28 @@ ABoxGizmoActor::ABoxGizmoActor()
 	RotationProxyComponent = CreateDefaultSubobject<USceneComponent>(TEXT("GizmoRotationProxy"));
 	RotationProxyComponent->SetupAttachment(RotationGroupComponent);
 
-	////
-	//// Translation Group
-	////
-	//TranslationGroupComponent = CreateDefaultSubobject<USceneComponent>(TEXT("GizmoTranslationGroup"));
-	//TranslationGroupComponent->SetupAttachment(GetRootComponent());
+	//
+	// Translation Group
+	//
+	TranslationGroupComponent = CreateDefaultSubobject<USceneComponent>(TEXT("GizmoTranslationGroup"));
+	TranslationGroupComponent->SetupAttachment(GetRootComponent());
 
-	//const FLinearColor GizmoTranslationColor = FLinearColor(0.0f, 0.2f, 0.2f);
-	//const float GizmoTranslationThickness = 8.0f;
+	const FLinearColor GizmoTranslationColor = FLinearColor(0.0f, 0.3f, 0.4f);
+	const float GizmoTranslationThickness = GizmoBoundsThickness * 1.0f;
 
-	//// Translate Z
-	//UPrimitiveGizmoArrowComponent* TempTranslateZComponent = CreateDefaultSubobject<UPrimitiveGizmoArrowComponent>(TEXT("GizmoTranslateZ"));
-	//TempTranslateZComponent->Color = GizmoTranslationColor;
-	//TempTranslateZComponent->SetDirection(FVector(0.0f, 0.0f, 1.0f));
-	//TempTranslateZComponent->SetGap(40.0f);
-	//TempTranslateZComponent->SetLength(40.0f);
-	//TempTranslateZComponent->SetThickness(GizmoTranslationThickness);
-	//TempTranslateZComponent->SetupAttachment(TranslationGroupComponent);
-	//TranslateZComponent = TempTranslateZComponent;
+	// Translate Z
+	UPrimitiveGizmoArrowComponent* TempTranslateZComponent = CreateDefaultSubobject<UPrimitiveGizmoArrowComponent>(TEXT("GizmoTranslateZ"));
+	TempTranslateZComponent->Color = GizmoTranslationColor;
+	TempTranslateZComponent->SetDirection(FVector(0.0f, 0.0f, 1.0f));
+	TempTranslateZComponent->SetGap(60.0f);
+	TempTranslateZComponent->SetLength(40.0f);
+	TempTranslateZComponent->SetThickness(GizmoTranslationThickness);
+	TempTranslateZComponent->SetupAttachment(TranslationGroupComponent);
+	TranslateZComponent = TempTranslateZComponent;
 
-	//// Translation Proxy
-	//TranslationProxyComponent = CreateDefaultSubobject<USceneComponent>(TEXT("GizmoTranslationProxy"));
-	//TranslationProxyComponent->SetupAttachment(TranslationGroupComponent);
+	// Translation Proxy
+	TranslationProxyComponent = CreateDefaultSubobject<USceneComponent>(TEXT("GizmoTranslationProxy"));
+	TranslationProxyComponent->SetupAttachment(TranslationGroupComponent);
 }
 
 TArray<UPrimitiveComponent*> ABoxGizmoActor::GetBoundsSubComponents()

@@ -61,26 +61,22 @@ protected:
 	//
 public:
 	USceneComponent* GetRotationGroupComponent() { return RotationGroupComponent; }
-	UPrimitiveComponent* GetRotateXComponent() { return RotateXComponent; }
-	UPrimitiveComponent* GetRotateYComponent() { return RotateYComponent; }
-	UPrimitiveComponent* GetRotateZComponent() { return RotateZComponent; }
 	USceneComponent* GetRotationProxyComponent() { return RotationProxyComponent; }
 
-	// 0: X, 1: Y, 2: Z
-	UPrimitiveComponent* GetRotateAxisComponent(int32 AxisIndex);
+	// AxisIndex - 0: X, 1: Y, 2: Z
+	// FaceIndex - 0: Front, 1: Back
+	USceneComponent* GetRotateAxisSocketComponent(int32 AxisIndex, int32 FaceIndex);
+	UPrimitiveComponent* GetRotateAxisIndicatorComponent(int32 AxisIndex, int32 FaceIndex);
 
 protected:
 	UPROPERTY()
 	USceneComponent* RotationGroupComponent;
 
 	UPROPERTY()
-	UPrimitiveComponent* RotateXComponent;
+	USceneComponent* RotateXFrontSocketComponent;
 
 	UPROPERTY()
-	UPrimitiveComponent* RotateYComponent;
-
-	UPROPERTY()
-	UPrimitiveComponent* RotateZComponent;
+	UPrimitiveComponent* RotateXFrontIndicatorComponent;
 
 	UPROPERTY()
 	USceneComponent* RotationProxyComponent;

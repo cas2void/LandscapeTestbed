@@ -12,242 +12,288 @@
 
 ABoxGizmoActor::ABoxGizmoActor()
 {
-	// Root
-	USphereComponent* SphereComponent = CreateDefaultSubobject<USphereComponent>(TEXT("GizmoCenter"));
-	SphereComponent->InitSphereRadius(1.0f);
-	SphereComponent->SetVisibility(false);
-	SphereComponent->SetCollisionProfileName(UCollisionProfile::NoCollision_ProfileName);
-	SetRootComponent(SphereComponent);
+    // Root
+    USphereComponent* SphereComponent = CreateDefaultSubobject<USphereComponent>(TEXT("GizmoCenter"));
+    SphereComponent->InitSphereRadius(1.0f);
+    SphereComponent->SetVisibility(false);
+    SphereComponent->SetCollisionProfileName(UCollisionProfile::NoCollision_ProfileName);
+    SetRootComponent(SphereComponent);
 
-	//
-	// Bounds Group
-	//
-	BoundsGroupComponent = CreateDefaultSubobject<USceneComponent>(TEXT("GizmoBoundsGroup"));
-	BoundsGroupComponent->SetupAttachment(GetRootComponent());
+    //
+    // Bounds Group
+    //
+    BoundsGroupComponent = CreateDefaultSubobject<USceneComponent>(TEXT("GizmoBoundsGroup"));
+    BoundsGroupComponent->SetupAttachment(GetRootComponent());
 
-	const FLinearColor GizmoBoundsColor(0.0f, 0.2f, 0.2f);
-	float GizmoBoundsThickness = 10.0f;
+    const FLinearColor GizmoBoundsColor(0.0f, 0.2f, 0.2f);
+    float GizmoBoundsThickness = 10.0f;
 
-	// Elevation
-	UPrimitiveGizmoCircleComponent* TempElevationComponent = CreateDefaultSubobject<UPrimitiveGizmoCircleComponent>(TEXT("GizmoElevation"));
-	TempElevationComponent->Color = GizmoBoundsColor;
-	TempElevationComponent->SetRadius(10.0f);
-	TempElevationComponent->SetCenterOffset(FVector(0.0f, 0.0f, 30.0f));
-	TempElevationComponent->SetThickness(GizmoBoundsThickness);
-	TempElevationComponent->SetNumSides(16);
-	TempElevationComponent->SetViewAligned(true);
-	TempElevationComponent->SetupAttachment(BoundsGroupComponent);
-	ElevationComponent = TempElevationComponent;
+    // Elevation
+    UPrimitiveGizmoCircleComponent* TempElevationComponent = CreateDefaultSubobject<UPrimitiveGizmoCircleComponent>(TEXT("GizmoElevation"));
+    TempElevationComponent->Color = GizmoBoundsColor;
+    TempElevationComponent->SetRadius(10.0f);
+    TempElevationComponent->SetCenterOffset(FVector(0.0f, 0.0f, 30.0f));
+    TempElevationComponent->SetThickness(GizmoBoundsThickness);
+    TempElevationComponent->SetNumSides(16);
+    TempElevationComponent->SetViewAligned(true);
+    TempElevationComponent->SetupAttachment(BoundsGroupComponent);
+    ElevationComponent = TempElevationComponent;
 
-	// Plane top left
-	UPrimitiveGizmoRectComponent* TempPlanTopLeftComponent = CreateDefaultSubobject<UPrimitiveGizmoRectComponent>(TEXT("GizmoPlanTopLeft"));
-	TempPlanTopLeftComponent->Color = GizmoBoundsColor;
-	TempPlanTopLeftComponent->SetOffsetX(TempPlanTopLeftComponent->GetLengthX() * -0.5f);
-	TempPlanTopLeftComponent->SetOffsetY(TempPlanTopLeftComponent->GetLengthY() * -0.5f);
-	TempPlanTopLeftComponent->SetThickness(GizmoBoundsThickness);
-	TempPlanTopLeftComponent->SetSegmentFlags(0x1 | 0x8);
-	TempPlanTopLeftComponent->SetupAttachment(BoundsGroupComponent);
-	PlanTopLeftComponent = TempPlanTopLeftComponent;
+    // Plane top left
+    UPrimitiveGizmoRectComponent* TempPlanTopLeftComponent = CreateDefaultSubobject<UPrimitiveGizmoRectComponent>(TEXT("GizmoPlanTopLeft"));
+    TempPlanTopLeftComponent->Color = GizmoBoundsColor;
+    TempPlanTopLeftComponent->SetOffsetX(TempPlanTopLeftComponent->GetLengthX() * -0.5f);
+    TempPlanTopLeftComponent->SetOffsetY(TempPlanTopLeftComponent->GetLengthY() * -0.5f);
+    TempPlanTopLeftComponent->SetThickness(GizmoBoundsThickness);
+    TempPlanTopLeftComponent->SetSegmentFlags(0x1 | 0x8);
+    TempPlanTopLeftComponent->SetupAttachment(BoundsGroupComponent);
+    PlanTopLeftComponent = TempPlanTopLeftComponent;
 
-	// Plane top right
-	UPrimitiveGizmoRectComponent* TempPlanTopRightComponent = CreateDefaultSubobject<UPrimitiveGizmoRectComponent>(TEXT("GizmoPlanTopRight"));
-	TempPlanTopRightComponent->Color = GizmoBoundsColor;
-	TempPlanTopRightComponent->SetOffsetX(TempPlanTopRightComponent->GetLengthX() * -0.5f);
-	TempPlanTopRightComponent->SetOffsetY(TempPlanTopRightComponent->GetLengthY() * -0.5f);
-	TempPlanTopRightComponent->SetThickness(GizmoBoundsThickness);
-	TempPlanTopRightComponent->SetSegmentFlags(0x1 | 0x2);
-	TempPlanTopRightComponent->SetupAttachment(BoundsGroupComponent);
-	PlanTopRightComponent = TempPlanTopRightComponent;
+    // Plane top right
+    UPrimitiveGizmoRectComponent* TempPlanTopRightComponent = CreateDefaultSubobject<UPrimitiveGizmoRectComponent>(TEXT("GizmoPlanTopRight"));
+    TempPlanTopRightComponent->Color = GizmoBoundsColor;
+    TempPlanTopRightComponent->SetOffsetX(TempPlanTopRightComponent->GetLengthX() * -0.5f);
+    TempPlanTopRightComponent->SetOffsetY(TempPlanTopRightComponent->GetLengthY() * -0.5f);
+    TempPlanTopRightComponent->SetThickness(GizmoBoundsThickness);
+    TempPlanTopRightComponent->SetSegmentFlags(0x1 | 0x2);
+    TempPlanTopRightComponent->SetupAttachment(BoundsGroupComponent);
+    PlanTopRightComponent = TempPlanTopRightComponent;
 
-	// Plane bottom right
-	UPrimitiveGizmoRectComponent* TempPlanBottomRightComponent = CreateDefaultSubobject<UPrimitiveGizmoRectComponent>(TEXT("GizmoPlanBottomRight"));
-	TempPlanBottomRightComponent->Color = GizmoBoundsColor;
-	TempPlanBottomRightComponent->SetOffsetX(TempPlanBottomRightComponent->GetLengthX() * -0.5f);
-	TempPlanBottomRightComponent->SetOffsetY(TempPlanBottomRightComponent->GetLengthY() * -0.5f);
-	TempPlanBottomRightComponent->SetThickness(GizmoBoundsThickness);
-	TempPlanBottomRightComponent->SetSegmentFlags(0x2 | 0x4);
-	TempPlanBottomRightComponent->SetupAttachment(BoundsGroupComponent);
-	PlanBottomRightComponent = TempPlanBottomRightComponent;
+    // Plane bottom right
+    UPrimitiveGizmoRectComponent* TempPlanBottomRightComponent = CreateDefaultSubobject<UPrimitiveGizmoRectComponent>(TEXT("GizmoPlanBottomRight"));
+    TempPlanBottomRightComponent->Color = GizmoBoundsColor;
+    TempPlanBottomRightComponent->SetOffsetX(TempPlanBottomRightComponent->GetLengthX() * -0.5f);
+    TempPlanBottomRightComponent->SetOffsetY(TempPlanBottomRightComponent->GetLengthY() * -0.5f);
+    TempPlanBottomRightComponent->SetThickness(GizmoBoundsThickness);
+    TempPlanBottomRightComponent->SetSegmentFlags(0x2 | 0x4);
+    TempPlanBottomRightComponent->SetupAttachment(BoundsGroupComponent);
+    PlanBottomRightComponent = TempPlanBottomRightComponent;
 
-	// Plane bottom left
-	UPrimitiveGizmoRectComponent* TempPlanBottomLeftComponent = CreateDefaultSubobject<UPrimitiveGizmoRectComponent>(TEXT("GizmoPlanBottomLeft"));
-	TempPlanBottomLeftComponent->Color = GizmoBoundsColor;
-	TempPlanBottomLeftComponent->SetOffsetX(TempPlanBottomLeftComponent->GetLengthX() * -0.5f);
-	TempPlanBottomLeftComponent->SetOffsetY(TempPlanBottomLeftComponent->GetLengthY() * -0.5f);
-	TempPlanBottomLeftComponent->SetThickness(GizmoBoundsThickness);
-	TempPlanBottomLeftComponent->SetSegmentFlags(0x4 | 0x8);
-	TempPlanBottomLeftComponent->SetupAttachment(BoundsGroupComponent);
-	PlanBottomLeftComponent = TempPlanBottomLeftComponent;
+    // Plane bottom left
+    UPrimitiveGizmoRectComponent* TempPlanBottomLeftComponent = CreateDefaultSubobject<UPrimitiveGizmoRectComponent>(TEXT("GizmoPlanBottomLeft"));
+    TempPlanBottomLeftComponent->Color = GizmoBoundsColor;
+    TempPlanBottomLeftComponent->SetOffsetX(TempPlanBottomLeftComponent->GetLengthX() * -0.5f);
+    TempPlanBottomLeftComponent->SetOffsetY(TempPlanBottomLeftComponent->GetLengthY() * -0.5f);
+    TempPlanBottomLeftComponent->SetThickness(GizmoBoundsThickness);
+    TempPlanBottomLeftComponent->SetSegmentFlags(0x4 | 0x8);
+    TempPlanBottomLeftComponent->SetupAttachment(BoundsGroupComponent);
+    PlanBottomLeftComponent = TempPlanBottomLeftComponent;
 
-	//
-	// Rotation Group
-	//
-	RotationGroupComponent = CreateDefaultSubobject<USceneComponent>(TEXT("GizmoRotationGroup"));
-	RotationGroupComponent->SetupAttachment(GetRootComponent());
+    //
+    // Rotation Group
+    //
+    const float GizmoRotationThickness = GizmoBoundsThickness * 0.8f;
+    const float GizmoRotationRadius = 60.0f;
 
-	const float GizmoRotationThickness = GizmoBoundsThickness * 0.8f;
-	const float GizmoRotationRadius = 60.0f;
+    RotationGroupComponent = CreateDefaultSubobject<USceneComponent>(TEXT("GizmoRotationGroup"));
+    RotationGroupComponent->SetupAttachment(GetRootComponent());
 
-	UPrimitiveGizmoRotateComponent* TempRotateXComponent = CreateDefaultSubobject<UPrimitiveGizmoRotateComponent>(TEXT("GizmoRotateX"));
-	TempRotateXComponent->Color = FLinearColor(1.0f, 0.1, 0.1f);
-	TempRotateXComponent->SetAxisIndex(0);
-	TempRotateXComponent->SetRadius(GizmoRotationRadius);
-	TempRotateXComponent->SetThickness(GizmoRotationThickness);
-	TempRotateXComponent->SetupAttachment(RotationGroupComponent);
-	RotateXComponent = TempRotateXComponent;
+    RotateXFrontSocketComponent = CreateDefaultSubobject<USceneComponent>(TEXT("GizmoRotateXFrontSocket"));
+    RotateXFrontSocketComponent->SetupAttachment(RotationGroupComponent);
 
-	//// Axis X Rotate
-	//UPrimitiveGizmoCircleComponent* TempRotateXComponent = CreateDefaultSubobject<UPrimitiveGizmoCircleComponent>(TEXT("GizmoRotateX"));
-	//TempRotateXComponent->Color = FLinearColor::Red;
-	//TempRotateXComponent->Normal = FVector(1.0f, 0.0f, 0.0f);
-	//TempRotateXComponent->Radius = GizmoRotationRadius;
-	//TempRotateXComponent->Thickness = GizmoRotationThickness;
-	//TempRotateXComponent->SetupAttachment(RotationGroupComponent);
-	//RotateXComponent = TempRotateXComponent;
+    UPrimitiveGizmoCircleComponent* TempRotateXComponent = CreateDefaultSubobject<UPrimitiveGizmoCircleComponent>(TEXT("GizmoRotateXFrontIndicator"));
+    TempRotateXComponent->Color = FLinearColor::Red;
+    TempRotateXComponent->SetNormal(FVector(1.0f, 0.0f, 0.0f));
+    TempRotateXComponent->SetRadius(GizmoRotationRadius);
+    TempRotateXComponent->SetThickness(GizmoRotationThickness);
+    TempRotateXComponent->SetupAttachment(RotateXFrontSocketComponent);
+    RotateXFrontIndicatorComponent = TempRotateXComponent;
 
-	//// Axis Y Rotate
-	//UPrimitiveGizmoCircleComponent* TempRotateYComponent = CreateDefaultSubobject<UPrimitiveGizmoCircleComponent>(TEXT("GizmoRotateY"));
-	//TempRotateYComponent->Color = FLinearColor::Green;
-	//TempRotateYComponent->Normal = FVector(0.0f, 1.0f, 0.0f);
-	//TempRotateYComponent->Radius = GizmoRotationRadius;
-	//TempRotateYComponent->Thickness = GizmoRotationThickness;
-	//TempRotateYComponent->SetupAttachment(RotationGroupComponent);
-	//RotateYComponent = TempRotateYComponent;
+    //UPrimitiveGizmoRotateComponent* TempRotateXComponent = CreateDefaultSubobject<UPrimitiveGizmoRotateComponent>(TEXT("GizmoRotateX"));
+    //TempRotateXComponent->Color = FLinearColor(1.0f, 0.1, 0.1f);
+    //TempRotateXComponent->SetAxisIndex(0);
+    //TempRotateXComponent->SetRadius(GizmoRotationRadius);
+    //TempRotateXComponent->SetThickness(GizmoRotationThickness);
+    //TempRotateXComponent->SetupAttachment(RotationGroupComponent);
+    //RotateXFrontIndicatorComponent = TempRotateXComponent;
 
-	//// Axis Z Rotate
-	//UPrimitiveGizmoCircleComponent* TempRotateZComponent = CreateDefaultSubobject<UPrimitiveGizmoCircleComponent>(TEXT("GizmoRotateZ"));
-	//TempRotateZComponent->Color = FLinearColor::Blue;
-	//TempRotateZComponent->Normal = FVector(0.0f, 0.0f, 1.0f);
-	//TempRotateZComponent->Radius = GizmoRotationRadius;
-	//TempRotateZComponent->Thickness = GizmoRotationThickness;
-	//TempRotateZComponent->SetupAttachment(RotationGroupComponent);
-	//RotateZComponent = TempRotateZComponent;
+    //// Axis X Rotate
+    //UPrimitiveGizmoCircleComponent* TempRotateXComponent = CreateDefaultSubobject<UPrimitiveGizmoCircleComponent>(TEXT("GizmoRotateX"));
+    //TempRotateXComponent->Color = FLinearColor::Red;
+    //TempRotateXComponent->Normal = FVector(1.0f, 0.0f, 0.0f);
+    //TempRotateXComponent->Radius = GizmoRotationRadius;
+    //TempRotateXComponent->Thickness = GizmoRotationThickness;
+    //TempRotateXComponent->SetupAttachment(RotationGroupComponent);
+    //RotateXFrontIndicatorComponent = TempRotateXComponent;
 
-	// Rotation Proxy
-	RotationProxyComponent = CreateDefaultSubobject<USceneComponent>(TEXT("GizmoRotationProxy"));
-	RotationProxyComponent->SetupAttachment(RotationGroupComponent);
+    //// Axis Y Rotate
+    //UPrimitiveGizmoCircleComponent* TempRotateYComponent = CreateDefaultSubobject<UPrimitiveGizmoCircleComponent>(TEXT("GizmoRotateY"));
+    //TempRotateYComponent->Color = FLinearColor::Green;
+    //TempRotateYComponent->Normal = FVector(0.0f, 1.0f, 0.0f);
+    //TempRotateYComponent->Radius = GizmoRotationRadius;
+    //TempRotateYComponent->Thickness = GizmoRotationThickness;
+    //TempRotateYComponent->SetupAttachment(RotationGroupComponent);
+    //RotateYIndicatorComponent = TempRotateYComponent;
 
-	//
-	// Translation Group
-	//
-	TranslationGroupComponent = CreateDefaultSubobject<USceneComponent>(TEXT("GizmoTranslationGroup"));
-	TranslationGroupComponent->SetupAttachment(GetRootComponent());
+    //// Axis Z Rotate
+    //UPrimitiveGizmoCircleComponent* TempRotateZComponent = CreateDefaultSubobject<UPrimitiveGizmoCircleComponent>(TEXT("GizmoRotateZ"));
+    //TempRotateZComponent->Color = FLinearColor::Blue;
+    //TempRotateZComponent->Normal = FVector(0.0f, 0.0f, 1.0f);
+    //TempRotateZComponent->Radius = GizmoRotationRadius;
+    //TempRotateZComponent->Thickness = GizmoRotationThickness;
+    //TempRotateZComponent->SetupAttachment(RotationGroupComponent);
+    //RotateZIndicatorComponent = TempRotateZComponent;
 
-	const FLinearColor GizmoTranslationColor = FLinearColor(0.0f, 0.3f, 0.4f);
-	const float GizmoTranslationThickness = GizmoBoundsThickness * 1.0f;
+    // Rotation Proxy
+    RotationProxyComponent = CreateDefaultSubobject<USceneComponent>(TEXT("GizmoRotationProxy"));
+    RotationProxyComponent->SetupAttachment(RotationGroupComponent);
 
-	// Translate Z
-	UPrimitiveGizmoArrowComponent* TempTranslateZComponent = CreateDefaultSubobject<UPrimitiveGizmoArrowComponent>(TEXT("GizmoTranslateZ"));
-	TempTranslateZComponent->Color = GizmoTranslationColor;
-	TempTranslateZComponent->SetDirection(FVector(0.0f, 0.0f, 1.0f));
-	TempTranslateZComponent->SetGap(60.0f);
-	TempTranslateZComponent->SetLength(40.0f);
-	TempTranslateZComponent->SetThickness(GizmoTranslationThickness);
-	TempTranslateZComponent->SetupAttachment(TranslationGroupComponent);
-	TranslateZComponent = TempTranslateZComponent;
+    //
+    // Translation Group
+    //
+    TranslationGroupComponent = CreateDefaultSubobject<USceneComponent>(TEXT("GizmoTranslationGroup"));
+    TranslationGroupComponent->SetupAttachment(GetRootComponent());
 
-	// Translation Proxy
-	TranslationProxyComponent = CreateDefaultSubobject<USceneComponent>(TEXT("GizmoTranslationProxy"));
-	TranslationProxyComponent->SetupAttachment(TranslationGroupComponent);
+    const FLinearColor GizmoTranslationColor = FLinearColor(0.0f, 0.3f, 0.4f);
+    const float GizmoTranslationThickness = GizmoBoundsThickness * 1.0f;
+
+    // Translate Z
+    UPrimitiveGizmoArrowComponent* TempTranslateZComponent = CreateDefaultSubobject<UPrimitiveGizmoArrowComponent>(TEXT("GizmoTranslateZ"));
+    TempTranslateZComponent->Color = GizmoTranslationColor;
+    TempTranslateZComponent->SetDirection(FVector(0.0f, 0.0f, 1.0f));
+    TempTranslateZComponent->SetGap(60.0f);
+    TempTranslateZComponent->SetLength(40.0f);
+    TempTranslateZComponent->SetThickness(GizmoTranslationThickness);
+    TempTranslateZComponent->SetupAttachment(TranslationGroupComponent);
+    TranslateZComponent = TempTranslateZComponent;
+
+    // Translation Proxy
+    TranslationProxyComponent = CreateDefaultSubobject<USceneComponent>(TEXT("GizmoTranslationProxy"));
+    TranslationProxyComponent->SetupAttachment(TranslationGroupComponent);
 }
 
 TArray<UPrimitiveComponent*> ABoxGizmoActor::GetBoundsSubComponents()
 {
-	TArray<UPrimitiveComponent*> Result;
-	Result.Add(ElevationComponent);
-	Result.Add(PlanTopLeftComponent);
-	Result.Add(PlanTopRightComponent);
-	Result.Add(PlanBottomRightComponent);
-	Result.Add(PlanBottomLeftComponent);
+    TArray<UPrimitiveComponent*> Result;
+    Result.Add(ElevationComponent);
+    Result.Add(PlanTopLeftComponent);
+    Result.Add(PlanTopRightComponent);
+    Result.Add(PlanBottomRightComponent);
+    Result.Add(PlanBottomLeftComponent);
 
-	return Result;
+    return Result;
 }
 
 UPrimitiveComponent* ABoxGizmoActor::GetPlanCornerComponent(int32 CornerIndex)
 {
-	check(CornerIndex >= 0 && CornerIndex < 4);
+    check(CornerIndex >= 0 && CornerIndex < 4);
 
-	UPrimitiveComponent* CornerComponent = nullptr;
-	switch (CornerIndex)
-	{
-	case 0:
-		CornerComponent = PlanTopLeftComponent;
-		break;
-	case 1:
-		CornerComponent = PlanTopRightComponent;
-		break;
-	case 2:
-		CornerComponent = PlanBottomRightComponent;
-		break;
-	case 3:
-		CornerComponent = PlanBottomLeftComponent;
-		break;
-	default:
-		break;
-	}
+    UPrimitiveComponent* CornerComponent = nullptr;
+    switch (CornerIndex)
+    {
+    case 0:
+        CornerComponent = PlanTopLeftComponent;
+        break;
+    case 1:
+        CornerComponent = PlanTopRightComponent;
+        break;
+    case 2:
+        CornerComponent = PlanBottomRightComponent;
+        break;
+    case 3:
+        CornerComponent = PlanBottomLeftComponent;
+        break;
+    default:
+        break;
+    }
 
-	return CornerComponent;
+    return CornerComponent;
 }
 
 int32 ABoxGizmoActor::GetPlanCornerDiagonalIndex(int32 CornerIndex) const
 {
-	check(CornerIndex >= 0 && CornerIndex < 4);
+    check(CornerIndex >= 0 && CornerIndex < 4);
 
-	return ((CornerIndex + 2) % 4);
+    return ((CornerIndex + 2) % 4);
 }
 
 TArray<int32> ABoxGizmoActor::GetPlanCornerNeighborIndices(int32 CornerIndex) const
 {
-	check(CornerIndex >= 0 && CornerIndex < 4);
+    check(CornerIndex >= 0 && CornerIndex < 4);
 
-	TArray<int32> Result;
-	Result.Add((CornerIndex + 1) % 4);
-	Result.Add((CornerIndex + 3) % 4);
+    TArray<int32> Result;
+    Result.Add((CornerIndex + 1) % 4);
+    Result.Add((CornerIndex + 3) % 4);
 
-	return Result;
+    return Result;
 }
 
-UPrimitiveComponent* ABoxGizmoActor::GetRotateAxisComponent(int32 AxisIndex)
+USceneComponent* ABoxGizmoActor::GetRotateAxisSocketComponent(int32 AxisIndex, int32 FaceIndex)
 {
-	UPrimitiveComponent* RotationComponent = nullptr;
-	switch (AxisIndex)
-	{
-	case 0:
-		RotationComponent = RotateXComponent;
-		break;
-	case 1:
-		RotationComponent = RotateYComponent;
-		break;
-	case 2:
-		RotationComponent = RotateZComponent;
-		break;
-	default:
-		break;
-	}
+    USceneComponent* Result = nullptr;
+    switch (AxisIndex)
+    {
+    case 0:
+        switch (FaceIndex)
+        {
+        case 0:
+            Result = RotateXFrontSocketComponent;
+            break;
+        case 1:
+            break;
+        default:
+            break;
+        }
+        break;
+    case 1:
+        break;
+    case 2:
+        break;
+    default:
+        break;
+    }
 
-	return RotationComponent;
+    return Result;
+}
+
+UPrimitiveComponent* ABoxGizmoActor::GetRotateAxisIndicatorComponent(int32 AxisIndex, int32 FaceIndex)
+{
+    UPrimitiveComponent* Result = nullptr;
+    switch (AxisIndex)
+    {
+    case 0:
+        switch (FaceIndex)
+        {
+        case 0:
+            Result = RotateXFrontIndicatorComponent;
+            break;
+        case 1:
+            break;
+        default:
+            break;
+        }
+        break;
+    case 1:
+        break;
+    case 2:
+        break;
+    default:
+        break;
+    }
+
+    return Result;
 }
 
 UPrimitiveComponent* ABoxGizmoActor::GetTranslateXYComponent()
 {
-	UPrimitiveComponent* Result = nullptr;
+    UPrimitiveComponent* Result = nullptr;
 
-	if (TranslateXYComponent.IsValid())
-	{
-		Result = TranslateXYComponent.Get();
-	}
+    if (TranslateXYComponent.IsValid())
+    {
+        Result = TranslateXYComponent.Get();
+    }
 
-	return Result;
+    return Result;
 }
 
 void ABoxGizmoActor::SetTranslateXYComponent(UPrimitiveComponent* InComponent)
 {
-	if (InComponent)
-	{
-		TranslateXYComponent = InComponent;
-	}
-	else
-	{
-		TranslateXYComponent.Reset();
-	}
+    if (InComponent)
+    {
+        TranslateXYComponent = InComponent;
+    }
+    else
+    {
+        TranslateXYComponent.Reset();
+    }
 }

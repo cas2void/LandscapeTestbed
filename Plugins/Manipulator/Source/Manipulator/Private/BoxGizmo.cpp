@@ -230,7 +230,7 @@ void UBoxGizmo::CreateSubGizmos()
 	//
 	// BoundsGroupComponent:
 	// - Origin: bounds bottom center
-	// - Direction: construction plane Z
+	// - SocketDirection: construction plane Z
 	// 
 	// BoundsAxisZSource will be shared by:
 	// - Elevation
@@ -270,22 +270,22 @@ void UBoxGizmo::CreateSubGizmos()
 	// Rotation Group
 	//
 	RegulateRotationGroupTransform();
-	for (int32 Index = 0; Index < 3; Index++)
+	RegulateRotationProxyTransform();
+	for (int32 AxisIndex = 0; AxisIndex < 3; AxisIndex++)
 	{
-		CreateRotateAxisGizmo(Index);
+		for (int32 FaceIndex = 0; FaceIndex < 2; FaceIndex++)
+		{
+			CreateRotateAxisGizmo(AxisIndex, FaceIndex);
+		}
 	}
 
 	//
 	// Translation Group
 	//
 	RegulateTranslationGroupTransform();
+	RegulateTranslationProxyTransform();
 	CreateTranslateZGizmo(BoundsAxisZSource);
 	CreateTranslateXYGizmo(BoundsAxisZSource);
-
-	//
-	// Transform proxy
-	//
-	InitTransformProxy();
 }
 
 void UBoxGizmo::DestroySubGizmos()
@@ -361,7 +361,6 @@ void UBoxGizmo::CreateElevationGizmo(UGizmoComponentAxisSource* AxisSource)
 					RecreateBoundsByElevation();
 					SyncComponentsByElevation();
 					NotifyBoundsModified();
-					InitTransformProxy();
 				}
 			);
 
@@ -506,19 +505,19 @@ void UBoxGizmo::CreatePlanCornerGizmo(UGizmoComponentAxisSource* AxisSource, int
 	}
 }
 
-void UBoxGizmo::CreateRotateAxisGizmo(int32 AxisIndex)
+void UBoxGizmo::CreateRotateAxisGizmo(int32 AxisIndex, int32 FaceIndex)
 {
 	if (GizmoActor)
 	{
-		USceneComponent* RotationGroupComponent = GizmoActor->GetRotationGroupComponent();
-		UPrimitiveComponent* RotationAxisComponent = GizmoActor->GetRotateAxisComponent(AxisIndex);
+		USceneComponent* RotateAxisSocketComponent = GizmoActor->GetRotateAxisSocketComponent(AxisIndex, FaceIndex);
+		UPrimitiveComponent* RotateAxisIndicatorComponent = GizmoActor->GetRotateAxisIndicatorComponent(AxisIndex, FaceIndex);
 		USceneComponent* RotationProxyComponent = GizmoActor->GetRotationProxyComponent();
-		if (RotationGroupComponent && RotationAxisComponent && RotationProxyComponent)
+		if (RotateAxisSocketComponent && RotateAxisIndicatorComponent && RotationProxyComponent)
 		{
 			//
 			// Move gizmo to target location, parent(rotation group) is the bounds center
 			//
-			RegulateRotateAxisTransform(AxisIndex);
+			RegulateRotateAxisTransform(AxisIndex, FaceIndex);
 
 			//
 			// Create axis-angle gizmo
@@ -529,7 +528,7 @@ void UBoxGizmo::CreateRotateAxisGizmo(int32 AxisIndex)
 			//
 			// Axis source provides the rotation axis
 			//
-			UGizmoComponentAxisSource* RotationAxisSource = UGizmoComponentAxisSource::Construct(RotationGroupComponent, AxisIndex, true, this);
+			UGizmoComponentAxisSource* RotationAxisSource = UGizmoComponentAxisSource::Construct(RotateAxisSocketComponent, AxisIndex, true, this);
 			RotationGizmo->AxisSource = RotationAxisSource;
 
 			//
@@ -546,8 +545,8 @@ void UBoxGizmo::CreateRotateAxisGizmo(int32 AxisIndex)
 			ComponentTransformSource->OnTransformChanged.AddLambda(
 				[this, AxisIndex](IGizmoTransformSource* TransformSource)
 				{
-					// Bounds needs to be recreated by active target's transform after rotation
 					NotifyRotationModified();
+					// Bounds needs to be recreated by active target's transform after rotation
 					InitBounds();
 					SyncComponentsByRotation(AxisIndex);
 				}
@@ -556,12 +555,12 @@ void UBoxGizmo::CreateRotateAxisGizmo(int32 AxisIndex)
 			//
 			// Sub-component provides hit target
 			//
-			UGizmoComponentHitTarget* HitTarget = UGizmoComponentHitTarget::Construct(RotationAxisComponent, this);
-			HitTarget->UpdateHoverFunction = [RotationAxisComponent, this](bool bHovering)
+			UGizmoComponentHitTarget* HitTarget = UGizmoComponentHitTarget::Construct(RotateAxisIndicatorComponent, this);
+			HitTarget->UpdateHoverFunction = [RotateAxisIndicatorComponent, this](bool bHovering)
 			{
-				if (Cast<UGizmoBaseComponent>(RotationAxisComponent) != nullptr)
+				if (Cast<UGizmoBaseComponent>(RotateAxisIndicatorComponent) != nullptr)
 				{
-					Cast<UGizmoBaseComponent>(RotationAxisComponent)->UpdateHoverState(bHovering);
+					Cast<UGizmoBaseComponent>(RotateAxisIndicatorComponent)->UpdateHoverState(bHovering);
 				}
 			};
 			RotationGizmo->HitTarget = HitTarget;
@@ -596,7 +595,7 @@ void UBoxGizmo::CreateRotateAxisGizmo(int32 AxisIndex)
 			//
 			// Reference the created gizmo
 			//
-			ActiveRotateAxisGizmos.Add(RotationGizmo, RotationAxisComponent);
+			ActiveRotateAxisGizmos.Add(RotationGizmo, RotateAxisIndicatorComponent);
 		}
 	}
 }
@@ -665,6 +664,10 @@ void UBoxGizmo::CreateTranslateZGizmo(UGizmoComponentAxisSource* AxisSource)
 				{
 					Cast<UPrimitiveGizmoBaseComponent>(TranslateZGizmo)->UpdateInteractionState(true);
 				}
+
+				NotifyRotationModified();
+				InitBounds();
+				RegulateTranslationAndSubTransform();
 
 				SetBoundsGizmoVisibility(false);
 				SetRotationGizmoVisibility(false);
@@ -777,6 +780,10 @@ void UBoxGizmo::CreateTranslateXYGizmo(UGizmoComponentAxisSource* AxisSource)
 			UGizmoLambdaStateTarget* StateTarget = NewObject<UGizmoLambdaStateTarget>(this);
 			StateTarget->BeginUpdateFunction = [this]()
 			{
+				NotifyRotationModified();
+				InitBounds();
+				RegulateTranslationAndSubTransform();
+
 				SetBoundsGizmoVisibility(false);
 				SetRotationGizmoVisibility(false);
 				SetTranslationGizmoVisibility(false);
@@ -797,39 +804,10 @@ void UBoxGizmo::CreateTranslateXYGizmo(UGizmoComponentAxisSource* AxisSource)
 	}
 }
 
-void UBoxGizmo::InitTransformProxy()
-{
-	if (ActiveTarget)
-	{
-		FManipulableTransform ManipulableTransform = ActiveTarget->GetTransform();
-		if (ManipulableTransform.bValid)
-		{
-			if (GizmoActor)
-			{
-				// Rotation proxy
-				USceneComponent* RotationProxyComponent = GizmoActor->GetRotationProxyComponent();
-				if (RotationProxyComponent)
-				{
-					FQuat Rotation = ManipulableTransform.Transform.GetRotation();
-					RotationProxyComponent->SetWorldRotation(Rotation);
-				}
-
-				// Translation proxy
-				USceneComponent* TranslationProxyComponent = GizmoActor->GetTranslationProxyComponent();
-				if (TranslationProxyComponent)
-				{
-					FVector Location = ManipulableTransform.Transform.GetLocation();
-					TranslationProxyComponent->SetWorldLocation(Location);
-				}
-			}
-		}
-	}
-}
-
 void UBoxGizmo::SyncComponentsByElevation()
 {
 	RegulateRotationAndSubTransform();
-	RegulateTranslationGroupTransform();
+	RegulateTranslationAndSubTransform();
 }
 
 void UBoxGizmo::SyncComponentsByCorner(int32 CornerIndex)
@@ -839,20 +817,20 @@ void UBoxGizmo::SyncComponentsByCorner(int32 CornerIndex)
 
 	RegulateBoundsAndSubTransform();
 	RegulateRotationAndSubTransform();
-	RegulateTranslationGroupTransform();
+	RegulateTranslationAndSubTransform();
 }
 
 void UBoxGizmo::SyncComponentsByRotation(int32 AxisIndex)
 {
 	RegulateBoundsAndSubTransform();
-	RegulateTranslationGroupTransform();
+	RegulateTranslationAndSubTransform();
 }
 
 void UBoxGizmo::SyncComponentsByTranslation()
 {
 	RegulateBoundsAndSubTransform();
 	RegulateRotationAndSubTransform();
-	RegulateTranslationGroupTransform();
+	RegulateTranslationAndSubTransform();
 }
 
 void UBoxGizmo::RegulateGizmoRootTransform()
@@ -936,14 +914,58 @@ void UBoxGizmo::RegulateRotationGroupTransform()
 	}
 }
 
-void UBoxGizmo::RegulateRotateAxisTransform(int32 AxisIndex)
+void UBoxGizmo::RegulateRotateAxisTransform(int32 AxisIndex, int32 FaceIndex)
 {
 	if (GizmoActor)
 	{
-		UPrimitiveGizmoRotateComponent* GizmoRotateComponent = Cast<UPrimitiveGizmoRotateComponent>(GizmoActor->GetRotateAxisComponent(AxisIndex));
-		if (GizmoRotateComponent)
+		USceneComponent* AxisSocketComponent = GizmoActor->GetRotateAxisSocketComponent(AxisIndex, FaceIndex);
+		UPrimitiveComponent* AxisIndicatorComponent = GizmoActor->GetRotateAxisIndicatorComponent(AxisIndex, FaceIndex);
+		if (AxisSocketComponent && AxisIndicatorComponent)
 		{
-			GizmoRotateComponent->SetExtent(Bounds.BoxExtent);
+			FVector SocketDirection = FVector::ZeroVector;
+			FVector IndicatorDirection = FVector::ZeroVector;
+			switch (AxisIndex)
+			{
+			case 0:
+				SocketDirection = FVector::XAxisVector;
+				IndicatorDirection = FVector::ZAxisVector;
+				break;
+			case 1:
+				SocketDirection = FVector::YAxisVector;
+				break;
+			case 2:
+				SocketDirection = FVector::ZAxisVector;
+				break;
+			default:
+				break;
+			}
+			float Sign = (FaceIndex == 0) ? 1.0f : -1.0f;
+			FVector SocketOffset = SocketDirection * Bounds.BoxExtent * Sign;
+			FVector IndicatorOffset = IndicatorDirection * Bounds.BoxExtent;
+
+			AxisSocketComponent->SetRelativeLocation(SocketOffset);
+			AxisIndicatorComponent->SetRelativeLocation(IndicatorOffset);
+		}
+	}
+}
+
+void UBoxGizmo::RegulateRotationProxyTransform()
+{
+	if (ActiveTarget)
+	{
+		FManipulableTransform ManipulableTransform = ActiveTarget->GetTransform();
+		if (ManipulableTransform.bValid)
+		{
+			if (GizmoActor)
+			{
+				// Rotation proxy
+				USceneComponent* RotationProxyComponent = GizmoActor->GetRotationProxyComponent();
+				if (RotationProxyComponent)
+				{
+					FQuat Rotation = ManipulableTransform.Transform.GetRotation();
+					RotationProxyComponent->SetWorldRotation(Rotation);
+				}
+			}
 		}
 	}
 }
@@ -954,8 +976,13 @@ void UBoxGizmo::RegulateRotationAndSubTransform()
 
 	for (int32 AxisIndex = 0; AxisIndex < 3; AxisIndex++)
 	{
-		RegulateRotateAxisTransform(AxisIndex);
+		for (int32 FaceIndex = 0; FaceIndex < 2; FaceIndex++)
+		{
+			RegulateRotateAxisTransform(AxisIndex, FaceIndex);
+		}
 	}
+
+	// Any gizmo other than rotation type will change proxy rotation, so it's unnecessary to regulate proxy's rotation here
 }
 
 void UBoxGizmo::RegulateTranslationGroupTransform()
@@ -970,6 +997,33 @@ void UBoxGizmo::RegulateTranslationGroupTransform()
 			TranslationGroupComponent->SetWorldLocation(BoundsFrameWorldCenter);
 		}
 	}
+}
+
+void UBoxGizmo::RegulateTranslationProxyTransform()
+{
+	if (ActiveTarget)
+	{
+		FManipulableTransform ManipulableTransform = ActiveTarget->GetTransform();
+		if (ManipulableTransform.bValid)
+		{
+			if (GizmoActor)
+			{
+				// Translation proxy
+				USceneComponent* TranslationProxyComponent = GizmoActor->GetTranslationProxyComponent();
+				if (TranslationProxyComponent)
+				{
+					FVector Location = ManipulableTransform.Transform.GetLocation();
+					TranslationProxyComponent->SetWorldLocation(Location);
+				}
+			}
+		}
+	}
+}
+
+void UBoxGizmo::RegulateTranslationAndSubTransform()
+{
+	RegulateTranslationGroupTransform();
+	RegulateTranslationProxyTransform();
 }
 
 void UBoxGizmo::NotifyBoundsModified()

@@ -67,6 +67,7 @@ public:
 	// FaceIndex - 0: Front, 1: Back
 	USceneComponent* GetRotateAxisSocketComponent(int32 AxisIndex, int32 FaceIndex);
 	UPrimitiveComponent* GetRotateAxisIndicatorComponent(int32 AxisIndex, int32 FaceIndex);
+	UPrimitiveComponent* GetRotateAxisDialComponent(int32 AxisIndex, int32 FaceIndex);
 
 protected:
 	UPROPERTY()
@@ -77,6 +78,18 @@ protected:
 
 	UPROPERTY()
 	UPrimitiveComponent* RotateXFrontIndicatorComponent;
+
+	UPROPERTY()
+	UPrimitiveComponent* RotateXFrontDialComponent;
+
+	UPROPERTY()
+	USceneComponent* RotateXBackSocketComponent;
+
+	UPROPERTY()
+	UPrimitiveComponent* RotateXBackIndicatorComponent;
+
+	UPROPERTY()
+	UPrimitiveComponent* RotateXBackDialComponent;
 
 	UPROPERTY()
 	USceneComponent* RotationProxyComponent;

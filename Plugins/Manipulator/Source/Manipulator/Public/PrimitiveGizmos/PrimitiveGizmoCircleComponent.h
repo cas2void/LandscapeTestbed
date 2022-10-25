@@ -37,11 +37,23 @@ public:
 	float GetRadius() const { return Radius; }
 	void SetRadius(float InRadius) { Radius = InRadius; }
 
+	bool IsAutoScaleRadius() const { return bAutoScaleRadius; }
+	void SetAudoScaleRadius(bool bValue) { bAutoScaleRadius = bValue; }
+
 	FVector GetCenterOffset() const { return CenterOffset; }
 	void SetCenterOffset(const FVector& InCenterOffset) { CenterOffset = InCenterOffset; }
 
-	int32 GetNumSides() const { return NumSides; }
-	void SetNumSides(int32 InNumSides) { NumSides = InNumSides; }
+	float GetResolution() const { return Resolution; }
+	void SetResolution(float InResolution) { Resolution = InResolution; }
+
+	float GetStartAngle() const { return StartAngle; }
+	void SetStartAngle(float InStartAngle) { StartAngle = InStartAngle; }
+
+	float GetEndAngle() const { return EndAngle; }
+	void SetEndAngle(float InEndAngle) { EndAngle = InEndAngle; }
+
+	bool IsCullFace() const { return bCullFace; }
+	void SetCullFace(bool bValue) { bCullFace = bValue; }
 	
 	float GetThickness() const { return Thickness; }
 	void SetThickness(float InThickness) { Thickness = InThickness; }
@@ -57,7 +69,23 @@ protected:
 	float Radius = 100.0f;
 
 	UPROPERTY(EditAnywhere, Category = Options)
+	bool bAutoScaleRadius = false;
+
+	UPROPERTY(EditAnywhere, Category = Options)
 	FVector CenterOffset = FVector::ZeroVector;
+
+	// Resolution in degrees
+	UPROPERTY(EditAnywhere, Category = Options)
+	float Resolution = 10.0f;
+
+	UPROPERTY(EditAnywhere, Category = Options)
+	float StartAngle = 0.0f;
+
+	UPROPERTY(EditAnywhere, Category = Options)
+	float EndAngle = 360.0f;
+
+	UPROPERTY(EditAnywhere, Category = Options)
+	bool bCullFace = false;
 
 	UPROPERTY(EditAnywhere, Category = Options)
 	int32 NumSides = 64;

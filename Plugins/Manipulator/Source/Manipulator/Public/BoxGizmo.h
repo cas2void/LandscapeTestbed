@@ -168,6 +168,9 @@ protected:
 	void SetRotationGizmoVisibility(bool bVisible);
 	void SetTranslationGizmoVisibility(bool bVisible);
 
+	// Set dial radius when enabled
+	void SetRotateDialGizmoEnabled(int32 AxisIndex, int32 FaceIndex, bool bEnabled);
+
 	//
 	// Editing Constraint
 	//
@@ -187,6 +190,7 @@ protected:
 protected:
 	FVector GetPlanCornerLocation(const FBoxSphereBounds& InBounds, int32 CornerIndex) const;
 	FBoxSphereBounds ConvertOBBToAABB(const FBoxSphereBounds& InBounds, const FTransform& InBoundsTransform, const FTransform& FrameTransform);
+	float GetRotateDialRadius(const FBoxSphereBounds& InBounds, int32 AxisIndex);
 
 	//
 	// Debug

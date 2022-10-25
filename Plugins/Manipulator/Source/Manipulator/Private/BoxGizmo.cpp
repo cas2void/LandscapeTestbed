@@ -23,7 +23,7 @@
 
 #include "BoxGizmoActor.h"
 #include "PrimitiveGizmoBaseComponent.h"
-#include "PrimitiveGizmoRotateComponent.h"
+#include "PrimitiveGizmoCircleComponent.h"
 
 void UBoxGizmo::Setup()
 {
@@ -566,21 +566,26 @@ void UBoxGizmo::CreateRotateAxisGizmo(int32 AxisIndex, int32 FaceIndex)
 			RotationGizmo->HitTarget = HitTarget;
 
 			UGizmoLambdaStateTarget* StateTarget = NewObject<UGizmoLambdaStateTarget>(this);
-			StateTarget->BeginUpdateFunction = [RotationGizmo, AxisIndex, this]()
+			StateTarget->BeginUpdateFunction = [RotationGizmo, AxisIndex, FaceIndex, this]()
 			{
 				if (Cast<UPrimitiveGizmoBaseComponent>(RotationGizmo) != nullptr)
 				{
 					Cast<UPrimitiveGizmoBaseComponent>(RotationGizmo)->UpdateInteractionState(true);
 				}
 
+				// Bounds may be modified by bounds gizmo, but not matched to current object, so we need to recreate the bounds,
+				// to prevent sudden jump in ComponentTransformSource->OnTransformChanged
 				NotifyRotationModified();
 				InitBounds();
 				RegulateRotationAndSubTransform();
 
 				SetBoundsGizmoVisibility(false);
 				SetTranslationGizmoVisibility(false);
+				SetRotationGizmoVisibility(false);
+
+				SetRotateDialGizmoEnabled(AxisIndex, FaceIndex, true);
 			};
-			StateTarget->EndUpdateFunction = [RotationGizmo, this]()
+			StateTarget->EndUpdateFunction = [RotationGizmo, AxisIndex, FaceIndex, this]()
 			{
 				if (Cast<UPrimitiveGizmoBaseComponent>(RotationGizmo) != nullptr)
 				{
@@ -589,6 +594,9 @@ void UBoxGizmo::CreateRotateAxisGizmo(int32 AxisIndex, int32 FaceIndex)
 
 				SetBoundsGizmoVisibility(true);
 				SetTranslationGizmoVisibility(true);
+				SetRotationGizmoVisibility(true);
+
+				SetRotateDialGizmoEnabled(AxisIndex, FaceIndex, false);
 			};
 			RotationGizmo->StateTarget = StateTarget;
 
@@ -665,6 +673,8 @@ void UBoxGizmo::CreateTranslateZGizmo(UGizmoComponentAxisSource* AxisSource)
 					Cast<UPrimitiveGizmoBaseComponent>(TranslateZGizmo)->UpdateInteractionState(true);
 				}
 
+				// Bounds may be modified by bounds gizmo, but not matched to current object, so we need to recreate the bounds,
+				// to prevent sudden jump in ComponentTransformSource->OnTransformChanged
 				NotifyRotationModified();
 				InitBounds();
 				RegulateTranslationAndSubTransform();
@@ -780,6 +790,8 @@ void UBoxGizmo::CreateTranslateXYGizmo(UGizmoComponentAxisSource* AxisSource)
 			UGizmoLambdaStateTarget* StateTarget = NewObject<UGizmoLambdaStateTarget>(this);
 			StateTarget->BeginUpdateFunction = [this]()
 			{
+				// Bounds may be modified by bounds gizmo, but not matched to current object, so we need to recreate the bounds,
+				// to prevent sudden jump in ComponentTransformSource->OnTransformChanged
 				NotifyRotationModified();
 				InitBounds();
 				RegulateTranslationAndSubTransform();
@@ -932,6 +944,7 @@ void UBoxGizmo::RegulateRotateAxisTransform(int32 AxisIndex, int32 FaceIndex)
 				break;
 			case 1:
 				SocketDirection = FVector::YAxisVector;
+				IndicatorDirection = FVector::ZAxisVector;
 				break;
 			case 2:
 				SocketDirection = FVector::ZAxisVector;
@@ -1163,6 +1176,20 @@ void UBoxGizmo::SetTranslationGizmoVisibility(bool bVisible)
 	}
 }
 
+void UBoxGizmo::SetRotateDialGizmoEnabled(int32 AxisIndex, int32 FaceIndex, bool bEnabled)
+{
+	UPrimitiveGizmoCircleComponent* RotateAxisDialComponent = Cast<UPrimitiveGizmoCircleComponent>(GizmoActor->GetRotateAxisDialComponent(AxisIndex, FaceIndex));
+	if (RotateAxisDialComponent)
+	{
+		if (bEnabled)
+		{
+			float DialRadius = GetRotateDialRadius(Bounds, AxisIndex);
+			RotateAxisDialComponent->SetRadius(DialRadius);
+		}
+		RotateAxisDialComponent->SetVisibility(bEnabled);
+	}
+}
+
 bool UBoxGizmo::ConstrainElevationPosition(const FVector& RawPosition, FVector& ConstrainedPosition)
 {
 	bool Result = false;
@@ -1265,6 +1292,35 @@ FBoxSphereBounds UBoxGizmo::ConvertOBBToAABB(const FBoxSphereBounds& InBounds, c
 	}
 
 	FBoxSphereBounds Result = FBoxSphereBounds(CornerPoints.GetData(), CornerPoints.Num());
+
+	return Result;
+}
+
+float UBoxGizmo::GetRotateDialRadius(const FBoxSphereBounds& InBounds, int32 AxisIndex)
+{
+	float Result = 0.0f;
+
+	float Edge0 = 0.0f;
+	float Edge1 = 0.0f;
+	switch (AxisIndex)
+	{
+	case 0:
+		Edge0 = InBounds.BoxExtent.Y;
+		Edge1 = InBounds.BoxExtent.Z;
+		break;
+	case 1:
+		Edge0 = InBounds.BoxExtent.Z;
+		Edge1 = InBounds.BoxExtent.X;
+		break;
+	case 2:
+		Edge0 = InBounds.BoxExtent.X;
+		Edge1 = InBounds.BoxExtent.Y;
+		break;
+	default:
+		break;
+	}
+
+	Result = FMath::Sqrt(Edge0 * Edge0 + Edge1 * Edge1);
 
 	return Result;
 }

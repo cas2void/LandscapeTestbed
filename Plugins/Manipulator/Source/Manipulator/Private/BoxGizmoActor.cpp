@@ -26,15 +26,17 @@ ABoxGizmoActor::ABoxGizmoActor()
     BoundsGroupComponent->SetupAttachment(GetRootComponent());
 
     const FLinearColor GizmoBoundsColor(0.0f, 0.2f, 0.2f);
-    float GizmoBoundsThickness = 10.0f;
+    const float GizmoBoundsThickness = 10.0f;
+    const float GizmoBoundsElevationRadius = 10.0f;
+    const float GizmoBoundsElevationOffset = GizmoBoundsElevationRadius + GizmoBoundsThickness;
 
     // Elevation
     UPrimitiveGizmoCircleComponent* TempElevationComponent = CreateDefaultSubobject<UPrimitiveGizmoCircleComponent>(TEXT("GizmoElevation"));
     TempElevationComponent->Color = GizmoBoundsColor;
-    TempElevationComponent->SetRadius(10.0f);
-    TempElevationComponent->SetCenterOffset(FVector(0.0f, 0.0f, 30.0f));
+    TempElevationComponent->SetRadius(GizmoBoundsElevationRadius);
+    TempElevationComponent->SetAudoScaleRadius(true);
+    TempElevationComponent->SetCenterOffset(FVector(0.0f, 0.0f, GizmoBoundsElevationOffset));
     TempElevationComponent->SetThickness(GizmoBoundsThickness);
-    TempElevationComponent->SetNumSides(16);
     TempElevationComponent->SetViewAligned(true);
     TempElevationComponent->SetupAttachment(BoundsGroupComponent);
     ElevationComponent = TempElevationComponent;
@@ -83,56 +85,79 @@ ABoxGizmoActor::ABoxGizmoActor()
     // Rotation Group
     //
     const float GizmoRotationThickness = GizmoBoundsThickness * 0.8f;
-    const float GizmoRotationRadius = 60.0f;
+    const float GizmoRotationRadius = 30.0f;
+    const float GizmoRotationResolution = 5.0f;
+    const float GizmoRotationOffset = GizmoRotationRadius + GizmoRotationThickness;
+    const FLinearColor GizmoRotateXColor = FLinearColor(1.0f, 0.1f, 0.1f);
+    const FVector GizmoRotateXFrontNormal = FVector(1.0f, 0.0f, 0.0f);
+    const FVector GizmoRotateXBackNormal = FVector(-1.0f, 0.0f, 0.0f);
 
     RotationGroupComponent = CreateDefaultSubobject<USceneComponent>(TEXT("GizmoRotationGroup"));
     RotationGroupComponent->SetupAttachment(GetRootComponent());
 
+    // Axis X Rotate Front Socket
     RotateXFrontSocketComponent = CreateDefaultSubobject<USceneComponent>(TEXT("GizmoRotateXFrontSocket"));
     RotateXFrontSocketComponent->SetupAttachment(RotationGroupComponent);
 
-    UPrimitiveGizmoCircleComponent* TempRotateXComponent = CreateDefaultSubobject<UPrimitiveGizmoCircleComponent>(TEXT("GizmoRotateXFrontIndicator"));
-    TempRotateXComponent->Color = FLinearColor::Red;
-    TempRotateXComponent->SetNormal(FVector(1.0f, 0.0f, 0.0f));
-    TempRotateXComponent->SetRadius(GizmoRotationRadius);
-    TempRotateXComponent->SetThickness(GizmoRotationThickness);
-    TempRotateXComponent->SetupAttachment(RotateXFrontSocketComponent);
-    RotateXFrontIndicatorComponent = TempRotateXComponent;
+    // Axis X Rotate Front Indicator
+    UPrimitiveGizmoCircleComponent* TempRotateXFrontIndicatorComponent = CreateDefaultSubobject<UPrimitiveGizmoCircleComponent>(TEXT("GizmoRotateXFrontIndicator"));
+    TempRotateXFrontIndicatorComponent->Color = GizmoRotateXColor;
+    TempRotateXFrontIndicatorComponent->SetNormal(GizmoRotateXFrontNormal);
+    TempRotateXFrontIndicatorComponent->SetRadius(GizmoRotationRadius);
+    TempRotateXFrontIndicatorComponent->SetAudoScaleRadius(true);
+    TempRotateXFrontIndicatorComponent->SetResolution(GizmoRotationResolution);
+    TempRotateXFrontIndicatorComponent->SetStartAngle(120.0f);
+    TempRotateXFrontIndicatorComponent->SetEndAngle(240.0f);
+    TempRotateXFrontIndicatorComponent->SetCullFace(true);
+    TempRotateXFrontIndicatorComponent->SetCenterOffset(FVector(0.0f, 0.0f, GizmoRotationOffset));
+    TempRotateXFrontIndicatorComponent->SetThickness(GizmoRotationThickness);
+    TempRotateXFrontIndicatorComponent->SetupAttachment(RotateXFrontSocketComponent);
+    RotateXFrontIndicatorComponent = TempRotateXFrontIndicatorComponent;
 
-    //UPrimitiveGizmoRotateComponent* TempRotateXComponent = CreateDefaultSubobject<UPrimitiveGizmoRotateComponent>(TEXT("GizmoRotateX"));
-    //TempRotateXComponent->Color = FLinearColor(1.0f, 0.1, 0.1f);
-    //TempRotateXComponent->SetAxisIndex(0);
-    //TempRotateXComponent->SetRadius(GizmoRotationRadius);
-    //TempRotateXComponent->SetThickness(GizmoRotationThickness);
-    //TempRotateXComponent->SetupAttachment(RotationGroupComponent);
-    //RotateXFrontIndicatorComponent = TempRotateXComponent;
+    // Axis X Rotate Front Dial
+    UPrimitiveGizmoCircleComponent* TempRotateXFrontDialComponent = CreateDefaultSubobject<UPrimitiveGizmoCircleComponent>(TEXT("GizmoRotateXFrontDial"));
+    TempRotateXFrontDialComponent->Color = GizmoRotateXColor;
+    TempRotateXFrontDialComponent->SetNormal(GizmoRotateXFrontNormal);
+    TempRotateXFrontDialComponent->SetRadius(GizmoRotationRadius);
+    TempRotateXFrontDialComponent->SetAudoScaleRadius(false);
+    TempRotateXFrontDialComponent->SetResolution(GizmoRotationResolution);
+    TempRotateXFrontDialComponent->SetCullFace(true);
+    TempRotateXFrontDialComponent->SetThickness(GizmoRotationThickness);
+    TempRotateXFrontDialComponent->SetupAttachment(RotateXFrontSocketComponent);
+    TempRotateXFrontDialComponent->SetVisibility(false);
+    RotateXFrontDialComponent = TempRotateXFrontDialComponent;
 
-    //// Axis X Rotate
-    //UPrimitiveGizmoCircleComponent* TempRotateXComponent = CreateDefaultSubobject<UPrimitiveGizmoCircleComponent>(TEXT("GizmoRotateX"));
-    //TempRotateXComponent->Color = FLinearColor::Red;
-    //TempRotateXComponent->Normal = FVector(1.0f, 0.0f, 0.0f);
-    //TempRotateXComponent->Radius = GizmoRotationRadius;
-    //TempRotateXComponent->Thickness = GizmoRotationThickness;
-    //TempRotateXComponent->SetupAttachment(RotationGroupComponent);
-    //RotateXFrontIndicatorComponent = TempRotateXComponent;
+    // Axis X Rotate Back Socket
+    RotateXBackSocketComponent = CreateDefaultSubobject<USceneComponent>(TEXT("GizmoRotateXBackSocket"));
+    RotateXBackSocketComponent->SetupAttachment(RotationGroupComponent);
 
-    //// Axis Y Rotate
-    //UPrimitiveGizmoCircleComponent* TempRotateYComponent = CreateDefaultSubobject<UPrimitiveGizmoCircleComponent>(TEXT("GizmoRotateY"));
-    //TempRotateYComponent->Color = FLinearColor::Green;
-    //TempRotateYComponent->Normal = FVector(0.0f, 1.0f, 0.0f);
-    //TempRotateYComponent->Radius = GizmoRotationRadius;
-    //TempRotateYComponent->Thickness = GizmoRotationThickness;
-    //TempRotateYComponent->SetupAttachment(RotationGroupComponent);
-    //RotateYIndicatorComponent = TempRotateYComponent;
+    // Axis X Rotate Back Indicator
+    UPrimitiveGizmoCircleComponent* TempRotateXBackIndicatorComponent = CreateDefaultSubobject<UPrimitiveGizmoCircleComponent>(TEXT("GizmoRotateXBackIndicator"));
+    TempRotateXBackIndicatorComponent->Color = GizmoRotateXColor;
+    TempRotateXBackIndicatorComponent->SetNormal(GizmoRotateXBackNormal);
+    TempRotateXBackIndicatorComponent->SetRadius(GizmoRotationRadius);
+    TempRotateXBackIndicatorComponent->SetAudoScaleRadius(true);
+    TempRotateXBackIndicatorComponent->SetResolution(GizmoRotationResolution);
+    TempRotateXBackIndicatorComponent->SetStartAngle(-60.0f);
+    TempRotateXBackIndicatorComponent->SetEndAngle(60.0f);
+    TempRotateXBackIndicatorComponent->SetCullFace(true);
+    TempRotateXBackIndicatorComponent->SetCenterOffset(FVector(0.0f, 0.0f, GizmoRotationOffset));
+    TempRotateXBackIndicatorComponent->SetThickness(GizmoRotationThickness);
+    TempRotateXBackIndicatorComponent->SetupAttachment(RotateXBackSocketComponent);
+    RotateXBackIndicatorComponent = TempRotateXBackIndicatorComponent;
 
-    //// Axis Z Rotate
-    //UPrimitiveGizmoCircleComponent* TempRotateZComponent = CreateDefaultSubobject<UPrimitiveGizmoCircleComponent>(TEXT("GizmoRotateZ"));
-    //TempRotateZComponent->Color = FLinearColor::Blue;
-    //TempRotateZComponent->Normal = FVector(0.0f, 0.0f, 1.0f);
-    //TempRotateZComponent->Radius = GizmoRotationRadius;
-    //TempRotateZComponent->Thickness = GizmoRotationThickness;
-    //TempRotateZComponent->SetupAttachment(RotationGroupComponent);
-    //RotateZIndicatorComponent = TempRotateZComponent;
+    // Axis X Rotate Back Dial
+    UPrimitiveGizmoCircleComponent* TempRotateXBackDialComponent = CreateDefaultSubobject<UPrimitiveGizmoCircleComponent>(TEXT("GizmoRotateXBackDial"));
+    TempRotateXBackDialComponent->Color = GizmoRotateXColor;
+    TempRotateXBackDialComponent->SetNormal(GizmoRotateXBackNormal);
+    TempRotateXBackDialComponent->SetRadius(GizmoRotationRadius);
+    TempRotateXBackDialComponent->SetAudoScaleRadius(false);
+    TempRotateXBackDialComponent->SetResolution(GizmoRotationResolution);
+    TempRotateXBackDialComponent->SetCullFace(true);
+    TempRotateXBackDialComponent->SetThickness(GizmoRotationThickness);
+    TempRotateXBackDialComponent->SetupAttachment(RotateXBackSocketComponent);
+    TempRotateXBackDialComponent->SetVisibility(false);
+    RotateXBackDialComponent = TempRotateXBackDialComponent;
 
     // Rotation Proxy
     RotationProxyComponent = CreateDefaultSubobject<USceneComponent>(TEXT("GizmoRotationProxy"));
@@ -230,6 +255,7 @@ USceneComponent* ABoxGizmoActor::GetRotateAxisSocketComponent(int32 AxisIndex, i
             Result = RotateXFrontSocketComponent;
             break;
         case 1:
+            Result = RotateXBackSocketComponent;
             break;
         default:
             break;
@@ -258,6 +284,36 @@ UPrimitiveComponent* ABoxGizmoActor::GetRotateAxisIndicatorComponent(int32 AxisI
             Result = RotateXFrontIndicatorComponent;
             break;
         case 1:
+            Result = RotateXBackIndicatorComponent;
+            break;
+        default:
+            break;
+        }
+        break;
+    case 1:
+        break;
+    case 2:
+        break;
+    default:
+        break;
+    }
+
+    return Result;
+}
+
+UPrimitiveComponent* ABoxGizmoActor::GetRotateAxisDialComponent(int32 AxisIndex, int32 FaceIndex)
+{
+    UPrimitiveComponent* Result = nullptr;
+    switch (AxisIndex)
+    {
+    case 0:
+        switch (FaceIndex)
+        {
+        case 0:
+            Result = RotateXFrontDialComponent;
+            break;
+        case 1:
+            Result = RotateXBackDialComponent;
             break;
         default:
             break;

@@ -125,6 +125,32 @@ protected:
 	UPROPERTY()
 	UPrimitiveComponent* RotateYBackDialComponent;
 
+	//
+	// RotateZ Front
+	//
+
+	UPROPERTY()
+	USceneComponent* RotateZFrontSocketComponent;
+
+	UPROPERTY()
+	UPrimitiveComponent* RotateZFrontIndicatorComponent;
+
+	UPROPERTY()
+	UPrimitiveComponent* RotateZFrontDialComponent;
+
+	//
+	// RotateZ Back
+	//
+
+	UPROPERTY()
+	USceneComponent* RotateZBackSocketComponent;
+
+	UPROPERTY()
+	UPrimitiveComponent* RotateZBackIndicatorComponent;
+
+	UPROPERTY()
+	UPrimitiveComponent* RotateZBackDialComponent;
+
 	// Rotation Proxy
 	UPROPERTY()
 	USceneComponent* RotationProxyComponent;

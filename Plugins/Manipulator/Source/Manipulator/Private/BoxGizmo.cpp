@@ -934,27 +934,29 @@ void UBoxGizmo::RegulateRotateAxisTransform(int32 AxisIndex, int32 FaceIndex)
 		UPrimitiveComponent* AxisIndicatorComponent = GizmoActor->GetRotateAxisIndicatorComponent(AxisIndex, FaceIndex);
 		if (AxisSocketComponent && AxisIndicatorComponent)
 		{
+			const float SocketSign = (FaceIndex == 0) ? 1.0f : -1.0f;
+			const float IndicatorPadding = 8.0f;
 			FVector SocketDirection = FVector::ZeroVector;
 			FVector IndicatorDirection = FVector::ZeroVector;
 			switch (AxisIndex)
 			{
 			case 0:
-				SocketDirection = FVector::XAxisVector;
+				SocketDirection = FVector::XAxisVector * SocketSign;
 				IndicatorDirection = FVector::ZAxisVector;
 				break;
 			case 1:
-				SocketDirection = FVector::YAxisVector;
+				SocketDirection = FVector::YAxisVector * SocketSign;
 				IndicatorDirection = FVector::ZAxisVector;
 				break;
 			case 2:
-				SocketDirection = FVector::ZAxisVector;
+				SocketDirection = FVector::ZAxisVector * -1.0f;
+				IndicatorDirection = FVector::YAxisVector * SocketSign;
 				break;
 			default:
 				break;
 			}
-			float Sign = (FaceIndex == 0) ? 1.0f : -1.0f;
-			FVector SocketOffset = SocketDirection * Bounds.BoxExtent * Sign;
-			FVector IndicatorOffset = IndicatorDirection * Bounds.BoxExtent;
+			const FVector SocketOffset = SocketDirection * Bounds.BoxExtent;
+			const FVector IndicatorOffset = IndicatorDirection * Bounds.BoxExtent + IndicatorDirection * IndicatorPadding;
 
 			AxisSocketComponent->SetRelativeLocation(SocketOffset);
 			AxisIndicatorComponent->SetRelativeLocation(IndicatorOffset);

@@ -54,6 +54,9 @@ public:
 
 	bool IsCullFace() const { return bCullFace; }
 	void SetCullFace(bool bValue) { bCullFace = bValue; }
+
+	FVector GetCullFaceNormal() const { return CullFaceNormal; }
+	void SetCullFaceNormal(const FVector& InCullFaceNormal) { CullFaceNormal = InCullFaceNormal; }
 	
 	float GetThickness() const { return Thickness; }
 	void SetThickness(float InThickness) { Thickness = InThickness; }
@@ -63,7 +66,7 @@ public:
 
 protected:
 	UPROPERTY(EditAnywhere, Category = Options)
-	FVector Normal = FVector(1, 0, 0);
+	FVector Normal = FVector::ZAxisVector;
 
 	UPROPERTY(EditAnywhere, Category = Options)
 	float Radius = 100.0f;
@@ -86,6 +89,9 @@ protected:
 
 	UPROPERTY(EditAnywhere, Category = Options)
 	bool bCullFace = false;
+
+	UPROPERTY(EditAnywhere, Category = Options)
+	FVector CullFaceNormal = FVector::ZAxisVector;
 
 	UPROPERTY(EditAnywhere, Category = Options)
 	int32 NumSides = 64;

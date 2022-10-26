@@ -19,7 +19,7 @@ public:
         : FPrimitiveSceneProxy(InComponent),
         Color(InComponent->Color),
         HoverThicknessMultiplier(InComponent->HoverSizeMultiplier),
-        Normal(InComponent->GetNormal()),
+        Normal(InComponent->GetNormal().GetSafeNormal()),
         Radius(InComponent->GetRadius()),
         bAutoScaleRadius(InComponent->IsAutoScaleRadius()),
         CenterOffset(InComponent->GetCenterOffset()),
@@ -27,6 +27,7 @@ public:
         StartAngle(InComponent->GetStartAngle()),
         EndAngle(InComponent->GetEndAngle()),
         bCullFace(InComponent->IsCullFace()),
+        CullFaceNormal(InComponent->GetCullFaceNormal().GetSafeNormal()),
         Thickness(InComponent->GetThickness()),
         bViewAligned(InComponent->IsViewAligned())
     {
@@ -149,15 +150,19 @@ public:
 
     virtual FPrimitiveViewRelevance GetViewRelevance(const FSceneView* View) const override
     {
-        const FMatrix& LocalToWorldMatrix = GetLocalToWorld();
-        const FVector Origin = LocalToWorldMatrix.TransformPosition(FVector::ZeroVector);
-        const bool bIsOrtho = !View->IsPerspectiveProjection();
-        FVector GizmoViewDirection = (bIsOrtho) ? (View->GetViewDirection()) : (Origin - View->ViewLocation);
-        GizmoViewDirection.Normalize();
-        const bool bFrontFace = FVector::DotProduct(-GizmoViewDirection, Normal) > 0;
+        bool bVisibleByFaceCulling = true;
+        if (bCullFace)
+        {
+            const FMatrix& LocalToWorldMatrix = GetLocalToWorld();
+            const FVector Origin = LocalToWorldMatrix.TransformPosition(FVector::ZeroVector);
+            const bool bIsOrtho = !View->IsPerspectiveProjection();
+            FVector GizmoViewDirection = (bIsOrtho) ? (View->GetViewDirection()) : (Origin - View->ViewLocation);
+            GizmoViewDirection.Normalize();
+            bVisibleByFaceCulling = FVector::DotProduct(-GizmoViewDirection, CullFaceNormal) > 0;
+        }
 
         FPrimitiveViewRelevance Result;
-        Result.bDrawRelevance = IsShown(View) && (!bCullFace || bFrontFace);
+        Result.bDrawRelevance = IsShown(View) && bVisibleByFaceCulling;
         Result.bDynamicRelevance = true;
         Result.bShadowRelevance = false;
         Result.bEditorPrimitiveRelevance = UseEditorCompositing(View);
@@ -209,6 +214,7 @@ private:
     float StartAngle;
     float EndAngle;
     bool bCullFace;
+    FVector CullFaceNormal;
     float Thickness;
     bool bViewAligned;
 

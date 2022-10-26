@@ -88,12 +88,16 @@ ABoxGizmoActor::ABoxGizmoActor()
     const float GizmoRotationRadius = 30.0f;
     const float GizmoRotationResolution = 5.0f;
     const float GizmoRotationOffset = GizmoRotationRadius + GizmoRotationThickness;
-    const FLinearColor GizmoRotateXColor = FLinearColor(1.0f, 0.1f, 0.1f);
-    const FVector GizmoRotateXFrontNormal = FVector(1.0f, 0.0f, 0.0f);
-    const FVector GizmoRotateXBackNormal = FVector(-1.0f, 0.0f, 0.0f);
 
     RotationGroupComponent = CreateDefaultSubobject<USceneComponent>(TEXT("GizmoRotationGroup"));
     RotationGroupComponent->SetupAttachment(GetRootComponent());
+
+    //
+    // Axis X Rotate
+    //
+    const FLinearColor GizmoRotateXColor = FLinearColor(1.0f, 0.1f, 0.1f);
+    const FVector GizmoRotateXFrontNormal = FVector(1.0f, 0.0f, 0.0f);
+    const FVector GizmoRotateXBackNormal = FVector(-1.0f, 0.0f, 0.0f);
 
     // Axis X Rotate Front Socket
     RotateXFrontSocketComponent = CreateDefaultSubobject<USceneComponent>(TEXT("GizmoRotateXFrontSocket"));
@@ -158,6 +162,77 @@ ABoxGizmoActor::ABoxGizmoActor()
     TempRotateXBackDialComponent->SetupAttachment(RotateXBackSocketComponent);
     TempRotateXBackDialComponent->SetVisibility(false);
     RotateXBackDialComponent = TempRotateXBackDialComponent;
+
+    //
+    // Axis Y Rotate
+    //
+    const FLinearColor GizmoRotateYColor = FLinearColor(0.1f, 1.0f, 0.1f);
+    const FVector GizmoRotateYFrontNormal = FVector(0.0f, 1.0f, 0.0f);
+    const FVector GizmoRotateYBackNormal = FVector(0.0f, -1.0f, 0.0f);
+
+    // Axis Y Rotate Front Socket
+    RotateYFrontSocketComponent = CreateDefaultSubobject<USceneComponent>(TEXT("GizmoRotateYFrontSocket"));
+    RotateYFrontSocketComponent->SetupAttachment(RotationGroupComponent);
+
+    // Axis Y Rotate Front Indicator
+    UPrimitiveGizmoCircleComponent* TempRotateYFrontIndicatorComponent = CreateDefaultSubobject<UPrimitiveGizmoCircleComponent>(TEXT("GizmoRotateYFrontIndicator"));
+    TempRotateYFrontIndicatorComponent->Color = GizmoRotateYColor;
+    TempRotateYFrontIndicatorComponent->SetNormal(GizmoRotateYFrontNormal);
+    TempRotateYFrontIndicatorComponent->SetRadius(GizmoRotationRadius);
+    TempRotateYFrontIndicatorComponent->SetAudoScaleRadius(true);
+    TempRotateYFrontIndicatorComponent->SetResolution(GizmoRotationResolution);
+    TempRotateYFrontIndicatorComponent->SetStartAngle(210.0f);
+    TempRotateYFrontIndicatorComponent->SetEndAngle(330.0f);
+    TempRotateYFrontIndicatorComponent->SetCullFace(true);
+    TempRotateYFrontIndicatorComponent->SetCenterOffset(FVector(0.0f, 0.0f, GizmoRotationOffset));
+    TempRotateYFrontIndicatorComponent->SetThickness(GizmoRotationThickness);
+    TempRotateYFrontIndicatorComponent->SetupAttachment(RotateYFrontSocketComponent);
+    RotateYFrontIndicatorComponent = TempRotateYFrontIndicatorComponent;
+
+    // Axis Y Rotate Front Dial
+    UPrimitiveGizmoCircleComponent* TempRotateYFrontDialComponent = CreateDefaultSubobject<UPrimitiveGizmoCircleComponent>(TEXT("GizmoRotateYFrontDial"));
+    TempRotateYFrontDialComponent->Color = GizmoRotateYColor;
+    TempRotateYFrontDialComponent->SetNormal(GizmoRotateYFrontNormal);
+    TempRotateYFrontDialComponent->SetRadius(GizmoRotationRadius);
+    TempRotateYFrontDialComponent->SetAudoScaleRadius(false);
+    TempRotateYFrontDialComponent->SetResolution(GizmoRotationResolution);
+    TempRotateYFrontDialComponent->SetCullFace(true);
+    TempRotateYFrontDialComponent->SetThickness(GizmoRotationThickness);
+    TempRotateYFrontDialComponent->SetupAttachment(RotateYFrontSocketComponent);
+    TempRotateYFrontDialComponent->SetVisibility(false);
+    RotateYFrontDialComponent = TempRotateYFrontDialComponent;
+
+    // Axis Y Rotate Back Socket
+    RotateYBackSocketComponent = CreateDefaultSubobject<USceneComponent>(TEXT("GizmoRotateYBackSocket"));
+    RotateYBackSocketComponent->SetupAttachment(RotationGroupComponent);
+
+    // Axis Y Rotate Back Indicator
+    UPrimitiveGizmoCircleComponent* TempRotateYBackIndicatorComponent = CreateDefaultSubobject<UPrimitiveGizmoCircleComponent>(TEXT("GizmoRotateYBackIndicator"));
+    TempRotateYBackIndicatorComponent->Color = GizmoRotateYColor;
+    TempRotateYBackIndicatorComponent->SetNormal(GizmoRotateYBackNormal);
+    TempRotateYBackIndicatorComponent->SetRadius(GizmoRotationRadius);
+    TempRotateYBackIndicatorComponent->SetAudoScaleRadius(true);
+    TempRotateYBackIndicatorComponent->SetResolution(GizmoRotationResolution);
+    TempRotateYBackIndicatorComponent->SetStartAngle(30.0f);
+    TempRotateYBackIndicatorComponent->SetEndAngle(150.0f);
+    TempRotateYBackIndicatorComponent->SetCullFace(true);
+    TempRotateYBackIndicatorComponent->SetCenterOffset(FVector(0.0f, 0.0f, GizmoRotationOffset));
+    TempRotateYBackIndicatorComponent->SetThickness(GizmoRotationThickness);
+    TempRotateYBackIndicatorComponent->SetupAttachment(RotateYBackSocketComponent);
+    RotateYBackIndicatorComponent = TempRotateYBackIndicatorComponent;
+
+    // Axis Y Rotate Back Dial
+    UPrimitiveGizmoCircleComponent* TempRotateYBackDialComponent = CreateDefaultSubobject<UPrimitiveGizmoCircleComponent>(TEXT("GizmoRotateYBackDial"));
+    TempRotateYBackDialComponent->Color = GizmoRotateYColor;
+    TempRotateYBackDialComponent->SetNormal(GizmoRotateYBackNormal);
+    TempRotateYBackDialComponent->SetRadius(GizmoRotationRadius);
+    TempRotateYBackDialComponent->SetAudoScaleRadius(false);
+    TempRotateYBackDialComponent->SetResolution(GizmoRotationResolution);
+    TempRotateYBackDialComponent->SetCullFace(true);
+    TempRotateYBackDialComponent->SetThickness(GizmoRotationThickness);
+    TempRotateYBackDialComponent->SetupAttachment(RotateYBackSocketComponent);
+    TempRotateYBackDialComponent->SetVisibility(false);
+    RotateYBackDialComponent = TempRotateYBackDialComponent;
 
     // Rotation Proxy
     RotationProxyComponent = CreateDefaultSubobject<USceneComponent>(TEXT("GizmoRotationProxy"));
@@ -262,6 +337,17 @@ USceneComponent* ABoxGizmoActor::GetRotateAxisSocketComponent(int32 AxisIndex, i
         }
         break;
     case 1:
+        switch (FaceIndex)
+        {
+        case 0:
+            Result = RotateYFrontSocketComponent;
+            break;
+        case 1:
+            Result = RotateYBackSocketComponent;
+            break;
+        default:
+            break;
+        }
         break;
     case 2:
         break;
@@ -291,6 +377,17 @@ UPrimitiveComponent* ABoxGizmoActor::GetRotateAxisIndicatorComponent(int32 AxisI
         }
         break;
     case 1:
+        switch (FaceIndex)
+        {
+        case 0:
+            Result = RotateYFrontIndicatorComponent;
+            break;
+        case 1:
+            Result = RotateYBackIndicatorComponent;
+            break;
+        default:
+            break;
+        }
         break;
     case 2:
         break;
@@ -320,6 +417,17 @@ UPrimitiveComponent* ABoxGizmoActor::GetRotateAxisDialComponent(int32 AxisIndex,
         }
         break;
     case 1:
+        switch (FaceIndex)
+        {
+        case 0:
+            Result = RotateYFrontDialComponent;
+            break;
+        case 1:
+            Result = RotateYBackDialComponent;
+            break;
+        default:
+            break;
+        }
         break;
     case 2:
         break;

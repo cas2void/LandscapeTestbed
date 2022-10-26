@@ -73,6 +73,10 @@ protected:
 	UPROPERTY()
 	USceneComponent* RotationGroupComponent;
 
+	//
+	// RotateX Front
+	//
+
 	UPROPERTY()
 	USceneComponent* RotateXFrontSocketComponent;
 
@@ -81,6 +85,10 @@ protected:
 
 	UPROPERTY()
 	UPrimitiveComponent* RotateXFrontDialComponent;
+
+	//
+	// RotateX Back
+	//
 
 	UPROPERTY()
 	USceneComponent* RotateXBackSocketComponent;
@@ -91,6 +99,33 @@ protected:
 	UPROPERTY()
 	UPrimitiveComponent* RotateXBackDialComponent;
 
+	//
+	// RotateY Front
+	//
+
+	UPROPERTY()
+	USceneComponent* RotateYFrontSocketComponent;
+
+	UPROPERTY()
+	UPrimitiveComponent* RotateYFrontIndicatorComponent;
+
+	UPROPERTY()
+	UPrimitiveComponent* RotateYFrontDialComponent;
+
+	//
+	// RotateY Back
+	//
+
+	UPROPERTY()
+	USceneComponent* RotateYBackSocketComponent;
+
+	UPROPERTY()
+	UPrimitiveComponent* RotateYBackIndicatorComponent;
+
+	UPROPERTY()
+	UPrimitiveComponent* RotateYBackDialComponent;
+
+	// Rotation Proxy
 	UPROPERTY()
 	USceneComponent* RotationProxyComponent;
 
